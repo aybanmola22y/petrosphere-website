@@ -1,0 +1,8 @@
+<svg width="120" height="80" viewBox="0 10 120 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 3 Leaves Icon (Shifted and Tighter) -->
+  <path d="M25 35C25 25 35 20 45 20C40 30 40 40 25 35Z" fill="#F37021"/>
+  <path d="M25 35C15 35 10 45 10 55C20 50 30 50 25 35Z" fill="#72BF44"/>
+  <path d="M25 35C35 35 40 45 40 55C30 50 20 50 25 35Z" fill="#0092D2"/>
+  
+  <text x="50" y="50" fill="#333" font-family="Arial, sans-serif" font-weight="700" font-size="32">idp</text>
+</svg>

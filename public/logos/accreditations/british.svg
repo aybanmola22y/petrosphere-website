@@ -1,0 +1,11 @@
+<svg width="180" height="60" viewBox="0 0 180 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 4 dots icon -->
+  <circle cx="12" cy="18" r="8" fill="#0072BC"/>
+  <circle cx="32" cy="18" r="8" fill="#0072BC"/>
+  <circle cx="12" cy="38" r="8" fill="#0072BC"/>
+  <circle cx="32" cy="38" r="8" fill="#0072BC"/>
+  
+  <!-- Text: BRITISH COUNCIL -->
+  <text x="50" y="26" fill="#002F5F" font-family="Inter, sans-serif" font-weight="700" font-size="18" letter-spacing="0.05em">BRITISH</text>
+  <text x="50" y="46" fill="#002F5F" font-family="Inter, sans-serif" font-weight="700" font-size="18" letter-spacing="0.05em">COUNCIL</text>
+</svg>

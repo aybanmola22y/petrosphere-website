@@ -1,0 +1,39 @@
+## Dependencies
+node_modules/
+
+## Next.js
+.next/
+out/
+
+## Project-specific distDir (historical)
+.next-cache/
+
+## Builds / output (if any tooling produces these)
+dist/
+build/
+coverage/
+
+## Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+## OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+## TypeScript
+*.tsbuildinfo
+
+## Local env files (secrets)
+.env*.local
+.env.local
+
+## Local content snapshot from /admin (don’t commit by default)
+site-content.local.json
+
+## Replit metadata (safe to omit if not using Replit)
+.replit-artifact/

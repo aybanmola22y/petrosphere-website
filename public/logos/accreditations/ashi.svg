@@ -1,0 +1,8 @@
+<svg width="300" height="100" viewBox="0 0 300 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="100" fill="transparent"/>
+  <!-- Blocky Text Style -->
+  <text x="10" y="45" fill="#004A99" font-family="Impact, sans-serif" font-size="32" letter-spacing="-1">AMERICAN SAFETY &amp;</text>
+  <rect x="10" y="55" width="280" height="30" fill="#004A99"/>
+  <text x="15" y="80" fill="white" font-family="Impact, sans-serif" font-size="28" letter-spacing="1">HEALTH INSTITUTE</text>
+  <text x="10" y="95" fill="#004A99" font-family="Arial, sans-serif" font-size="10" font-weight="700">Approved Training Center</text>
+</svg>
