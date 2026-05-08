@@ -141,7 +141,8 @@ export async function getCompanyNewsForHome(limit = 6): Promise<CompanyNewsItem[
   // This keeps the site fresh while still letting admin edits win.
   const fetched = await fetchPetrosphereLatestNews(limit);
   const merged = applyNewsOverrides(fetched, overrides, removedSlugs);
-  return removeDummySeedNews(merged).slice(0, limit);
+  const ordered = merged.slice().sort(byPublishedDesc);
+  return removeDummySeedNews(ordered).slice(0, limit);
 }
 
 /**
@@ -303,17 +304,25 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
 
   if (websiteSupabaseConfigured()) {
     const supabase = createSupabaseWebsiteAdminClient();
-    const { error } = await supabase.from(WEBSITE_CONTENT_TABLE).upsert(
-      {
-        id: WEBSITE_CONTENT_ROW_ID,
-        news_overrides: stored.news ?? [],
-        removed_news_slugs: stored.removedNewsSlugs ?? [],
-        video_testimonials: stored.videoTestimonials ?? null,
-        stats: stored.stats ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    );
+    // Merge with existing row so saving one section doesn't wipe others.
+    const existing = await supabase
+      .from(WEBSITE_CONTENT_TABLE)
+      .select("news_overrides,removed_news_slugs,video_testimonials,stats")
+      .eq("id", WEBSITE_CONTENT_ROW_ID)
+      .maybeSingle();
+    const ex = existing.data ?? ({} as any);
+
+    const payloadRow = {
+      id: WEBSITE_CONTENT_ROW_ID,
+      news_overrides: stored.news ?? ex.news_overrides ?? [],
+      removed_news_slugs: stored.removedNewsSlugs ?? ex.removed_news_slugs ?? [],
+      video_testimonials:
+        stored.videoTestimonials !== undefined ? stored.videoTestimonials : (ex.video_testimonials ?? null),
+      stats: stored.stats !== undefined ? stored.stats : (ex.stats ?? null),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from(WEBSITE_CONTENT_TABLE).upsert(payloadRow, { onConflict: "id" });
     if (!error) return;
     throw new Error(`Supabase save failed: ${error.message}`);
   }
