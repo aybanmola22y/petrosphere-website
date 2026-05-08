@@ -40,7 +40,8 @@ type Props = {
 
 export default function NewsArticle({ article, shareUrl, related }: Props) {
   const readingMinutes = estimateReadingMinutes([article.summary, ...article.body]);
-  const referenceCode = related.length ? newsReferenceLabel(0) : "";
+  // Reference codes are derived from the homepage ordering; compute server-side when needed.
+  const referenceCode = "";
   const [leadParagraph, ...restParagraphs] = article.body;
   const shares = shareTargets(article.title, shareUrl);
 

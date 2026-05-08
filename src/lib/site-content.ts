@@ -22,8 +22,12 @@ type StoredShape = Partial<SiteContentSnapshot> & {
   removedNewsSlugs?: string[];
 };
 
-const WEBSITE_CONTENT_TABLE = "site_content_overrides";
+const WEBSITE_CONTENT_TABLE = "site_content_overrides"; // now used only for: removed slugs + stats (and any future site-wide settings)
 const WEBSITE_CONTENT_ROW_ID = 1;
+
+const NEWS_FETCHED_TABLE = "news_fetched";
+const NEWS_AUTHORED_TABLE = "news_authored";
+const VIDEO_TESTIMONIALS_TABLE = "video_testimonials";
 
 function websiteSupabaseConfigured(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL_WEBSITE && process.env.SUPABASE_SERVICE_ROLE_KEY_WEBSITE);
@@ -49,15 +53,13 @@ async function readStoredFromWebsiteSupabase(): Promise<StoredShape | null> {
     const supabase = createSupabaseWebsiteAdminClient();
     const { data, error } = await supabase
       .from(WEBSITE_CONTENT_TABLE)
-      .select("news_overrides,removed_news_slugs,video_testimonials,stats")
+      .select("removed_news_slugs,stats")
       .eq("id", WEBSITE_CONTENT_ROW_ID)
       .maybeSingle();
     if (error || !data) return null;
 
     const out: StoredShape = {};
-    if (Array.isArray(data.news_overrides)) out.news = data.news_overrides as unknown as CompanyNewsItem[];
     if (Array.isArray(data.removed_news_slugs)) out.removedNewsSlugs = data.removed_news_slugs as unknown as string[];
-    if (Array.isArray(data.video_testimonials)) out.videoTestimonials = data.video_testimonials as unknown as StudentVideoTestimonial[];
     if (Array.isArray(data.stats)) out.stats = data.stats as unknown as SiteStat[];
     return out;
   } catch {
@@ -81,6 +83,95 @@ function applyNewsOverrides(base: CompanyNewsItem[], overrides?: CompanyNewsItem
   }
   const removed = new Set((removedSlugs ?? []).map((s) => s.toLowerCase()));
   return Array.from(bySlug.values()).filter((n) => !removed.has(n.slug.toLowerCase()));
+}
+
+function mapNewsRowToItem(row: any): CompanyNewsItem {
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    category: row.category,
+    title: row.title,
+    publishedAt: row.published_at ?? row.publishedAt ?? "1970-01-01",
+    summary: row.summary ?? "",
+    imageSrc: row.image_src ?? row.imageSrc ?? "/logos/petrosphere.svg",
+    body: Array.isArray(row.body) ? row.body : Array.isArray(row.body_json) ? row.body_json : Array.isArray(row.body_jsonb) ? row.body_jsonb : row.body ?? [],
+    external: Boolean(row.external ?? false),
+    externalHref: row.source_url ?? row.external_href ?? row.externalHref ?? undefined,
+    cta: row.cta ?? undefined,
+  } as CompanyNewsItem;
+}
+
+async function loadNewsFromWebsiteSupabase(limit?: number): Promise<CompanyNewsItem[]> {
+  if (!websiteSupabaseConfigured()) return [];
+  const supabase = createSupabaseWebsiteAdminClient();
+
+  const fetchedQuery = supabase
+    .from(NEWS_FETCHED_TABLE)
+    .select("id,slug,source_url,category,title,published_at,summary,image_src,body,external,updated_at");
+  const authoredQuery = supabase
+    .from(NEWS_AUTHORED_TABLE)
+    .select("id,slug,category,title,published_at,summary,image_src,body,external,external_href,cta,updated_at");
+
+  const [fetchedRes, authoredRes] = await Promise.all([fetchedQuery, authoredQuery]);
+  const fetched = Array.isArray(fetchedRes.data) ? fetchedRes.data.map(mapNewsRowToItem) : [];
+  const authored = Array.isArray(authoredRes.data) ? authoredRes.data.map(mapNewsRowToItem) : [];
+  const merged = [...authored, ...fetched].sort(byPublishedDesc);
+  return typeof limit === "number" ? merged.slice(0, limit) : merged;
+}
+
+async function loadVideoTestimonialsFromWebsiteSupabase(): Promise<StudentVideoTestimonial[]> {
+  if (!websiteSupabaseConfigured()) return [];
+  const supabase = createSupabaseWebsiteAdminClient();
+  const { data } = await supabase
+    .from(VIDEO_TESTIMONIALS_TABLE)
+    .select("id,student_name,credential,summary,youtube_video_id,poster_src,updated_at")
+    .order("updated_at", { ascending: false });
+  if (!Array.isArray(data)) return [];
+  return data.map((r: any) => ({
+    id: String(r.id),
+    studentName: String(r.student_name ?? ""),
+    credential: String(r.credential ?? ""),
+    summary: String(r.summary ?? ""),
+    youtubeVideoId: String(r.youtube_video_id ?? ""),
+    posterSrc: String(r.poster_src ?? ""),
+  }));
+}
+
+async function syncFetchedNewsToWebsiteSupabase(options: { limit: number; hydrateBodies: boolean }): Promise<void> {
+  if (!websiteSupabaseConfigured()) return;
+  const supabase = createSupabaseWebsiteAdminClient();
+
+  const fetched = await fetchPetrosphereLatestNews(options.limit).catch(() => []);
+  if (!fetched.length) return;
+
+  let hydrated: CompanyNewsItem[] = fetched;
+  if (options.hydrateBodies) {
+    hydrated = await Promise.all(
+      fetched.map(async (n) => {
+        if (n.body && n.body.length) return n;
+        const src = n.externalHref;
+        if (!src) return n;
+        return await fetchPetrosphereNewsArticleByUrl(src).catch(() => n);
+      }),
+    );
+  }
+
+  const rows = hydrated.map((n) => ({
+    id: n.id,
+    slug: n.slug,
+    source_url: n.externalHref ?? null,
+    category: n.category,
+    title: n.title,
+    published_at: n.publishedAt,
+    summary: n.summary,
+    image_src: n.imageSrc,
+    body: n.body ?? [],
+    external: Boolean(n.external ?? false),
+    updated_at: new Date().toISOString(),
+    fetched_at: new Date().toISOString(),
+  }));
+
+  await supabase.from(NEWS_FETCHED_TABLE).upsert(rows, { onConflict: "slug" });
 }
 
 export function getCompanyNewsForSite(): CompanyNewsItem[] {
@@ -133,15 +224,18 @@ function removeDummySeedNews(items: CompanyNewsItem[]): CompanyNewsItem[] {
  * fall back to Petrosphere fetch. Does not write to disk.
  */
 export async function getCompanyNewsForHome(limit = 6): Promise<CompanyNewsItem[]> {
-  const s = await readStored();
-  const overrides = s?.news && Array.isArray(s.news) ? s.news : undefined;
-  const removedSlugs = s?.removedNewsSlugs && Array.isArray(s.removedNewsSlugs) ? s.removedNewsSlugs : undefined;
+  const stored = await readStored();
+  const removedSlugs = stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : undefined;
 
-  // Always fetch the latest for the public site, then apply local overrides.
-  // This keeps the site fresh while still letting admin edits win.
+  const fromDb = await loadNewsFromWebsiteSupabase();
+  if (fromDb.length) {
+    const filtered = applyNewsOverrides(fromDb, undefined, removedSlugs).slice().sort(byPublishedDesc);
+    return removeDummySeedNews(filtered).slice(0, limit);
+  }
+
+  // Fallback if DB isn't configured or empty.
   const fetched = await fetchPetrosphereLatestNews(limit);
-  const merged = applyNewsOverrides(fetched, overrides, removedSlugs);
-  const ordered = merged.slice().sort(byPublishedDesc);
+  const ordered = fetched.slice().sort(byPublishedDesc);
   return removeDummySeedNews(ordered).slice(0, limit);
 }
 
@@ -157,47 +251,21 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const hydrateBodies = options?.hydrateBodies ?? true;
 
   const stored = await readStored();
-  const storedNewsOverrides = stored?.news && Array.isArray(stored.news) ? stored.news : [];
-  const removedSlugs =
-    stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : [];
+  const removedSlugs = stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : [];
 
-  const storedVideos =
-    stored?.videoTestimonials && Array.isArray(stored.videoTestimonials) ? stored.videoTestimonials : defaultVideoTestimonials;
-  const mergedVideos = mergeVideoPreferLocal(storedVideos, defaultVideoTestimonials);
+  // Sync fetched news into the dedicated table, then load combined list (authored + fetched).
+  await syncFetchedNewsToWebsiteSupabase({ limit, hydrateBodies });
+  const news = await loadNewsFromWebsiteSupabase();
+  const filtered = removeDummySeedNews(applyNewsOverrides(news, undefined, removedSlugs));
 
-  const base: SiteContentSnapshot = {
-    // Local/admin overrides applied to seed data (used only as fallback if fetch fails).
-    news: removeDummySeedNews(applyNewsOverrides(companyNewsItems, storedNewsOverrides, removedSlugs)),
+  const dbVideos = await loadVideoTestimonialsFromWebsiteSupabase();
+  const mergedVideos = mergeVideoPreferLocal(dbVideos.length ? dbVideos : defaultVideoTestimonials, defaultVideoTestimonials);
+
+  return {
+    news: filtered,
     videoTestimonials: mergedVideos,
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
-
-  // Fetch latest index cards.
-  const fetched = await fetchPetrosphereLatestNews(limit).catch(() => []);
-
-  // Optionally fetch full bodies for any new items (so admin starts with real content).
-  let hydrated: CompanyNewsItem[] = fetched;
-  if (hydrateBodies && fetched.length) {
-    const existingSlugs = new Set(base.news.map((n) => n.slug));
-    const toHydrate = fetched.filter((n) => !existingSlugs.has(n.slug)).slice(0, limit);
-    const hydratedNew = await Promise.all(
-      toHydrate.map(async (n) => {
-        const src = n.externalHref;
-        if (!src) return n;
-        return await fetchPetrosphereNewsArticleByUrl(src).catch(() => n);
-      }),
-    );
-
-    const hydratedBySlug = new Map(hydratedNew.map((n) => [n.slug, n]));
-    hydrated = fetched.map((n) => hydratedBySlug.get(n.slug) ?? n);
-  }
-
-  if (!hydrated.length) return base;
-
-  // Apply local overrides on top of fetched items, and include any local-only posts.
-  const fetchedWithOverrides = applyNewsOverrides(hydrated, storedNewsOverrides, removedSlugs);
-  const mergedNews = mergeNewsPreferLocal(fetchedWithOverrides, storedNewsOverrides);
-  return { ...base, news: mergedNews };
 }
 
 export function getNewsArticleBySlug(slug: string): CompanyNewsItem | undefined {
@@ -211,17 +279,23 @@ export function getRelatedCompanyNews(slug: string, limit = 4): CompanyNewsItem[
 }
 
 export async function getNewsArticleBySlugAsync(slug: string): Promise<CompanyNewsItem | undefined> {
-  const s = await readStored();
-  const list = s?.news && Array.isArray(s.news) ? s.news : [];
   const normalized = slug.toLowerCase();
-  return list.find((item) => item.slug?.toLowerCase?.() === normalized);
+  const supabase = websiteSupabaseConfigured() ? createSupabaseWebsiteAdminClient() : null;
+  if (supabase) {
+    const [a, f] = await Promise.all([
+      supabase.from(NEWS_AUTHORED_TABLE).select("*").eq("slug", normalized).maybeSingle(),
+      supabase.from(NEWS_FETCHED_TABLE).select("*").eq("slug", normalized).maybeSingle(),
+    ]);
+    const hit = a.data ?? f.data;
+    if (hit) return mapNewsRowToItem(hit);
+  }
+  return undefined;
 }
 
 export async function getRelatedCompanyNewsAsync(slug: string, limit = 4): Promise<CompanyNewsItem[]> {
-  const s = await readStored();
-  const list = s?.news && Array.isArray(s.news) ? s.news : [];
   const normalized = slug.toLowerCase();
-  return list.filter((item) => item.slug?.toLowerCase?.() !== normalized).slice(0, limit);
+  const all = await loadNewsFromWebsiteSupabase();
+  return all.filter((item) => item.slug.toLowerCase() !== normalized).slice(0, limit);
 }
 
 export function getVideoTestimonialsForSite(): StudentVideoTestimonial[] {
@@ -233,9 +307,8 @@ export function getStatsForSite(): SiteStat[] {
 }
 
 export async function getVideoTestimonialsForSiteAsync(): Promise<StudentVideoTestimonial[]> {
-  const s = await readStored();
-  if (s && Array.isArray(s.videoTestimonials)) return s.videoTestimonials;
-  return defaultVideoTestimonials;
+  const rows = await loadVideoTestimonialsFromWebsiteSupabase();
+  return rows.length ? rows : defaultVideoTestimonials;
 }
 
 export async function getStatsForSiteAsync(): Promise<SiteStat[]> {
@@ -289,9 +362,8 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
 
   const stored: StoredShape = {};
 
-  // Only persist overrides for news (edited/new) and removals.
-  const { overrides, removedSlugs } = pickChangedNewsOverrides(baseline.news, data.news);
-  if (overrides.length) stored.news = overrides;
+  // Track removals so fetched items can be hidden without deleting and being re-synced.
+  const { removedSlugs } = pickChangedNewsOverrides(baseline.news, data.news);
   if (removedSlugs.length) stored.removedNewsSlugs = removedSlugs;
 
   // Persist full sections only when they changed.
@@ -304,24 +376,80 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
 
   if (websiteSupabaseConfigured()) {
     const supabase = createSupabaseWebsiteAdminClient();
-    // Merge with existing row so saving one section doesn't wipe others.
+    // 1) Save news items into the correct table.
+    const authoredItems = data.news.filter((n) => !String(n.id).startsWith("petrosphere-"));
+    const fetchedItems = data.news.filter((n) => String(n.id).startsWith("petrosphere-"));
+
+    if (authoredItems.length) {
+      await supabase.from(NEWS_AUTHORED_TABLE).upsert(
+        authoredItems.map((n) => ({
+          id: n.id,
+          slug: n.slug,
+          category: n.category,
+          title: n.title,
+          published_at: n.publishedAt,
+          summary: n.summary,
+          image_src: n.imageSrc,
+          body: n.body,
+          external: Boolean(n.external ?? false),
+          external_href: n.externalHref ?? null,
+          cta: n.cta ?? null,
+          updated_at: new Date().toISOString(),
+        })),
+        { onConflict: "id" },
+      );
+    }
+
+    if (fetchedItems.length) {
+      await supabase.from(NEWS_FETCHED_TABLE).upsert(
+        fetchedItems.map((n) => ({
+          id: n.id,
+          slug: n.slug,
+          source_url: n.externalHref ?? null,
+          category: n.category,
+          title: n.title,
+          published_at: n.publishedAt,
+          summary: n.summary,
+          image_src: n.imageSrc,
+          body: n.body ?? [],
+          external: Boolean(n.external ?? false),
+          updated_at: new Date().toISOString(),
+          fetched_at: new Date().toISOString(),
+        })),
+        { onConflict: "slug" },
+      );
+    }
+
+    // 2) Save video testimonials into their own table (upsert per id).
+    if (stored.videoTestimonials) {
+      await supabase.from(VIDEO_TESTIMONIALS_TABLE).upsert(
+        stored.videoTestimonials.map((v) => ({
+          id: v.id,
+          student_name: v.studentName,
+          credential: v.credential,
+          summary: v.summary,
+          youtube_video_id: v.youtubeVideoId,
+          poster_src: v.posterSrc,
+          updated_at: new Date().toISOString(),
+        })),
+        { onConflict: "id" },
+      );
+    }
+
+    // 3) Save removed slugs + stats into the settings row.
     const existing = await supabase
       .from(WEBSITE_CONTENT_TABLE)
-      .select("news_overrides,removed_news_slugs,video_testimonials,stats")
+      .select("removed_news_slugs,stats")
       .eq("id", WEBSITE_CONTENT_ROW_ID)
       .maybeSingle();
     const ex = existing.data ?? ({} as any);
 
     const payloadRow = {
       id: WEBSITE_CONTENT_ROW_ID,
-      news_overrides: stored.news ?? ex.news_overrides ?? [],
       removed_news_slugs: stored.removedNewsSlugs ?? ex.removed_news_slugs ?? [],
-      video_testimonials:
-        stored.videoTestimonials !== undefined ? stored.videoTestimonials : (ex.video_testimonials ?? null),
       stats: stored.stats !== undefined ? stored.stats : (ex.stats ?? null),
       updated_at: new Date().toISOString(),
     };
-
     const { error } = await supabase.from(WEBSITE_CONTENT_TABLE).upsert(payloadRow, { onConflict: "id" });
     if (!error) return;
     throw new Error(`Supabase save failed: ${error.message}`);
