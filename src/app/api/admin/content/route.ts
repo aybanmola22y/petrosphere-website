@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { verifyAdminSession } from "@/lib/admin-session";
-import { getSiteContentSnapshotForAdminSync, persistSiteContent } from "@/lib/site-content";
+import { getSiteContentSnapshotForAdminSync, persistSiteContent, siteContentStorageLabel } from "@/lib/site-content";
 import { siteContentSavePayloadSchema } from "@/lib/site-content-schema";
 
 export const runtime = "nodejs";
@@ -38,5 +38,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, storedIn: siteContentStorageLabel() });
 }

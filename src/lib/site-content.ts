@@ -312,3 +312,8 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
 
   fs.writeFileSync(getLocalContentPath(), `${JSON.stringify(stored, null, 2)}\n`, "utf-8");
 }
+
+export function siteContentStorageLabel(): "supabase" | "file" {
+  if (websiteSupabaseConfigured()) return "supabase";
+  return "file";
+}

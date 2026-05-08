@@ -219,8 +219,15 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
         });
         return;
       }
+      const okBody = (await res.json().catch(() => ({}))) as { storedIn?: "supabase" | "file" };
       setBaseline(cloneSnapshot(data));
-      toast({ title: "Saved", description: `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.` });
+      toast({
+        title: "Saved",
+        description:
+          okBody.storedIn === "supabase"
+            ? "Saved to Supabase."
+            : `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
+      });
       router.refresh();
     } finally {
       setPending(false);
