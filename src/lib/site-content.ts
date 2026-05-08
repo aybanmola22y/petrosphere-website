@@ -209,6 +209,20 @@ export function getRelatedCompanyNews(slug: string, limit = 4): CompanyNewsItem[
     .slice(0, limit);
 }
 
+export async function getNewsArticleBySlugAsync(slug: string): Promise<CompanyNewsItem | undefined> {
+  const s = await readStored();
+  const list = s?.news && Array.isArray(s.news) ? s.news : [];
+  const normalized = slug.toLowerCase();
+  return list.find((item) => item.slug?.toLowerCase?.() === normalized);
+}
+
+export async function getRelatedCompanyNewsAsync(slug: string, limit = 4): Promise<CompanyNewsItem[]> {
+  const s = await readStored();
+  const list = s?.news && Array.isArray(s.news) ? s.news : [];
+  const normalized = slug.toLowerCase();
+  return list.filter((item) => item.slug?.toLowerCase?.() !== normalized).slice(0, limit);
+}
+
 export function getVideoTestimonialsForSite(): StudentVideoTestimonial[] {
   return defaultVideoTestimonials;
 }

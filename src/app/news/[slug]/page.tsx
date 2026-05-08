@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import NewsArticle from "@/views/NewsArticle";
-import { getCompanyNewsForSite, getNewsArticleBySlug } from "@/lib/site-content";
+import { getCompanyNewsForSite, getNewsArticleBySlugAsync, getRelatedCompanyNewsAsync } from "@/lib/site-content";
 import { fetchPetrosphereNewsArticleBySlug } from "@/lib/petrosphere-latest-news";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export function generateStaticParams() {
 
 async function resolveArticle(slug: string) {
   const normalized = slug.toLowerCase();
-  const local = getNewsArticleBySlug(normalized) ?? getNewsArticleBySlug(slug);
+  const local = (await getNewsArticleBySlugAsync(normalized)) ?? (await getNewsArticleBySlugAsync(slug));
   if (local) return local;
   return await fetchPetrosphereNewsArticleBySlug(normalized);
 }
@@ -53,7 +53,8 @@ export default async function Page({ params }: Props) {
   if (!article) {
     notFound();
   }
+  const related = await getRelatedCompanyNewsAsync(article.slug, 4);
   const origin = await resolveShareOrigin();
   const shareUrl = `${origin}/news/${article.slug}`;
-  return <NewsArticle article={article} shareUrl={shareUrl} />;
+  return <NewsArticle article={article} shareUrl={shareUrl} related={related} />;
 }

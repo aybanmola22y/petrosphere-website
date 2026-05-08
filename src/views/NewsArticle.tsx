@@ -14,7 +14,6 @@ import {
 import { FiChevronRight } from "react-icons/fi";
 import type { CompanyNewsItem } from "@/data/companyNews";
 import { formatCompanyNewsDate, newsReferenceLabel } from "@/data/companyNews";
-import { getCompanyNewsForSite, getRelatedCompanyNews } from "@/lib/site-content";
 import { cn } from "@/lib/utils";
 
 function estimateReadingMinutes(paragraphs: string[]): number {
@@ -36,13 +35,12 @@ function shareTargets(title: string, url: string) {
 type Props = {
   article: CompanyNewsItem;
   shareUrl: string;
+  related: CompanyNewsItem[];
 };
 
-export default function NewsArticle({ article, shareUrl }: Props) {
-  const related = getRelatedCompanyNews(article.slug, 4);
+export default function NewsArticle({ article, shareUrl, related }: Props) {
   const readingMinutes = estimateReadingMinutes([article.summary, ...article.body]);
-  const refIndex = getCompanyNewsForSite().findIndex((i) => i.slug === article.slug);
-  const referenceCode = refIndex >= 0 ? newsReferenceLabel(refIndex) : "";
+  const referenceCode = related.length ? newsReferenceLabel(0) : "";
   const [leadParagraph, ...restParagraphs] = article.body;
   const shares = shareTargets(article.title, shareUrl);
 
