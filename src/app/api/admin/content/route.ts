@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { verifyAdminSession } from "@/lib/admin-session";
 import { getSiteContentSnapshotForAdminSync, persistSiteContent, siteContentStorageLabel } from "@/lib/site-content";
@@ -37,6 +38,9 @@ export async function POST(req: Request) {
     const msg = e instanceof Error ? e.message : "Write failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+
+  // The public homepage uses ISR; clear cached HTML so edits reflect immediately.
+  revalidatePath("/");
 
   return NextResponse.json({ ok: true, storedIn: siteContentStorageLabel() });
 }
