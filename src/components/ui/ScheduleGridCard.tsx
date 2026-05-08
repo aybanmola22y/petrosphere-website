@@ -101,9 +101,9 @@ export function ScheduleGridCard({ session }: { session: TrainingSession }) {
 
       <div className="flex h-full min-h-0 flex-col p-7">
         <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
-            <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
+            <span className="min-w-0 truncate text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground tabular-nums">
               {codeLabel}
             </span>
           </div>
@@ -137,15 +137,15 @@ export function ScheduleGridCard({ session }: { session: TrainingSession }) {
           </p>
 
           <div className="mt-auto flex flex-col">
-            <dl className="grid grid-cols-3 divide-x divide-border/60 border-t border-border/50 pt-5">
-              <div className="min-w-0 pr-4">
+            <dl className="grid grid-cols-1 divide-y divide-border/60 border-t border-border/50 pt-5 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+              <div className="min-w-0 pb-4 sm:pb-0 sm:pr-4">
                 <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   <FiClock className="h-3.5 w-3.5 shrink-0 opacity-80" />
                   Duration
                 </dt>
                 <dd className="mt-2 truncate text-[13px] font-semibold text-foreground">{duration}</dd>
               </div>
-              <div className="min-w-0 px-4">
+              <div className="min-w-0 py-4 sm:py-0 sm:px-4">
                 <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   <FiCalendar className="h-3.5 w-3.5 shrink-0 opacity-80" />
                   Schedule
@@ -157,7 +157,7 @@ export function ScheduleGridCard({ session }: { session: TrainingSession }) {
                   </span>
                 </dd>
               </div>
-              <div className="min-w-0 pl-4">
+              <div className="min-w-0 pt-4 sm:pt-0 sm:pl-4">
                 <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   <FiLayers className="h-3.5 w-3.5 shrink-0 opacity-80" />
                   Level

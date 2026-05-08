@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    persistSiteContent(parsed.data);
+    await persistSiteContent(parsed.data);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Write failed";
     return NextResponse.json({ error: msg }, { status: 500 });

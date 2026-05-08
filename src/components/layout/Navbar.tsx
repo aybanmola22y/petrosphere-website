@@ -311,7 +311,7 @@ export function Navbar() {
                           "ml-2 rounded-xl border border-border bg-background shadow-lg p-6 grid gap-x-8 gap-y-6",
                           activeSubLink.groups.length === 1
                             ? "w-72 grid-cols-1"
-                            : "w-[640px] grid-cols-2"
+                            : "w-[min(640px,calc(100vw-2rem))] max-w-[640px] grid-cols-2"
                         )}
                         onMouseEnter={() => setOpenSub(activeSubLink.name)}
                       >

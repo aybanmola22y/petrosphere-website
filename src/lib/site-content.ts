@@ -10,6 +10,7 @@ import { stats as defaultStats, studentVideoTestimonials as defaultVideoTestimon
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 import { getLocalContentPath } from "./site-content-path";
 import { fetchPetrosphereLatestNews, fetchPetrosphereNewsArticleByUrl } from "@/lib/petrosphere-latest-news";
+import { createSupabaseWebsiteAdminClient } from "@/lib/supabase/website";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -21,7 +22,19 @@ type StoredShape = Partial<SiteContentSnapshot> & {
   removedNewsSlugs?: string[];
 };
 
-function readStored(): StoredShape | null {
+const WEBSITE_CONTENT_TABLE = "site_content_overrides";
+const WEBSITE_CONTENT_ROW_ID = 1;
+
+function websiteSupabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL_WEBSITE && process.env.SUPABASE_SERVICE_ROLE_KEY_WEBSITE);
+}
+
+function isReadOnlyDeployFs(): boolean {
+  // Vercel (and similar serverless) runtimes don't allow writing to the repo filesystem at runtime.
+  return Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
+}
+
+function readStoredFromFile(): StoredShape | null {
   try {
     const p = getLocalContentPath();
     if (!fs.existsSync(p)) return null;
@@ -29,6 +42,35 @@ function readStored(): StoredShape | null {
   } catch {
     return null;
   }
+}
+
+async function readStoredFromWebsiteSupabase(): Promise<StoredShape | null> {
+  try {
+    const supabase = createSupabaseWebsiteAdminClient();
+    const { data, error } = await supabase
+      .from(WEBSITE_CONTENT_TABLE)
+      .select("news_overrides,removed_news_slugs,video_testimonials,stats")
+      .eq("id", WEBSITE_CONTENT_ROW_ID)
+      .maybeSingle();
+    if (error || !data) return null;
+
+    const out: StoredShape = {};
+    if (Array.isArray(data.news_overrides)) out.news = data.news_overrides as unknown as CompanyNewsItem[];
+    if (Array.isArray(data.removed_news_slugs)) out.removedNewsSlugs = data.removed_news_slugs as unknown as string[];
+    if (Array.isArray(data.video_testimonials)) out.videoTestimonials = data.video_testimonials as unknown as StudentVideoTestimonial[];
+    if (Array.isArray(data.stats)) out.stats = data.stats as unknown as SiteStat[];
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+async function readStored(): Promise<StoredShape | null> {
+  if (websiteSupabaseConfigured()) {
+    const s = await readStoredFromWebsiteSupabase();
+    if (s) return s;
+  }
+  return readStoredFromFile();
 }
 
 function applyNewsOverrides(base: CompanyNewsItem[], overrides?: CompanyNewsItem[], removedSlugs?: string[]): CompanyNewsItem[] {
@@ -42,7 +84,8 @@ function applyNewsOverrides(base: CompanyNewsItem[], overrides?: CompanyNewsItem
 }
 
 export function getCompanyNewsForSite(): CompanyNewsItem[] {
-  const s = readStored();
+  // Used for seed-only fallbacks (and static params). Keep it sync.
+  const s = readStoredFromFile();
   return applyNewsOverrides(companyNewsItems, s?.news, s?.removedNewsSlugs);
 }
 
@@ -90,7 +133,7 @@ function removeDummySeedNews(items: CompanyNewsItem[]): CompanyNewsItem[] {
  * fall back to Petrosphere fetch. Does not write to disk.
  */
 export async function getCompanyNewsForHome(limit = 6): Promise<CompanyNewsItem[]> {
-  const s = readStored();
+  const s = await readStored();
   const overrides = s?.news && Array.isArray(s.news) ? s.news : undefined;
   const removedSlugs = s?.removedNewsSlugs && Array.isArray(s.removedNewsSlugs) ? s.removedNewsSlugs : undefined;
 
@@ -112,7 +155,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const limit = options?.limit ?? 12;
   const hydrateBodies = options?.hydrateBodies ?? true;
 
-  const stored = readStored();
+  const stored = await readStored();
   const storedNewsOverrides = stored?.news && Array.isArray(stored.news) ? stored.news : [];
   const removedSlugs =
     stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : [];
@@ -167,13 +210,21 @@ export function getRelatedCompanyNews(slug: string, limit = 4): CompanyNewsItem[
 }
 
 export function getVideoTestimonialsForSite(): StudentVideoTestimonial[] {
-  const s = readStored();
-  if (s && Array.isArray(s.videoTestimonials)) return s.videoTestimonials;
   return defaultVideoTestimonials;
 }
 
 export function getStatsForSite(): SiteStat[] {
-  const s = readStored();
+  return defaultStats;
+}
+
+export async function getVideoTestimonialsForSiteAsync(): Promise<StudentVideoTestimonial[]> {
+  const s = await readStored();
+  if (s && Array.isArray(s.videoTestimonials)) return s.videoTestimonials;
+  return defaultVideoTestimonials;
+}
+
+export async function getStatsForSiteAsync(): Promise<SiteStat[]> {
+  const s = await readStored();
   if (s && Array.isArray(s.stats)) return s.stats;
   return defaultStats;
 }
@@ -218,7 +269,7 @@ function pickChangedNewsOverrides(baseline: CompanyNewsItem[], next: CompanyNews
   return { overrides, removedSlugs };
 }
 
-export function persistSiteContent(payload: { baseline: SiteContentSnapshot; data: SiteContentSnapshot }): void {
+export async function persistSiteContent(payload: { baseline: SiteContentSnapshot; data: SiteContentSnapshot }): Promise<void> {
   const { baseline, data } = payload;
 
   const stored: StoredShape = {};
@@ -234,6 +285,29 @@ export function persistSiteContent(payload: { baseline: SiteContentSnapshot; dat
   }
   if (stableStringify(baseline.stats) !== stableStringify(data.stats)) {
     stored.stats = data.stats;
+  }
+
+  if (websiteSupabaseConfigured()) {
+    const supabase = createSupabaseWebsiteAdminClient();
+    const { error } = await supabase.from(WEBSITE_CONTENT_TABLE).upsert(
+      {
+        id: WEBSITE_CONTENT_ROW_ID,
+        news_overrides: stored.news ?? [],
+        removed_news_slugs: stored.removedNewsSlugs ?? [],
+        video_testimonials: stored.videoTestimonials ?? null,
+        stats: stored.stats ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+    if (!error) return;
+    throw new Error(`Supabase save failed: ${error.message}`);
+  }
+
+  if (isReadOnlyDeployFs()) {
+    throw new Error(
+      "Saving is not configured for this deployment. Set SUPABASE_SERVICE_ROLE_KEY_WEBSITE (and run the SQL for site_content_overrides) so /admin can save without writing local files.",
+    );
   }
 
   fs.writeFileSync(getLocalContentPath(), `${JSON.stringify(stored, null, 2)}\n`, "utf-8");

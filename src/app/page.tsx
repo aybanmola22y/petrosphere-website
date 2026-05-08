@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Home from "@/views/Home";
 import {
-  getStatsForSite,
-  getVideoTestimonialsForSite,
+  getStatsForSiteAsync,
+  getVideoTestimonialsForSiteAsync,
 } from "@/lib/site-content";
 import { getCompanyNewsForSite } from "@/lib/site-content";
 import { getCompanyNewsForHome } from "@/lib/site-content";
@@ -21,8 +21,8 @@ export default async function Page() {
   return (
     <Home
       companyNews={companyNews}
-      videoTestimonials={getVideoTestimonialsForSite()}
-      stats={getStatsForSite()}
+      videoTestimonials={await getVideoTestimonialsForSiteAsync()}
+      stats={await getStatsForSiteAsync()}
     />
   );
 }

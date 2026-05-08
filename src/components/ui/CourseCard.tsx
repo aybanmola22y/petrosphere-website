@@ -29,9 +29,9 @@ export function CourseCard({ course }: CourseCardProps) {
       <div className="flex h-full flex-col p-8">
         {/* Header row: code + accreditation */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span className={`w-1.5 h-1.5 rounded-full ${accent}`} aria-hidden />
-            <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground tabular-nums">
+            <span className="min-w-0 truncate text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground tabular-nums">
               {courseCode(course)}
             </span>
           </div>
@@ -57,8 +57,8 @@ export function CourseCard({ course }: CourseCardProps) {
         </p>
 
         {/* Meta strip */}
-        <dl className="grid grid-cols-3 divide-x divide-border/60 border-t border-border/70 pt-5">
-          <div className="min-w-0 pr-4">
+        <dl className="grid grid-cols-1 divide-y divide-border/60 border-t border-border/70 pt-5 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+          <div className="min-w-0 pb-4 sm:pb-0 sm:pr-4">
             <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               <FiClock className="h-3.5 w-3.5 opacity-80" />
               Duration
@@ -67,7 +67,7 @@ export function CourseCard({ course }: CourseCardProps) {
               {course.duration}
             </dd>
           </div>
-          <div className="min-w-0 px-4">
+          <div className="min-w-0 py-4 sm:py-0 sm:px-4">
             <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               <FiCalendar className="h-3.5 w-3.5 opacity-80" />
               Cohort
@@ -76,7 +76,7 @@ export function CourseCard({ course }: CourseCardProps) {
               {course.schedule}
             </dd>
           </div>
-          <div className="min-w-0 pl-4">
+          <div className="min-w-0 pt-4 sm:pt-0 sm:pl-4">
             <dt className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
               <FiLayers className="h-3.5 w-3.5 opacity-80" />
               Level

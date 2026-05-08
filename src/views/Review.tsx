@@ -182,7 +182,8 @@ export default function Review() {
             <div
               key={s.label}
               className={[
-                "p-6 flex items-start gap-4 bg-background/60",
+                // Slightly taller cells on mobile so labels never clip against borders.
+                "px-6 py-7 flex items-start gap-4 bg-background/60",
                 i !== 0 ? "lg:border-l border-border" : "",
                 i % 2 !== 0 ? "border-l border-border lg:border-l" : "",
                 i >= 2 ? "border-t lg:border-t-0 border-border" : "",
@@ -191,11 +192,11 @@ export default function Review() {
               <div className="w-9 h-9 rounded-lg bg-primary/5 text-primary flex items-center justify-center shrink-0">
                 {s.icon}
               </div>
-              <div className="min-w-0">
-                <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums leading-none">
+              <div className="min-w-0 flex flex-col gap-2">
+                <div className="min-w-0 wrap-break-word text-xl font-semibold tracking-tight text-foreground leading-tight sm:text-2xl tabular-nums">
                   {s.value}
                 </div>
-                <div className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground mt-2">
+                <div className="whitespace-normal pb-1 text-[11px] font-medium uppercase tracking-[0.14em] leading-relaxed text-muted-foreground sm:tracking-[0.18em]">
                   {s.label}
                 </div>
               </div>
