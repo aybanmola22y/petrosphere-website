@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  ArrowRight,
   Calendar,
   Clock,
   Facebook,
@@ -199,43 +197,6 @@ export default function NewsArticle({ article, shareUrl, related, referenceIndex
                   </Link>
                 </div>
               ) : null}
-
-              <div className="mt-14 flex flex-wrap items-center gap-4 border-t border-border pt-10">
-                <Link
-                  href="/#latest-updates"
-                  className={cn(
-                    "group relative inline-flex min-h-[48px] items-center gap-3 overflow-hidden rounded-full pl-2 pr-6",
-                    "bg-linear-to-br from-primary via-[hsl(43_78%_50%)] to-[hsl(38_72%_44%)]",
-                    "text-sm font-bold tracking-tight text-primary-foreground shadow-[0_8px_28px_-6px_hsl(42_72%_40%/0.65)]",
-                    "ring-2 ring-primary/40 ring-offset-2 ring-offset-background",
-                    "transition-[transform,box-shadow,filter] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_hsl(42_72%_38%/0.55)] hover:brightness-[1.03] active:translate-y-0 active:brightness-100",
-                  )}
-                >
-                  <span
-                    className="pointer-events-none absolute inset-0 bg-linear-to-r from-white/25 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    aria-hidden
-                  />
-                  <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/15 shadow-inner ring-1 ring-white/25">
-                    <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" aria-hidden />
-                  </span>
-                  <span className="relative whitespace-nowrap">Latest updates</span>
-                  <ArrowRight
-                    className="relative h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:opacity-100"
-                    aria-hidden
-                  />
-                </Link>
-                <Link
-                  href="/"
-                  className={cn(
-                    "inline-flex min-h-[48px] items-center gap-2 rounded-full border-2 border-foreground/10 bg-card px-6 py-2.5",
-                    "text-sm font-semibold text-foreground shadow-sm",
-                    "transition-all duration-200 hover:border-primary/35 hover:bg-primary/6 hover:text-primary hover:shadow-md",
-                  )}
-                >
-                  <Home className="h-4 w-4 opacity-80" aria-hidden />
-                  Home
-                </Link>
-              </div>
             </article>
 
             <aside className="space-y-6 xl:sticky xl:top-28 xl:col-span-4 xl:self-start">

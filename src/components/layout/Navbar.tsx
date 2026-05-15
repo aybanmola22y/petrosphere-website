@@ -366,13 +366,7 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-3 shrink-0">
-          <Link
-            href="/contact?intent=corporate"
-            className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-          >
-            Speak to sales
-          </Link>
+        <div className="hidden lg:flex items-center shrink-0">
           <Link
             href="/courses"
             className="inline-flex items-center justify-center text-sm font-medium text-primary-foreground bg-primary rounded-lg px-5 py-2.5 hover:bg-primary/90 transition-all"
@@ -498,16 +492,10 @@ export function Navbar() {
               );
             })}
           </nav>
-          <div className="flex flex-col gap-3 pt-4">
-            <Link
-              href="/contact?intent=corporate"
-              className="text-center text-sm font-medium text-foreground py-2.5 border border-border rounded-lg"
-            >
-              Speak to sales
-            </Link>
+          <div className="pt-4">
             <Link
               href="/courses"
-              className="text-center text-sm font-medium text-primary-foreground bg-primary rounded-lg py-2.5"
+              className="block text-center text-sm font-medium text-primary-foreground bg-primary rounded-lg py-2.5"
             >
               Enroll
             </Link>
