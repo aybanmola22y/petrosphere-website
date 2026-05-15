@@ -12,13 +12,66 @@ import {
   Share2,
 } from "lucide-react";
 import { FiChevronRight } from "react-icons/fi";
-import type { CompanyNewsItem } from "@/data/companyNews";
-import { formatCompanyNewsDate, newsReferenceLabel } from "@/data/companyNews";
+import type { CompanyNewsItem, NewsBodyBlock } from "@/data/companyNews";
+import {
+  formatCompanyNewsDate,
+  newsReferenceLabel,
+  normalizeNewsBody,
+  newsBodyPlainText,
+  stripEmbeddedRelatedPosts,
+} from "@/data/companyNews";
 import { cn } from "@/lib/utils";
 
-function estimateReadingMinutes(paragraphs: string[]): number {
-  const words = paragraphs.join(" ").split(/\s+/).filter(Boolean).length;
+function estimateReadingMinutes(body: NewsBodyBlock[]): number {
+  const words = newsBodyPlainText(body).split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
+}
+
+function FullArticleDivider() {
+  return (
+    <div className="flex items-center gap-4" aria-hidden>
+      <span className="h-px flex-1 bg-linear-to-r from-transparent via-primary/40 to-transparent" />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+        Full article
+      </span>
+      <span className="h-px flex-1 bg-linear-to-r from-transparent via-primary/40 to-transparent" />
+    </div>
+  );
+}
+
+function isSkippableBodyBlock(block: NewsBodyBlock): boolean {
+  if (block.type === "paragraph") {
+    const text = block.text.trim();
+    if (!text) return true;
+    if (text.toLowerCase() === "full article") return true;
+  }
+  if (block.type === "heading" && block.text.trim().toLowerCase() === "full article") return true;
+  return false;
+}
+
+function NewsBodyBlockView({ block }: { block: NewsBodyBlock }) {
+  if (block.type === "heading") {
+    return (
+      <h2 className="mt-10 scroll-mt-28 text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+        {block.text}
+      </h2>
+    );
+  }
+  if (block.type === "image") {
+    return (
+      <figure className="my-8 overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
+        <Image
+          src={block.src}
+          alt={block.alt ?? ""}
+          width={1200}
+          height={800}
+          className="h-auto w-full"
+          sizes="(max-width: 1280px) 100vw, 920px"
+        />
+      </figure>
+    );
+  }
+  return <p className="text-[17px] leading-[1.75] text-muted-foreground">{block.text}</p>;
 }
 
 function shareTargets(title: string, url: string) {
@@ -36,13 +89,17 @@ type Props = {
   article: CompanyNewsItem;
   shareUrl: string;
   related: CompanyNewsItem[];
+  referenceIndex: number;
 };
 
-export default function NewsArticle({ article, shareUrl, related }: Props) {
-  const readingMinutes = estimateReadingMinutes([article.summary, ...article.body]);
-  // Reference codes are derived from the homepage ordering; compute server-side when needed.
-  const referenceCode = "";
-  const [leadParagraph, ...restParagraphs] = article.body;
+export default function NewsArticle({ article, shareUrl, related, referenceIndex }: Props) {
+  const body = stripEmbeddedRelatedPosts(normalizeNewsBody(article.body)).filter(
+    (block) => !isSkippableBodyBlock(block),
+  );
+  const readingMinutes = estimateReadingMinutes(body);
+  const heroInBody = body.some((b) => b.type === "image" && b.src === article.imageSrc);
+  const showStandaloneHero = Boolean(article.imageSrc) && !heroInBody;
+  const referenceCode = referenceIndex >= 0 ? newsReferenceLabel(referenceIndex + 1) : "";
   const shares = shareTargets(article.title, shareUrl);
 
   return (
@@ -74,6 +131,12 @@ export default function NewsArticle({ article, shareUrl, related }: Props) {
               {article.title}
             </h1>
 
+            {article.summary.trim() ? (
+              <p className="mt-5 max-w-3xl text-pretty text-lg leading-relaxed text-muted-foreground md:text-xl">
+                {article.summary}
+              </p>
+            ) : null}
+
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-2">
                 <Calendar className="h-4 w-4 shrink-0 text-primary" aria-hidden />
@@ -90,9 +153,6 @@ export default function NewsArticle({ article, shareUrl, related }: Props) {
               ) : null}
             </div>
 
-            <p className="mt-8 max-w-4xl text-pretty text-lg leading-relaxed text-muted-foreground md:text-xl md:leading-relaxed">
-              {article.summary}
-            </p>
           </header>
         </div>
       </div>
@@ -104,44 +164,28 @@ export default function NewsArticle({ article, shareUrl, related }: Props) {
         <div className="container mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 gap-12 xl:grid-cols-12 xl:gap-16">
             <article className="min-w-0 xl:col-span-8">
-              <div className="mb-10 overflow-hidden rounded-2xl border border-border bg-muted shadow-sm md:mb-12">
-                <Image
-                  src={article.imageSrc}
-                  alt={article.title}
-                  width={1200}
-                  height={630}
-                  className="h-auto w-full"
-                  sizes="(max-width: 1280px) 100vw, 920px"
-                  priority
-                />
-              </div>
+              {body.length > 0 || showStandaloneHero ? (
+                <div className="space-y-6">
+                  <FullArticleDivider />
 
-              {leadParagraph ? (
-                <p className="text-pretty text-xl font-medium leading-relaxed text-foreground md:text-2xl md:leading-snug">
-                  {leadParagraph}
-                </p>
-              ) : null}
+                  {showStandaloneHero ? (
+                    <div className="overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
+                      <Image
+                        src={article.imageSrc}
+                        alt={article.title}
+                        width={1200}
+                        height={630}
+                        className="h-auto w-full"
+                        sizes="(max-width: 1280px) 100vw, 920px"
+                        priority
+                      />
+                    </div>
+                  ) : null}
 
-              {restParagraphs.length > 0 ? (
-                <>
-                  <div className="my-10 flex items-center gap-4 md:my-12" aria-hidden>
-                    <span className="h-px flex-1 bg-linear-to-r from-transparent via-primary/40 to-transparent" />
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
-                      Full article
-                    </span>
-                    <span className="h-px flex-1 bg-linear-to-r from-transparent via-primary/40 to-transparent" />
-                  </div>
-                  <div
-                    className={cn(
-                      "prose prose-lg max-w-none prose-p:text-[17px] prose-p:leading-[1.75] prose-p:text-muted-foreground",
-                      "prose-headings:scroll-mt-28 prose-headings:font-semibold prose-headings:text-foreground",
-                    )}
-                  >
-                    {restParagraphs.map((paragraph, index) => (
-                      <p key={index}>{paragraph}</p>
-                    ))}
-                  </div>
-                </>
+                  {body.map((block, index) => (
+                    <NewsBodyBlockView key={index} block={block} />
+                  ))}
+                </div>
               ) : null}
 
               {article.cta ? (
@@ -254,14 +298,14 @@ export default function NewsArticle({ article, shareUrl, related }: Props) {
                         href={`/news/${item.slug}`}
                         className="group flex gap-4 rounded-xl border border-transparent p-2 transition-colors hover:border-border hover:bg-secondary/50"
                       >
-                        <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+                        <div className="relative aspect-16/10 w-28 shrink-0 overflow-hidden rounded-lg bg-muted">
                           <Image
                             src={item.imageSrc}
                             alt=""
                             role="presentation"
                             fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            sizes="80px"
+                            className="object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                            sizes="112px"
                           />
                         </div>
                         <div className="min-w-0 flex-1">

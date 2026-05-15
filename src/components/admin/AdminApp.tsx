@@ -28,6 +28,7 @@ import {
 } from "recharts";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
+import { normalizeNewsBody } from "@/data/companyNews";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import type { SiteContentSnapshot } from "@/types/site-content";
 import { SITE_CONTENT_LOCAL_FILENAME } from "@/constants/site-content-file";
@@ -112,9 +113,12 @@ function blankNews(): CompanyNewsItem {
     category: "NEWS",
     title: "New story title",
     publishedAt: new Date().toISOString().slice(0, 10),
-    summary: "Short summary for cards and SEO.",
+    summary: "Short summary shown on the article page and news cards.",
     imageSrc: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-    body: ["Opening paragraph for the article body.", "Second paragraph—add detail, quotes, or outcomes."],
+    body: [
+      { type: "paragraph", text: "Opening paragraph for the article body." },
+      { type: "paragraph", text: "Second paragraph—add detail, quotes, or outcomes." },
+    ],
     external: false,
   };
 }
@@ -219,14 +223,11 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
         });
         return;
       }
-      const okBody = (await res.json().catch(() => ({}))) as { storedIn?: "supabase" | "file" };
+      await res.json().catch(() => ({}));
       setBaseline(cloneSnapshot(data));
       toast({
         title: "Saved",
-        description:
-          okBody.storedIn === "supabase"
-            ? "Saved to Supabase."
-            : `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
+        description: `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
       });
       router.refresh();
     } finally {
@@ -766,19 +767,23 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
                                 </label>
                               </div>
                             </Field>
-                            <Field label="Summary" className="sm:col-span-2" hint="Used on the grid card and metadata.">
+                            <Field label="Summary" className="sm:col-span-2" hint="Shown under the title on the article page and on news cards.">
                               <Textarea rows={3} value={selectedNews.summary} onChange={(e) => updateNews(selectedNewsIndex, { summary: e.target.value })} />
                             </Field>
                             <Field label="Article body" className="sm:col-span-2" hint="Separate paragraphs with a blank line.">
                               <Textarea
                                 rows={10}
-                                value={selectedNews.body.join("\n\n")}
+                                value={normalizeNewsBody(selectedNews.body)
+                                  .filter((b) => b.type === "paragraph")
+                                  .map((b) => b.text)
+                                  .join("\n\n")}
                                 onChange={(e) =>
                                   updateNews(selectedNewsIndex, {
                                     body: e.target.value
                                       .split(/\n\n+/)
                                       .map((p) => p.trim())
-                                      .filter(Boolean),
+                                      .filter(Boolean)
+                                      .map((text) => ({ type: "paragraph" as const, text })),
                                   })
                                 }
                               />

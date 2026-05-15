@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { verifyAdminSession } from "@/lib/admin-session";
-import { getSiteContentSnapshotForAdminSync, persistSiteContent, siteContentStorageLabel } from "@/lib/site-content";
+import { getSiteContentSnapshotForAdminSync, persistSiteContent } from "@/lib/site-content";
 import { siteContentSavePayloadSchema } from "@/lib/site-content-schema";
 
 export const runtime = "nodejs";
@@ -42,5 +42,5 @@ export async function POST(req: Request) {
   // The public homepage uses ISR; clear cached HTML so edits reflect immediately.
   revalidatePath("/");
 
-  return NextResponse.json({ ok: true, storedIn: siteContentStorageLabel() });
+  return NextResponse.json({ ok: true });
 }

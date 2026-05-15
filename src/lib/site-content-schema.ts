@@ -10,7 +10,23 @@ const newsItemSchema = z.object({
   publishedAt: z.string().min(1),
   summary: z.string(),
   imageSrc: z.string().min(1),
-  body: z.array(z.string()).min(1),
+  body: z.preprocess(
+    (val) => {
+      if (!Array.isArray(val)) return val;
+      return val.map((item) =>
+        typeof item === "string" ? { type: "paragraph", text: item } : item,
+      );
+    },
+    z
+      .array(
+        z.discriminatedUnion("type", [
+          z.object({ type: z.literal("paragraph"), text: z.string() }),
+          z.object({ type: z.literal("heading"), text: z.string() }),
+          z.object({ type: z.literal("image"), src: z.string(), alt: z.string().optional() }),
+        ]),
+      )
+      .min(1),
+  ),
   external: z.boolean().optional(),
   externalHref: z.string().optional(),
   cta: z.object({ label: z.string(), href: z.string() }).optional(),

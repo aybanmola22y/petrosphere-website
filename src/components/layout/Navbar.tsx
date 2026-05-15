@@ -11,6 +11,10 @@ type Group = { name: string; courses: Course[] };
 type SubLink = { name: string; href: string; groups?: Group[] };
 type NavItem = { name: string; href: string; children?: SubLink[] };
 
+function isExternalHref(href: string) {
+  return href.startsWith("http://") || href.startsWith("https://");
+}
+
 const NAV: NavItem[] = [
   { name: "About Us", href: "/about" },
   {
@@ -170,7 +174,7 @@ const NAV: NavItem[] = [
     ],
   },
   { name: "Consultancy", href: "/services" },
-  { name: "Cybersecurity", href: "/cybersecurity" },
+  { name: "eLearning Academy", href: "https://elearning.petrosphere.com.ph/" },
 ];
 
 export function Navbar() {
@@ -212,6 +216,7 @@ export function Navbar() {
   };
 
   const isActive = (href: string) => {
+    if (isExternalHref(href)) return false;
     const path = href.split("?")[0].split("#")[0];
     const p = pathname ?? "";
     if (path === "/") return p === "/";
@@ -249,25 +254,41 @@ export function Navbar() {
                 onMouseEnter={() => hasChildren && handleEnter(item.name)}
                 onMouseLeave={() => hasChildren && handleLeave()}
               >
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors",
-                    active
-                      ? "text-white bg-white/15"
-                      : "text-white/80 hover:text-white hover:bg-white/10"
-                  )}
-                >
-                  {item.name}
-                  {hasChildren && (
-                    <FiChevronDown
-                      className={cn(
-                        "w-3.5 h-3.5 transition-transform duration-200",
-                        openMenu === item.name ? "rotate-180" : ""
-                      )}
-                    />
-                  )}
-                </Link>
+                {isExternalHref(item.href) ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors",
+                      active
+                        ? "text-white bg-white/15"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors",
+                      active
+                        ? "text-white bg-white/15"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    )}
+                  >
+                    {item.name}
+                    {hasChildren && (
+                      <FiChevronDown
+                        className={cn(
+                          "w-3.5 h-3.5 transition-transform duration-200",
+                          openMenu === item.name ? "rotate-180" : ""
+                        )}
+                      />
+                    )}
+                  </Link>
+                )}
 
                 {hasChildren && openMenu === item.name && (
                   <div
@@ -380,12 +401,20 @@ export function Navbar() {
               return (
                 <div key={item.name} className="border-b border-border last:border-b-0">
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={item.href}
-                      className="flex-1 py-3 text-base font-medium text-white"
-                    >
-                      {item.name}
-                    </Link>
+                    {isExternalHref(item.href) ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-3 text-base font-medium text-white"
+                      >
+                        {item.name}
+                      </a>
+                    ) : (
+                      <Link href={item.href} className="flex-1 py-3 text-base font-medium text-white">
+                        {item.name}
+                      </Link>
+                    )}
                     {hasChildren && (
                       <button
                         type="button"

@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: rootDir,
   // Use the default Next.js dist directory (`.next`) for reliable caching on Windows.
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/cybersecurity",
+        destination: "https://elearning.petrosphere.com.ph/",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

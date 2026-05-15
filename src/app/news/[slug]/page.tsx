@@ -3,7 +3,12 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import NewsArticle from "@/views/NewsArticle";
-import { getCompanyNewsForSite, getNewsArticleBySlugAsync, getRelatedCompanyNewsAsync } from "@/lib/site-content";
+import {
+  getCompanyNewsForSite,
+  getCompanyNewsMergedAsync,
+  getNewsArticleBySlug,
+  getRelatedCompanyNewsAsync,
+} from "@/lib/site-content";
 import { fetchPetrosphereNewsArticleBySlug } from "@/lib/petrosphere-latest-news";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +23,7 @@ export function generateStaticParams() {
 
 async function resolveArticle(slug: string) {
   const normalized = slug.toLowerCase();
-  const local = (await getNewsArticleBySlugAsync(normalized)) ?? (await getNewsArticleBySlugAsync(slug));
+  const local = getNewsArticleBySlug(normalized) ?? getNewsArticleBySlug(slug);
   if (local) return local;
   return await fetchPetrosphereNewsArticleBySlug(normalized);
 }
@@ -53,8 +58,21 @@ export default async function Page({ params }: Props) {
   if (!article) {
     notFound();
   }
-  const related = await getRelatedCompanyNewsAsync(article.slug, 4);
   const origin = await resolveShareOrigin();
   const shareUrl = `${origin}/news/${article.slug}`;
-  return <NewsArticle article={article} shareUrl={shareUrl} related={related} />;
+
+  const [related, allNews] = await Promise.all([
+    getRelatedCompanyNewsAsync(article.slug, 4),
+    getCompanyNewsMergedAsync(24).catch(() => getCompanyNewsForSite()),
+  ]);
+  const referenceIndex = allNews.findIndex((n) => n.slug.toLowerCase() === article.slug.toLowerCase());
+
+  return (
+    <NewsArticle
+      article={article}
+      shareUrl={shareUrl}
+      related={related}
+      referenceIndex={referenceIndex}
+    />
+  );
 }

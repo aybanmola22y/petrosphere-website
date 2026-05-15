@@ -33,6 +33,10 @@ import { Card } from "@/components/ui/card";
 import { ScheduleGridCard } from "@/components/ui/ScheduleGridCard";
 import { cn } from "@/lib/utils";
 
+function getCurrentMonthKey(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 function formatMonthLabel(key: string): string {
   const [y, m] = key.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleString("en-US", {
@@ -109,10 +113,14 @@ export default function Schedule() {
   const { data: trainingSessions = [], isLoading, error } = useTmsSchedules();
 
   const months = useMemo(() => monthKeysSorted(trainingSessions), [trainingSessions]);
-  const defaultMonth = "all"; // Default to all since data is dynamic
+  const monthOptions = useMemo(() => {
+    const current = getCurrentMonthKey();
+    if (!months.includes(current)) return [...months, current].sort();
+    return months;
+  }, [months]);
 
   const [courseFilter, setCourseFilter] = useState<string>("all");
-  const [monthFilter, setMonthFilter] = useState<string>(defaultMonth);
+  const [monthFilter, setMonthFilter] = useState<string>(() => getCurrentMonthKey());
   const [view, setView] = useState<"table" | "grid">("table");
 
   const filtered = useMemo(() => {
@@ -174,7 +182,7 @@ export default function Schedule() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All dates</SelectItem>
-                {months.map((key) => (
+                {monthOptions.map((key) => (
                   <SelectItem key={key} value={key}>
                     {formatMonthLabel(key)}
                   </SelectItem>

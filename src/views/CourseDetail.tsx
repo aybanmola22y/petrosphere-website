@@ -11,8 +11,33 @@ import {
   resolveEnrollHrefForCourse,
 } from "@/lib/enrollment";
 import { resolveCourseBySlug } from "@/lib/catalog";
+import { buildCourseDetailSections, type CourseDetailSection } from "@/lib/course-detail-sections";
 import { useTmsSchedules } from "@/hooks/use-tms-schedules";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
+
+function CourseDetailSectionBlock({ section }: { section: CourseDetailSection }) {
+  return (
+    <section>
+      <h2 className="text-2xl font-semibold text-foreground mb-6">{section.title}</h2>
+      {section.body.type === "paragraphs" ? (
+        <div className="space-y-4 prose prose-lg prose-p:text-muted-foreground prose-p:leading-relaxed max-w-none">
+          {section.body.paragraphs.map((paragraph, idx) => (
+            <p key={idx}>{paragraph}</p>
+          ))}
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {section.body.items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-3 text-muted-foreground leading-relaxed">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export default function CourseDetail({ slug }: { slug: string }) {
   const { data: tmsSessions = [] } = useTmsSchedules();
@@ -22,6 +47,16 @@ export default function CourseDetail({ slug }: { slug: string }) {
     () => resolveCourseBySlug(slug, catalogCourses),
     [slug, catalogCourses],
   );
+
+  const enrollHref = useMemo(
+    () => (course ? resolveEnrollHrefForCourse(course.slug, tmsSessions) : "/schedule"),
+    [course, tmsSessions],
+  );
+  const detailSections = useMemo(
+    () => (course ? buildCourseDetailSections(course) : []),
+    [course],
+  );
+  const enrollIsExternal = course ? isExternalHref(enrollHref) : false;
 
   if (isLoading && !course) {
     return (
@@ -49,12 +84,6 @@ export default function CourseDetail({ slug }: { slug: string }) {
       </div>
     );
   }
-
-  const enrollHref = useMemo(
-    () => resolveEnrollHrefForCourse(course.slug, tmsSessions),
-    [course.slug, tmsSessions],
-  );
-  const enrollIsExternal = isExternalHref(enrollHref);
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -94,19 +123,9 @@ export default function CourseDetail({ slug }: { slug: string }) {
                 </div>
             </section>
 
-            <section>
-                <h2 className="text-2xl font-semibold text-foreground mb-6">Learning Outcomes</h2>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {course.objectives.map((obj, idx) => (
-                        <li key={idx} className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border">
-                            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                <span className="text-primary text-xs font-semibold">{idx + 1}</span>
-                            </div>
-                            <span className="text-foreground leading-relaxed">{obj}</span>
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            {detailSections.map((section) => (
+              <CourseDetailSectionBlock key={section.id} section={section} />
+            ))}
 
             <section>
                 <h2 className="text-2xl font-semibold text-foreground mb-6">Target Profile</h2>
