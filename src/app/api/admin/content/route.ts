@@ -43,6 +43,7 @@ export async function POST(req: Request) {
   revalidatePath("/");
   revalidatePath("/courses");
   revalidatePath("/schedule");
+  revalidatePath("/sitemap.xml");
   revalidateTag(CACHE_TAGS.cms);
   revalidateTag(CACHE_TAGS.news);
 
