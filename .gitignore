@@ -8,10 +8,13 @@ out/
 ## Project-specific distDir (historical)
 .next-cache/
 
-## Builds / output (if any tooling produces these)
+## Builds / output
 dist/
 build/
 coverage/
+
+## Vercel
+.vercel
 
 ## Logs
 npm-debug.log*
@@ -23,17 +26,30 @@ pnpm-debug.log*
 ## OS / editor
 .DS_Store
 Thumbs.db
+.idea/
 .vscode/
+*.swp
+*.swo
 
 ## TypeScript
 *.tsbuildinfo
 
-## Local env files (secrets)
-.env*.local
+## Environment (secrets — never commit)
+.env
 .env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 
-## Local content snapshot from /admin (don’t commit by default)
+## Supabase CLI local state (keep migrations/ config in git)
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+## Local CMS snapshot from /admin (file storage fallback)
 site-content.local.json
 
-## Replit metadata (safe to omit if not using Replit)
+## Replit metadata (optional)
 .replit-artifact/

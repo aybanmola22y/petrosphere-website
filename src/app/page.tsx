@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Home from "@/views/Home";
-import {
-  getStatsForSite,
-  getVideoTestimonialsForSite,
-} from "@/lib/site-content";
+import { getStatsForSiteAsync, getVideoTestimonialsForSiteAsync } from "@/lib/site-content";
 import { getCompanyNewsForSite } from "@/lib/site-content";
 import { getCompanyNewsForHome } from "@/lib/site-content";
 
@@ -17,12 +14,16 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   // Use admin-edited content when available; otherwise fall back to fetched Petrosphere posts.
-  const companyNews = await getCompanyNewsForHome(6).catch(() => getCompanyNewsForSite().slice(0, 6));
+  const [companyNews, videoTestimonials, stats] = await Promise.all([
+    getCompanyNewsForHome(6).catch(() => getCompanyNewsForSite().slice(0, 6)),
+    getVideoTestimonialsForSiteAsync(),
+    getStatsForSiteAsync(),
+  ]);
   return (
     <Home
       companyNews={companyNews}
-      videoTestimonials={getVideoTestimonialsForSite()}
-      stats={getStatsForSite()}
+      videoTestimonials={videoTestimonials}
+      stats={stats}
     />
   );
 }

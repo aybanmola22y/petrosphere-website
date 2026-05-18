@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AdminApp } from "@/components/admin/AdminApp";
 import { verifyAdminSession } from "@/lib/admin-session";
-import { getSiteContentSnapshotForAdminSync } from "@/lib/site-content";
+import { getSiteContentSnapshotForAdminSync, siteContentStorageLabel } from "@/lib/site-content";
 
 export const runtime = "nodejs";
 
@@ -11,5 +11,5 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
   const snapshot = await getSiteContentSnapshotForAdminSync({ limit: 12, hydrateBodies: true });
-  return <AdminApp initial={snapshot} />;
+  return <AdminApp initial={snapshot} storage={siteContentStorageLabel()} />;
 }

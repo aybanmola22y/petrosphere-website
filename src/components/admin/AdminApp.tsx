@@ -137,7 +137,89 @@ function blankVideo(): StudentVideoTestimonial {
   };
 }
 
-export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
+function AdminAccountMenu({ onLogout }: { onLogout: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-10 shrink-0 gap-2 rounded-full border-black/10 bg-white pl-1.5 pr-3 shadow-sm",
+            "hover:bg-secondary/60 data-[state=open]:bg-secondary/80",
+          )}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-linear-to-br from-primary/90 to-primary text-[11px] font-bold text-primary-foreground shadow-inner">
+            PS
+          </span>
+          <span className="hidden text-sm font-medium sm:inline">Account</span>
+          <ChevronDown className="size-3.5 text-muted-foreground opacity-70" aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="w-60 overflow-hidden rounded-2xl border border-border/80 bg-card p-0 shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)]"
+      >
+        <div className="border-b border-border/70 bg-linear-to-br from-secondary/80 via-background to-background px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/90 to-primary text-sm font-bold text-primary-foreground shadow-sm ring-1 ring-primary/20">
+              PS
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-tight text-foreground">Petrosphere Admin</p>
+              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Shield className="size-3 shrink-0 text-primary/80" aria-hidden />
+                Content manager
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="p-1.5">
+          <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary">
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center gap-3"
+            >
+              <span className="flex size-8 items-center justify-center rounded-lg bg-secondary text-foreground">
+                <ExternalLink className="size-4" aria-hidden />
+              </span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="text-sm font-medium leading-none">View public site</span>
+                <span className="text-[11px] text-muted-foreground">Opens homepage in a new tab</span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+        </div>
+        <DropdownMenuSeparator className="mx-2 bg-border/70" />
+        <div className="p-1.5 pt-0">
+          <DropdownMenuItem
+            onClick={onLogout}
+            className="cursor-pointer rounded-lg px-3 py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
+          >
+            <span className="flex size-8 items-center justify-center rounded-lg bg-destructive/10">
+              <LogOut className="size-4" aria-hidden />
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-sm font-medium leading-none">Sign out</span>
+              <span className="text-[11px] text-destructive/70">End admin session</span>
+            </span>
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function AdminApp({
+  initial,
+  storage,
+}: {
+  initial: SiteContentSnapshot;
+  storage: "file" | "supabase";
+}) {
   const router = useRouter();
 
   const initialKey = JSON.stringify(initial);
@@ -230,7 +312,10 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
       setBaseline(cloneSnapshot(data));
       toast({
         title: "Saved",
-        description: `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
+        description:
+          storage === "supabase"
+            ? "Saved to your Supabase CMS project."
+            : `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
       });
       router.refresh();
     } finally {
@@ -331,22 +416,22 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
   return (
     <div className="min-h-svh text-foreground admin-surface">
       <div className="mx-auto w-full max-w-[1400px] px-5 py-5">
-        <header className="flex items-center justify-between gap-4 p-3 min-h-[84px] backdrop-blur admin-card admin-card-strong overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="grid size-10 place-items-center rounded-2xl bg-[#00044a] shadow-sm overflow-hidden">
+        <header className="space-y-3 p-3 md:p-4 backdrop-blur admin-card admin-card-strong">
+          <div className="flex w-full items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-[#00044a] shadow-sm overflow-hidden">
               <img
                 src="/weblogo.ico"
                 alt="Petrosphere"
                 className="h-6 w-6 object-contain"
               />
             </div>
-            <div className="leading-tight">
+            <div className="min-w-0 leading-tight">
               <div className="text-sm font-semibold admin-title tracking-tight">Petrosphere</div>
               <div className="text-[11px] admin-muted">Admin dashboard</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-1 justify-end min-w-max">
+          <div className="flex w-full min-w-0 flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between">
             <nav className="flex items-center gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {([
                 { id: "overview", label: "Dashboard", icon: LayoutDashboard },
@@ -377,8 +462,8 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
               })}
             </nav>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="relative w-[220px] sm:w-[260px] md:w-[260px] lg:w-[320px]">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 xl:flex-1 xl:flex-nowrap">
+              <div className="relative shrink-0 w-[130px] sm:w-[150px] lg:w-[170px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
@@ -420,6 +505,7 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
               >
                 Reset
               </Button>
+              <AdminAccountMenu onLogout={logout} />
               <Button
                 size="sm"
                 onClick={save}
@@ -428,78 +514,6 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
               >
                 {pending ? "Saving…" : "Save changes"}
               </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "h-10 shrink-0 gap-2 rounded-full border-black/10 bg-white pl-1.5 pr-3 shadow-sm",
-                      "hover:bg-secondary/60 data-[state=open]:bg-secondary/80",
-                    )}
-                  >
-                    <span className="flex size-7 items-center justify-center rounded-full bg-linear-to-br from-primary/90 to-primary text-[11px] font-bold text-primary-foreground shadow-inner">
-                      PS
-                    </span>
-                    <span className="hidden text-sm font-medium sm:inline">Account</span>
-                    <ChevronDown className="size-3.5 text-muted-foreground opacity-70" aria-hidden />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  sideOffset={8}
-                  className="w-60 overflow-hidden rounded-2xl border border-border/80 bg-card p-0 shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)]"
-                >
-                  <div className="border-b border-border/70 bg-linear-to-br from-secondary/80 via-background to-background px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/90 to-primary text-sm font-bold text-primary-foreground shadow-sm ring-1 ring-primary/20">
-                        PS
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-tight text-foreground">Petrosphere Admin</p>
-                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <Shield className="size-3 shrink-0 text-primary/80" aria-hidden />
-                          Content manager
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-1.5">
-                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg px-3 py-2.5 focus:bg-secondary">
-                      <Link
-                        href="/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center gap-3"
-                      >
-                        <span className="flex size-8 items-center justify-center rounded-lg bg-secondary text-foreground">
-                          <ExternalLink className="size-4" aria-hidden />
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-sm font-medium leading-none">View public site</span>
-                          <span className="text-[11px] text-muted-foreground">Opens homepage in a new tab</span>
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
-                  </div>
-                  <DropdownMenuSeparator className="mx-2 bg-border/70" />
-                  <div className="p-1.5 pt-0">
-                    <DropdownMenuItem
-                      onClick={logout}
-                      className="cursor-pointer rounded-lg px-3 py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    >
-                      <span className="flex size-8 items-center justify-center rounded-lg bg-destructive/10">
-                        <LogOut className="size-4" aria-hidden />
-                      </span>
-                      <span className="flex min-w-0 flex-col gap-0.5">
-                        <span className="text-sm font-medium leading-none">Sign out</span>
-                        <span className="text-[11px] text-destructive/70">End admin session</span>
-                      </span>
-                    </DropdownMenuItem>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </header>
