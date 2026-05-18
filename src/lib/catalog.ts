@@ -321,8 +321,27 @@ export function resolveCourseBySlug(slug: string, list: Course[]): Course | unde
   }
 
   const s = n;
-  if (s.includes("bosh001") || s.includes("so1")) return list.find((c) => c.slug === "bosh-so1");
-  if (s.includes("bosh002") || s.includes("so2")) return list.find((c) => c.slug === "bosh-so2");
+  if (s === "bosh-so1" || s.includes("bosh-so1") || s.includes("boshso1") || s.includes("bosh001")) {
+    return (
+      list.find((c) => c.slug === "bosh-so1" || c.slug.startsWith("bosh-so1--")) ??
+      list.find((c) => {
+        const b = `${c.title} ${c.slug}`.toLowerCase();
+        return (
+          (b.includes("boshso1") || b.includes("safety officer 1") || (b.includes("bosh") && b.includes("officer 1"))) &&
+          !b.includes("officer 2")
+        );
+      })
+    );
+  }
+  if (s === "bosh-so2" || s.includes("bosh-so2") || s.includes("boshso2") || s.includes("bosh002")) {
+    return (
+      list.find((c) => c.slug === "bosh-so2" || c.slug.startsWith("bosh-so2--")) ??
+      list.find((c) => {
+        const b = `${c.title} ${c.slug}`.toLowerCase();
+        return b.includes("boshso2") || b.includes("safety officer 2") || (b.includes("bosh") && b.includes("officer 2"));
+      })
+    );
+  }
   if (s.includes("cosh")) return list.find((c) => c.slug === "cosh");
   if (s.includes("mesh") || s.includes("8-hour")) return list.find((c) => c.slug === "mesh");
   if (s.includes("efat")) return list.find((c) => c.slug === "efat");

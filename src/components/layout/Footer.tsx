@@ -48,9 +48,14 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Petrosphere Inc. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center gap-2.5 text-center md:items-start md:text-left">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Petrosphere Inc. All rights reserved.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Developed by PetroCore<span className="font-medium text-red-600">X</span>
+            </p>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end">
             <Link
               href="/admin"

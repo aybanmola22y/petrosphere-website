@@ -409,8 +409,22 @@ function getMockSlug(title: string, slug: string): string {
 
   // Safety & Health
   if (t.includes("mandatory eight-hour") || t.includes("8-hour") || s === "mesh") return "mesh";
-  if (s.includes("bosh001") || t.includes("so1")) return "bosh-so1";
-  if (s.includes("bosh002") || t.includes("so2") || t.includes("basic occupational safety and health")) return "bosh-so2";
+  if (
+    s.includes("boshso2") ||
+    s.includes("bosh002") ||
+    t.includes("safety officer 2") ||
+    (t.includes("bosh") && t.includes("officer 2"))
+  ) {
+    return "bosh-so2";
+  }
+  if (
+    s.includes("boshso1") ||
+    s.includes("bosh001") ||
+    t.includes("safety officer 1") ||
+    (t.includes("bosh") && t.includes("officer 1"))
+  ) {
+    return "bosh-so1";
+  }
   if (s.includes("cosh") || t.includes("construction occupational")) return "cosh";
   if (s.includes("tott") || t.includes("train the trainer")) {
     if (t.includes("24") || t.includes("24-hour")) return "ttt-24";

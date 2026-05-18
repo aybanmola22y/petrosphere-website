@@ -16,6 +16,7 @@ import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { LatestUpdatesSection } from "@/components/sections/LatestUpdatesSection";
 import { StudentVideoTestimonialsSection } from "@/components/sections/StudentVideoTestimonialsSection";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
+import { pickFeaturedCourses } from "@/lib/featured-courses";
 
 const heroImg = "/backgroundtopar.png";
 
@@ -27,7 +28,7 @@ export type HomeProps = {
 
 export default function Home({ companyNews, videoTestimonials, stats }: HomeProps) {
   const { catalogCourses: courses } = useCatalogCoursesList();
-  const featuredCourses = courses.slice(0, 3);
+  const featuredCourses = pickFeaturedCourses(courses);
 
   const accreditationLogos = [
     { src: "/logos/accreditations/dole.svg", alt: "DOLE" },
@@ -261,9 +262,10 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
           <div className="mb-12 md:mb-16 flex flex-col items-center text-center gap-4 md:flex-row md:justify-between md:items-end md:text-left md:gap-6">
             <SectionHeader
               eyebrow="Curriculum"
-              title="Featured Programs"
+              title="Popular Programs"
+              description="Our most enrolled DOLE and EMS pathways — the programs teams choose first for safety officer accreditation, mandatory orientation, and advanced life support."
               alignment="center"
-              className="mb-0 w-full md:max-w-3xl md:mx-0 md:text-left md:items-start"
+              className="mb-0 w-full md:max-w-3xl md:mx-0 md:text-left md:items-start [&_p]:mt-4 [&_p]:max-w-xl [&_p]:text-base [&_p]:md:text-[17px]"
             />
             <Link
               href="/courses"
@@ -273,9 +275,14 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
+            {featuredCourses.map((course, index) => (
+              <div
+                key={course.id}
+                className={index === 3 ? "md:col-span-2 md:col-start-2" : "md:col-span-2"}
+              >
+                <CourseCard course={course} />
+              </div>
             ))}
           </div>
         </div>
