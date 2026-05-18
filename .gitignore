@@ -32,10 +32,6 @@ Thumbs.db
 .env*.local
 .env.local
 
-## Supabase CLI local state
-supabase/.branches
-supabase/.temp
-
 ## Local content snapshot from /admin (don’t commit by default)
 site-content.local.json
 

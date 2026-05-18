@@ -230,7 +230,7 @@ export function AdminApp({ initial }: { initial: SiteContentSnapshot }) {
       setBaseline(cloneSnapshot(data));
       toast({
         title: "Saved",
-        description: "Your changes were saved.",
+        description: `Wrote ${SITE_CONTENT_LOCAL_FILENAME} at the project root.`,
       });
       router.refresh();
     } finally {

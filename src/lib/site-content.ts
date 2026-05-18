@@ -10,12 +10,6 @@ import { stats as defaultStats, studentVideoTestimonials as defaultVideoTestimon
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 import { getLocalContentPath } from "./site-content-path";
 import { fetchPetrosphereLatestNews, fetchPetrosphereNewsArticleByUrl } from "@/lib/petrosphere-latest-news";
-import {
-  assertSiteContentPersistenceConfigured,
-  getSiteContentStorage,
-  isSupabaseSiteContentEnabled,
-} from "@/lib/supabase/env";
-import { persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -35,23 +29,6 @@ function readStoredFromFile(): StoredShape | null {
   } catch {
     return null;
   }
-}
-
-async function readStoredAsync(): Promise<StoredShape | null> {
-  if (isSupabaseSiteContentEnabled()) {
-    try {
-      const cms = await readCmsFromSupabase();
-      return {
-        news: cms.news,
-        removedNewsSlugs: cms.removedNewsSlugs,
-        videoTestimonials: cms.videoTestimonials,
-        stats: cms.stats,
-      };
-    } catch (e) {
-      console.error("Supabase CMS read failed, falling back to file:", e);
-    }
-  }
-  return readStoredFromFile();
 }
 
 function readStored(): StoredShape | null {
@@ -137,7 +114,7 @@ function removeDummySeedNews(items: CompanyNewsItem[]): CompanyNewsItem[] {
  */
 /** Merged Petrosphere fetch + local overrides, with seed/dummy posts removed. */
 export async function getCompanyNewsMergedAsync(limit = 6): Promise<CompanyNewsItem[]> {
-  const stored = await readStoredAsync();
+  const stored = readStored();
   const overrides = stored?.news && Array.isArray(stored.news) ? stored.news : undefined;
   const removedSlugs = stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : undefined;
 
@@ -162,7 +139,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const limit = options?.limit ?? 12;
   const hydrateBodies = options?.hydrateBodies ?? true;
 
-  const stored = await readStoredAsync();
+  const stored = readStored();
   const storedNewsOverrides = stored?.news && Array.isArray(stored.news) ? stored.news : [];
   const removedSlugs =
     stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : [];
@@ -286,11 +263,6 @@ function pickChangedNewsOverrides(baseline: CompanyNewsItem[], next: CompanyNews
 }
 
 export async function persistSiteContent(payload: { baseline: SiteContentSnapshot; data: SiteContentSnapshot }): Promise<void> {
-  if (isSupabaseSiteContentEnabled()) {
-    await persistCmsToSupabase(payload);
-    return;
-  }
-
   const { baseline, data } = payload;
 
   const stored: StoredShape = {};
@@ -311,6 +283,6 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
   fs.writeFileSync(getLocalContentPath(), `${JSON.stringify(stored, null, 2)}\n`, "utf-8");
 }
 
-export function siteContentStorageLabel(): "supabase" | "file" {
-  return isSupabaseSiteContentEnabled() ? "supabase" : getSiteContentStorage();
+export function siteContentStorageLabel(): "file" {
+  return "file";
 }
