@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Services from "@/views/Services";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Consulting & Advisory",

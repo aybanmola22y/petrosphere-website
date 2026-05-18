@@ -4,6 +4,9 @@ import { getStatsForSiteAsync, getVideoTestimonialsForSiteAsync } from "@/lib/si
 import { getCompanyNewsForSite } from "@/lib/site-content";
 import { getCompanyNewsForHome } from "@/lib/site-content";
 
+/** ISR: serve cached HTML; refresh CMS/news every 5 minutes. */
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: {
     absolute: "Petrosphere Incorporated | Training, Review, and Consultancy Company",

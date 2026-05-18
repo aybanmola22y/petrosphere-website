@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Schedule from "@/views/Schedule";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Training Schedule",

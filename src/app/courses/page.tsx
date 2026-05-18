@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Courses from "@/views/Courses";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Training Curriculum",

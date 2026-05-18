@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
+import { CACHE_TAGS } from "@/lib/cache";
 import { verifyAdminSession } from "@/lib/admin-session";
 import { getSiteContentSnapshotForAdminSync, persistSiteContent } from "@/lib/site-content";
 import { siteContentSavePayloadSchema } from "@/lib/site-content-schema";
@@ -39,8 +40,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  // The public homepage uses ISR; clear cached HTML so edits reflect immediately.
   revalidatePath("/");
+  revalidatePath("/courses");
+  revalidatePath("/schedule");
+  revalidateTag(CACHE_TAGS.cms);
+  revalidateTag(CACHE_TAGS.news);
 
   return NextResponse.json({ ok: true });
 }

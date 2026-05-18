@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import CourseDetail from "@/views/CourseDetail";
-import { getCourseForSlug } from "@/lib/catalog";
+import { getCourseForSlug } from "@/lib/catalog-server";
 
 type Props = {
   params: Promise<{ slug: string }>;

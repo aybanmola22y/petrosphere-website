@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import About from "@/views/About";
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "The Institute",

@@ -20,6 +20,7 @@ import {
   capVideoTestimonialsNewestFirst,
   videoTestimonialsForHomepageDisplay,
 } from "@/lib/video-testimonials";
+import { getCachedCmsSnapshot, getCachedPetrosphereNews } from "@/lib/server-cache";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -86,7 +87,7 @@ function mergeNewsFromParts(
     .sort(compareNewsNewestFirst);
 }
 
-async function readStoredAsync(): Promise<StoredShape | null> {
+async function readStoredUncached(): Promise<StoredShape | null> {
   if (isSupabaseSiteContentEnabled()) {
     try {
       const cms = await readCmsFromSupabase();
@@ -98,6 +99,17 @@ async function readStoredAsync(): Promise<StoredShape | null> {
         videoTestimonials: cms.videoTestimonials,
         stats: cms.stats,
       };
+    } catch (e) {
+      console.error("CMS Supabase read failed, falling back to file:", e);
+    }
+  }
+  return readStoredFromFile();
+}
+
+async function readStoredForPublic(): Promise<StoredShape | null> {
+  if (isSupabaseSiteContentEnabled()) {
+    try {
+      return await getCachedCmsSnapshot();
     } catch (e) {
       console.error("CMS Supabase read failed, falling back to file:", e);
     }
@@ -182,10 +194,10 @@ function removeDummySeedNews(items: CompanyNewsItem[]): CompanyNewsItem[] {
  */
 /** Merged Petrosphere fetch + local overrides, with seed/dummy posts removed. */
 export async function getCompanyNewsMergedAsync(limit = 6): Promise<CompanyNewsItem[]> {
-  const stored = await readStoredAsync();
+  const stored = await readStoredForPublic();
   const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
-  const fetched = await fetchPetrosphereLatestNews(limit);
+  const fetched = await getCachedPetrosphereNews(limit);
   const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
   return removeDummySeedNews(merged).slice(0, limit);
 }
@@ -205,7 +217,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const limit = options?.limit ?? 12;
   const hydrateBodies = options?.hydrateBodies ?? true;
 
-  const stored = await readStoredAsync();
+  const stored = await readStoredUncached();
   const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
   const storedVideos = Array.isArray(stored?.videoTestimonials) ? stored.videoTestimonials : [];
@@ -221,7 +233,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
 
-  const fetched = await fetchPetrosphereLatestNews(limit).catch(() => []);
+  const fetched = await getCachedPetrosphereNews(limit).catch(() => []);
 
   let hydrated: CompanyNewsItem[] = fetched;
   if (hydrateBodies && fetched.length) {
@@ -277,14 +289,14 @@ export function getStatsForSite(): SiteStat[] {
 }
 
 export async function getVideoTestimonialsForSiteAsync(): Promise<StudentVideoTestimonial[]> {
-  const s = await readStoredAsync();
+  const s = await readStoredForPublic();
   return resolveVideoTestimonialsForSite(
     s?.videoTestimonials && Array.isArray(s.videoTestimonials) ? s.videoTestimonials : undefined,
   );
 }
 
 export async function getStatsForSiteAsync(): Promise<SiteStat[]> {
-  const s = await readStoredAsync();
+  const s = await readStoredForPublic();
   if (s?.stats && Array.isArray(s.stats)) return s.stats;
   return getStatsForSite();
 }

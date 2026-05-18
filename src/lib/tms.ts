@@ -1,4 +1,5 @@
 import { type TrainingSession } from "@/data/mockData";
+import { CACHE_REVALIDATE_SECONDS } from "@/lib/cache";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -37,7 +38,8 @@ async function fetchCourseRowsForSlugCollisions(): Promise<Record<string, unknow
           authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           "accept-profile": TMS_SCHEMA,
         },
-      }
+        next: { revalidate: CACHE_REVALIDATE_SECONDS.tms },
+      },
     );
     if (!res.ok) return [];
     const json = await res.json();
@@ -65,7 +67,8 @@ export async function fetchTmsSchedules(): Promise<TrainingSession[]> {
           authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           "accept-profile": TMS_SCHEMA,
         },
-      }
+        next: { revalidate: CACHE_REVALIDATE_SECONDS.tms },
+      },
     ),
     fetchCourseRowsForSlugCollisions(),
   ]);

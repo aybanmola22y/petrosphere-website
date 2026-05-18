@@ -1,12 +1,10 @@
 import type { Course, TrainingSession } from "@/data/mockData";
 import { courseCategories, courses as mockCourses } from "@/data/mockData";
 import {
-  buildCollisionBaseSlugSet,
   courseSlugFromTms,
   disambiguateCatalogCourseSlug,
   getEffectiveCatalogRowBaseSlug,
   inferCatalogCategorySlug,
-  isExcludedTmsTestCourseRow,
 } from "@/lib/tms";
 import {
   enrichCourseCopyFromTms,
@@ -16,10 +14,6 @@ import {
 
 /** DOLE first-aid programs: keep seed titles ("EFAT — …") so cards match nav branding. */
 const FIRST_AID_CANONICAL_SLUGS = new Set(["efat", "ofat", "sfat"]);
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const TMS_SCHEMA = process.env.NEXT_PUBLIC_TMS_SCHEMA || "tms";
 
 const LEVELS: Course["level"][] = ["Beginner", "Intermediate", "Advanced", "All Levels"];
 
@@ -204,52 +198,6 @@ export function expandTmsCourseForUi(course: Course): Course {
   return out;
 }
 
-export async function fetchCatalogCourses(): Promise<Course[]> {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return [];
-  }
-
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/courses?select=*&order=title.asc`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          "accept-profile": TMS_SCHEMA,
-        },
-        next: { revalidate: 300 },
-      }
-    );
-
-    if (!response.ok) {
-      console.warn(`fetchCatalogCourses: ${response.status} ${response.statusText}`);
-      return [];
-    }
-
-    const data = (await response.json()) as unknown;
-    if (!Array.isArray(data)) return [];
-
-    const rows = data
-      .filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
-      .filter((row) => !isExcludedTmsTestCourseRow(row));
-    const collisionBases = buildCollisionBaseSlugSet(rows);
-
-    const seenIds = new Set<string>();
-    const out: Course[] = [];
-    for (const item of rows) {
-      const course = mapCourseRowToCourse(item, collisionBases);
-      if (seenIds.has(course.id)) continue;
-      seenIds.add(course.id);
-      out.push(course);
-    }
-    return out;
-  } catch (e) {
-    console.warn("fetchCatalogCourses failed", e);
-    return [];
-  }
-}
-
 /**
  * Programs offered outside TMS (no Supabase row): merge canonical seeds so /courses and nav links resolve.
  * Extend this set when similar gaps appear.
@@ -386,8 +334,3 @@ export function resolveCourseForScheduleCard(
   return expandTmsCourseForUi(stub);
 }
 
-export async function getCourseForSlug(slug: string): Promise<Course | undefined> {
-  const remote = await fetchCatalogCourses();
-  const list = resolveCatalogList(remote);
-  return resolveCourseBySlug(slug, list);
-}

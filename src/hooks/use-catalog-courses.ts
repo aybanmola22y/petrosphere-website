@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { courses as mockCourses } from "@/data/mockData";
 import type { Course } from "@/data/mockData";
-import { fetchCatalogCourses, resolveCatalogList } from "@/lib/catalog";
+import { resolveCatalogList } from "@/lib/catalog";
+import { CACHE_REVALIDATE_SECONDS } from "@/lib/cache";
+import { fetchPublicCatalog } from "@/lib/public-api";
 
 const canFetchCatalog =
   typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" &&
@@ -19,16 +21,16 @@ export function useCatalogCoursesList(): {
 } {
   const { data, isPending } = useQuery({
     queryKey: ["catalog-courses"],
-    queryFn: fetchCatalogCourses,
-    staleTime: 1000 * 60 * 5,
+    queryFn: () => fetchPublicCatalog<Course[]>(),
+    staleTime: CACHE_REVALIDATE_SECONDS.tms * 1000,
     retry: 1,
     enabled: canFetchCatalog,
   });
 
-  /** Avoid falling back to static mock while the first Supabase fetch is still in flight (wrong slugs → false "not found"). */
+  /** Avoid falling back to static mock while the first remote fetch is still in flight. */
   const awaitingFirstRemote = canFetchCatalog && isPending && data === undefined;
   const remote = data ?? [];
-  const catalogCourses = awaitingFirstRemote ? [] : resolveCatalogList(remote);
+  const catalogCourses = awaitingFirstRemote ? [] : remote.length > 0 ? remote : resolveCatalogList([]);
   const isFromSupabase = remote.length > 0;
 
   return {
