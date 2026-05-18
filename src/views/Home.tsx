@@ -258,15 +258,16 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
       {/* Featured Courses */}
       <section className="py-24 md:py-32 bg-secondary/30 border-y border-border">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
+          <div className="mb-12 md:mb-16 flex flex-col items-center text-center gap-4 md:flex-row md:justify-between md:items-end md:text-left md:gap-6">
             <SectionHeader
               eyebrow="Curriculum"
               title="Featured Programs"
-              className="mb-0"
+              alignment="center"
+              className="mb-0 w-full md:max-w-3xl md:mx-0 md:text-left md:items-start"
             />
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors mb-2"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
             >
               View all programs <FiArrowRight />
             </Link>
