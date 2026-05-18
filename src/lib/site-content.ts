@@ -10,7 +10,11 @@ import { stats as defaultStats, studentVideoTestimonials as defaultVideoTestimon
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 import { getLocalContentPath } from "./site-content-path";
 import { fetchPetrosphereLatestNews, fetchPetrosphereNewsArticleByUrl } from "@/lib/petrosphere-latest-news";
-import { getSiteContentStorage, isSupabaseSiteContentEnabled } from "@/lib/supabase/env";
+import {
+  assertSiteContentPersistenceConfigured,
+  getSiteContentStorage,
+  isSupabaseSiteContentEnabled,
+} from "@/lib/supabase/env";
 import { persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
@@ -308,5 +312,5 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
 }
 
 export function siteContentStorageLabel(): "supabase" | "file" {
-  return getSiteContentStorage();
+  return isSupabaseSiteContentEnabled() ? "supabase" : getSiteContentStorage();
 }

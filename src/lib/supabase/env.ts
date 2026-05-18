@@ -33,7 +33,26 @@ export function isSupabaseAdminConfigured(): boolean {
   return Boolean(getSupabaseUrl() && getSupabaseServiceRoleKey());
 }
 
-/** CMS reads/writes in Supabase (needs service role for admin save). */
+/** True when deployed on Vercel (or similar) where the filesystem is read-only. */
+export function isServerlessDeployment(): boolean {
+  return process.env.VERCEL === "1";
+}
+
+/**
+ * CMS reads/writes in Supabase (needs service role for admin save).
+ * On Vercel we always use Supabase when the service role is set — local JSON cannot be written.
+ */
 export function isSupabaseSiteContentEnabled(): boolean {
-  return getSiteContentStorage() === "supabase" && isSupabaseAdminConfigured();
+  if (!isSupabaseAdminConfigured()) return false;
+  if (getSiteContentStorage() === "supabase") return true;
+  return isServerlessDeployment();
+}
+
+export function assertSiteContentPersistenceConfigured(): void {
+  if (isSupabaseSiteContentEnabled()) return;
+  if (isServerlessDeployment()) {
+    throw new Error(
+      "Admin save on Vercel requires Supabase. In Vercel → Environment Variables, set SITE_CONTENT_STORAGE=supabase, SUPABASE_SERVICE_ROLE_KEY (same project as your URL), then redeploy.",
+    );
+  }
 }
