@@ -128,11 +128,6 @@ function LoginHero({ className }: { className?: string }) {
 
         <LoginHeroAnimation />
 
-        <div className="mt-auto shrink-0 pt-6 lg:pt-8">
-          <Link href="/" className="text-sm font-medium text-white/52 transition-colors hover:text-white">
-            ← Back to website
-          </Link>
-        </div>
       </div>
     </div>
   );

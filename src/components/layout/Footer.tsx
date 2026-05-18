@@ -23,14 +23,20 @@ export function Footer() {
               <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Curriculum</Link>
               <Link href="/schedule" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Schedule</Link>
               <Link href="/services" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Consulting</Link>
-              <Link href="/contact?intent=corporate" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Enterprise Sales</Link>
             </div>
             
             <div className="flex flex-col gap-4">
               <h4 className="font-semibold text-sm text-foreground">Company</h4>
               <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
-              <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Careers</a>
+              <Link href="/about#contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
+              <a
+                href="https://petrosphere.hrpartner.io/jobs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Careers
+              </a>
             </div>
 
             <div className="flex flex-col gap-4">

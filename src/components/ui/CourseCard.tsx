@@ -1,13 +1,18 @@
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { FiArrowUpRight, FiAward } from "react-icons/fi";
+import { FiArrowUpRight } from "react-icons/fi";
 import { Course } from "@/data/mockData";
+import { resolveCourseAccreditationLogo } from "@/lib/course-accreditation";
+import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
   course: Course;
 }
 
 export function CourseCard({ course }: CourseCardProps) {
+  const accreditation = resolveCourseAccreditationLogo(course);
+
   return (
     <Link
       href={`/courses/${course.slug}`}
@@ -23,10 +28,23 @@ export function CourseCard({ course }: CourseCardProps) {
           <span className="inline-flex w-fit items-center rounded-full bg-secondary/70 px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
             {course.category}
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
-            <FiAward className="h-3 w-3" />
-            Certified
-          </span>
+          {accreditation ? (
+            <div
+              className="relative h-10 w-22 shrink-0 overflow-hidden rounded-lg border border-border/80 bg-white px-2 py-1.5"
+              title={accreditation.alt}
+            >
+              <Image
+                src={accreditation.src}
+                alt={accreditation.alt}
+                fill
+                className={cn(
+                  "object-contain object-center p-0.5",
+                  accreditation.multiply && "mix-blend-multiply",
+                )}
+                sizes="88px"
+              />
+            </div>
+          ) : null}
         </div>
 
         <h3 className="mb-3 line-clamp-2 text-[19px] font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary md:text-xl">

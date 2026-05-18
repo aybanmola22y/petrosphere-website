@@ -368,7 +368,7 @@ export function Navbar() {
 
         <div className="hidden lg:flex items-center shrink-0">
           <Link
-            href="/courses"
+            href="/schedule"
             className="inline-flex items-center justify-center text-sm font-medium text-primary-foreground bg-primary rounded-lg px-5 py-2.5 hover:bg-primary/90 transition-all"
           >
             Enroll
@@ -494,7 +494,7 @@ export function Navbar() {
           </nav>
           <div className="pt-4">
             <Link
-              href="/courses"
+              href="/schedule"
               className="block text-center text-sm font-medium text-primary-foreground bg-primary rounded-lg py-2.5"
             >
               Enroll

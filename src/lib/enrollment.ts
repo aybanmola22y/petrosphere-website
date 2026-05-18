@@ -3,12 +3,12 @@ import type { TrainingSession } from "@/data/mockData";
 const EXTERNAL = /^https?:\/\//i;
 
 /** On-site registration / inquiry form for a single course (public enroll). */
-export function contactEnrollHref(courseSlug: string): string {
-  return `/contact?course=${encodeURIComponent(courseSlug)}&intent=enroll`;
+export function contactEnrollHref(_courseSlug: string): string {
+  return "/about#contact";
 }
 
-export function contactCorporateHref(courseSlug: string): string {
-  return `/contact?course=${encodeURIComponent(courseSlug)}&intent=corporate`;
+export function contactCorporateHref(_courseSlug: string): string {
+  return "/about#contact";
 }
 
 /** Public enroll target: TMS URL when provided, otherwise same flow as course page Enroll. */

@@ -107,7 +107,7 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="mt-10 lg:mt-14 w-full aspect-video md:aspect-[21/9] rounded-3xl overflow-hidden bg-muted mb-24 border border-border shadow-sm"
+            className="mt-10 lg:mt-14 w-full aspect-video md:aspect-21/9 rounded-3xl overflow-hidden bg-muted mb-24 border border-border shadow-sm"
         >
              <img src={aboutImg} alt="Corporate Office" className="w-full h-full object-cover" />
         </motion.div>
@@ -187,7 +187,7 @@ export default function About() {
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-2xl font-medium leading-[1.25] tracking-tight text-foreground md:text-[28px] lg:text-[32px]">
+                        <p className="text-2xl font-medium leading-tight tracking-tight text-foreground md:text-[28px] lg:text-[32px]">
                           {"statement" in item ? item.statement : ""}
                         </p>
                       )}
@@ -260,15 +260,15 @@ export default function About() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto mt-20 w-full max-w-[min(100%,96rem)] md:mt-28 lg:mt-36"
+          className="scroll-mt-28 mx-auto mt-20 w-full max-w-[min(100%,96rem)] md:mt-28 lg:mt-36"
         >
-          <div className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-secondary/50 via-background to-secondary/30 shadow-[0_28px_70px_-28px_rgba(0,4,74,0.22)] ring-1 ring-foreground/[0.07]">
+          <div className="relative overflow-hidden rounded-4xl border border-border bg-linear-to-br from-secondary/50 via-background to-secondary/30 shadow-[0_28px_70px_-28px_rgba(0,4,74,0.22)] ring-1 ring-foreground/[0.07]">
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/0 via-primary to-primary/0 opacity-90"
+              className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary/0 via-primary to-primary/0 opacity-90"
               aria-hidden
             />
-            <div className="pointer-events-none absolute -right-32 top-1/4 h-72 w-72 -translate-y-1/2 rounded-full bg-primary/[0.08] blur-3xl" aria-hidden />
-            <div className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-accent/[0.07] blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -right-32 top-1/4 h-72 w-72 -translate-y-1/2 rounded-full bg-primary/8 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-accent/7 blur-3xl" aria-hidden />
 
             <div className="relative px-5 py-12 sm:px-8 md:px-12 md:py-16 lg:px-14 lg:py-20 xl:px-16 xl:py-24">
               <SectionHeader
@@ -276,7 +276,7 @@ export default function About() {
                 title="Visit, call, or write—your next step starts here"
                 description="Plan a site visit, lock a cohort date, or route a compliance question. Use the live map for directions, then reach the desk that fits your inquiry."
                 alignment="center"
-                className="!mb-10 md:!mb-14"
+                className="mb-10! md:mb-14!"
               />
 
               <div className="grid gap-8 lg:grid-cols-12 lg:items-stretch lg:gap-12 xl:gap-14">
@@ -284,7 +284,7 @@ export default function About() {
                 <div className="flex flex-col lg:col-span-8">
                   <div className="relative min-h-[300px] flex-1 overflow-hidden rounded-2xl border border-border/90 bg-muted shadow-inner sm:min-h-[360px] lg:min-h-[min(52vh,560px)] xl:min-h-[min(56vh,620px)]">
                     <AboutHeadquartersMap lat={HQ_LAT} lon={HQ_LON} />
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-background via-background/85 to-transparent pt-24 pb-0">
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-linear-to-t from-background via-background/85 to-transparent pt-24 pb-0">
                       <div className="pointer-events-auto flex flex-col gap-3 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -356,7 +356,7 @@ export default function About() {
                                 9:00 AM. – 5:00 PM.
                               </span>
                             </p>
-                            <p className="mt-4 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">
+                            <p className="mt-4 max-w-88 text-sm leading-relaxed text-muted-foreground">
                               Admissions and sales route through the same desk outside public holidays.
                             </p>
                           </div>
