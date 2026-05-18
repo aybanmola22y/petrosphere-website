@@ -16,6 +16,10 @@ import {
   isSupabaseSiteContentEnabled,
 } from "@/lib/supabase/env";
 import { isAuthoredNewsId, persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
+import {
+  capVideoTestimonialsNewestFirst,
+  videoTestimonialsForHomepageDisplay,
+} from "@/lib/video-testimonials";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -150,13 +154,11 @@ function mergeNewsPreferLocal(local: CompanyNewsItem[], incoming: CompanyNewsIte
   return Array.from(bySlug.values()).sort(compareNewsNewestFirst);
 }
 
-function mergeVideoPreferLocal(local: StudentVideoTestimonial[], defaults: StudentVideoTestimonial[]): StudentVideoTestimonial[] {
-  const byId = new Map<string, StudentVideoTestimonial>();
-  for (const v of local) byId.set(v.id, v);
-  for (const v of defaults) {
-    if (!byId.has(v.id)) byId.set(v.id, v);
+function resolveVideoTestimonialsForSite(stored: StudentVideoTestimonial[] | undefined): StudentVideoTestimonial[] {
+  if (stored?.length) {
+    return videoTestimonialsForHomepageDisplay(capVideoTestimonialsNewestFirst(stored));
   }
-  return Array.from(byId.values());
+  return videoTestimonialsForHomepageDisplay(defaultVideoTestimonials);
 }
 
 const DUMMY_SEED_IDS = new Set<string>([
@@ -206,9 +208,8 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const stored = await readStoredAsync();
   const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
-  const storedVideos =
-    stored?.videoTestimonials && Array.isArray(stored.videoTestimonials) ? stored.videoTestimonials : defaultVideoTestimonials;
-  const mergedVideos = mergeVideoPreferLocal(storedVideos, defaultVideoTestimonials);
+  const storedVideos = Array.isArray(stored?.videoTestimonials) ? stored.videoTestimonials : [];
+  const adminVideos = storedVideos.length ? storedVideos : defaultVideoTestimonials;
 
   const fallbackNews = removeDummySeedNews(
     mergeNewsFromParts([], authored, overrides, hiddenSlugs),
@@ -216,7 +217,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
 
   const base: SiteContentSnapshot = {
     news: fallbackNews,
-    videoTestimonials: mergedVideos,
+    videoTestimonials: adminVideos,
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
 
@@ -268,7 +269,7 @@ export async function getRelatedCompanyNewsAsync(slug: string, limit = 4): Promi
 }
 
 export function getVideoTestimonialsForSite(): StudentVideoTestimonial[] {
-  return defaultVideoTestimonials;
+  return videoTestimonialsForHomepageDisplay(defaultVideoTestimonials);
 }
 
 export function getStatsForSite(): SiteStat[] {
@@ -277,10 +278,9 @@ export function getStatsForSite(): SiteStat[] {
 
 export async function getVideoTestimonialsForSiteAsync(): Promise<StudentVideoTestimonial[]> {
   const s = await readStoredAsync();
-  if (s?.videoTestimonials && Array.isArray(s.videoTestimonials)) {
-    return mergeVideoPreferLocal(s.videoTestimonials, defaultVideoTestimonials);
-  }
-  return getVideoTestimonialsForSite();
+  return resolveVideoTestimonialsForSite(
+    s?.videoTestimonials && Array.isArray(s.videoTestimonials) ? s.videoTestimonials : undefined,
+  );
 }
 
 export async function getStatsForSiteAsync(): Promise<SiteStat[]> {

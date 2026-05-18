@@ -32,14 +32,19 @@ const newsItemSchema = z.object({
   cta: z.object({ label: z.string(), href: z.string() }).optional(),
 });
 
-const videoSchema = z.object({
-  id: z.string().min(1),
-  studentName: z.string().min(1),
-  credential: z.string(),
-  summary: z.string(),
-  youtubeVideoId: z.string().min(1),
-  posterSrc: z.string().min(1),
-});
+const videoSchema = z
+  .object({
+    id: z.string().min(1),
+    studentName: z.string().min(1),
+    credential: z.string(),
+    summary: z.string(),
+    youtubeVideoId: z.string(),
+    videoSrc: z.string().optional(),
+    posterSrc: z.string().min(1),
+  })
+  .refine((v) => Boolean(v.videoSrc?.trim()) || Boolean(v.youtubeVideoId?.trim()), {
+    message: "Each testimonial needs a YouTube video ID or an uploaded video file.",
+  });
 
 const statSchema = z.object({
   value: z.string().min(1),

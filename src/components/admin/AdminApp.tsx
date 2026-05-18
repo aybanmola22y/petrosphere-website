@@ -35,6 +35,10 @@ import { normalizeNewsBody } from "@/data/companyNews";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import type { SiteContentSnapshot } from "@/types/site-content";
 import { SITE_CONTENT_LOCAL_FILENAME } from "@/constants/site-content-file";
+import {
+  testimonialHasUploadedVideo,
+  testimonialVideoLabel,
+} from "@/lib/video-testimonial-media";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,7 +136,7 @@ function blankVideo(): StudentVideoTestimonial {
     studentName: "Full name",
     credential: "Program · Location",
     summary: "Optional short quote shown next to the embed.",
-    youtubeVideoId: "ScMzIvxBSi4",
+    youtubeVideoId: "",
     posterSrc: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=960&q=80",
   };
 }
@@ -232,6 +236,7 @@ export function AdminApp({
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(() => initial.videoTestimonials[0]?.id ?? null);
   const [confirmDelete, setConfirmDelete] = useState<null | { kind: "news" | "video"; id: string }>(null);
   const [uploadingNewsImage, setUploadingNewsImage] = useState(false);
+  const [uploadingTestimonialVideo, setUploadingTestimonialVideo] = useState(false);
 
   useEffect(() => {
     const snap = JSON.parse(initialKey) as SiteContentSnapshot;
@@ -280,7 +285,8 @@ export function AdminApp({
       return (
         v.studentName.toLowerCase().includes(q) ||
         v.credential.toLowerCase().includes(q) ||
-        v.youtubeVideoId.toLowerCase().includes(q)
+        v.youtubeVideoId.toLowerCase().includes(q) ||
+        (v.videoSrc?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [data.videoTestimonials, query]);
@@ -369,7 +375,10 @@ export function AdminApp({
 
   function addTestimonial() {
     const item = blankVideo();
-    setData((d) => ({ ...d, videoTestimonials: [item, ...d.videoTestimonials] }));
+    setData((d) => ({
+      ...d,
+      videoTestimonials: [item, ...d.videoTestimonials],
+    }));
     setSelectedVideoId(item.id);
   }
 
@@ -410,6 +419,30 @@ export function AdminApp({
       return j.url;
     } finally {
       setUploadingNewsImage(false);
+    }
+  }
+
+  async function uploadTestimonialVideo(file: File) {
+    setUploadingTestimonialVideo(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/admin/upload-video", { method: "POST", body: fd });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        toast({
+          title: "Upload failed",
+          description: j.error ?? `HTTP ${res.status}`,
+          variant: "destructive",
+        });
+        return null;
+      }
+      const j = (await res.json()) as { url?: string };
+      if (!j.url) return null;
+      toast({ title: "Uploaded", description: "Video saved to /public/uploads/videos/." });
+      return j.url;
+    } finally {
+      setUploadingTestimonialVideo(false);
     }
   }
 
@@ -505,7 +538,6 @@ export function AdminApp({
               >
                 Reset
               </Button>
-              <AdminAccountMenu onLogout={logout} />
               <Button
                 size="sm"
                 onClick={save}
@@ -514,6 +546,7 @@ export function AdminApp({
               >
                 {pending ? "Saving…" : "Save changes"}
               </Button>
+              <AdminAccountMenu onLogout={logout} />
             </div>
           </div>
         </header>
@@ -912,7 +945,9 @@ export function AdminApp({
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <CardTitle className="text-base">Testimonials</CardTitle>
-                        <CardDescription>Homepage embed list.</CardDescription>
+                        <CardDescription>
+                          Manage all testimonials here. The homepage shows up to 3 — newest on the left.
+                        </CardDescription>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -958,7 +993,7 @@ export function AdminApp({
                                       {item.credential}
                                     </div>
                                     <div className="mt-2 whitespace-normal break-all text-xs text-muted-foreground">
-                                      ID: {item.youtubeVideoId}
+                                      {testimonialVideoLabel(item)}
                                     </div>
                                   </div>
                                 </TableCell>
@@ -982,9 +1017,7 @@ export function AdminApp({
                           {selectedVideo?.studentName || "Select a testimonial"}
                         </CardTitle>
                         <CardDescription className="whitespace-normal break-all">
-                          {selectedVideo
-                            ? `YouTube ID: ${selectedVideo.youtubeVideoId}`
-                            : "Choose one from the list."}
+                          {selectedVideo ? testimonialVideoLabel(selectedVideo) : "Choose one from the list."}
                         </CardDescription>
                       </div>
                       {selectedVideo ? (
@@ -1004,8 +1037,98 @@ export function AdminApp({
                             <Field label="Credential line">
                               <Input value={selectedVideo.credential} onChange={(e) => updateVideo(selectedVideoIndex, { credential: e.target.value })} />
                             </Field>
-                            <Field label="YouTube video ID" className="sm:col-span-2" hint="From Share → Embed, e.g. ScMzIvxBSi4">
-                              <Input value={selectedVideo.youtubeVideoId} onChange={(e) => updateVideo(selectedVideoIndex, { youtubeVideoId: e.target.value })} />
+                            <Field
+                              label="Video source"
+                              className="sm:col-span-2"
+                              hint="Upload a file from your computer (MP4, WebM, or MOV up to 50MB) or enter a YouTube video ID."
+                            >
+                              {testimonialHasUploadedVideo(selectedVideo) ? (
+                                <div className="space-y-2">
+                                  <p className="text-sm text-muted-foreground break-all">{selectedVideo.videoSrc}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    <label className="inline-flex">
+                                      <input
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                                        className="hidden"
+                                        disabled={uploadingTestimonialVideo}
+                                        onChange={async (e) => {
+                                          const f = e.target.files?.[0];
+                                          e.currentTarget.value = "";
+                                          if (!f) return;
+                                          const url = await uploadTestimonialVideo(f);
+                                          if (url) {
+                                            updateVideo(selectedVideoIndex, {
+                                              videoSrc: url,
+                                              youtubeVideoId: "",
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-medium text-foreground shadow-sm hover:bg-black/5 cursor-pointer",
+                                          uploadingTestimonialVideo && "opacity-60 cursor-not-allowed",
+                                        )}
+                                      >
+                                        {uploadingTestimonialVideo ? "Uploading…" : "Replace video"}
+                                      </span>
+                                    </label>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="rounded-full"
+                                      onClick={() =>
+                                        updateVideo(selectedVideoIndex, { videoSrc: undefined, youtubeVideoId: "" })
+                                      }
+                                    >
+                                      Use YouTube instead
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <Input
+                                    value={selectedVideo.youtubeVideoId}
+                                    onChange={(e) =>
+                                      updateVideo(selectedVideoIndex, { youtubeVideoId: e.target.value })
+                                    }
+                                    placeholder="YouTube ID, e.g. ScMzIvxBSi4"
+                                  />
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-xs text-muted-foreground">Or upload from your computer.</p>
+                                    <label className="inline-flex">
+                                      <input
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                                        className="hidden"
+                                        disabled={uploadingTestimonialVideo}
+                                        onChange={async (e) => {
+                                          const f = e.target.files?.[0];
+                                          e.currentTarget.value = "";
+                                          if (!f) return;
+                                          const url = await uploadTestimonialVideo(f);
+                                          if (url) {
+                                            updateVideo(selectedVideoIndex, {
+                                              videoSrc: url,
+                                              youtubeVideoId: "",
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-medium text-foreground shadow-sm hover:bg-black/5 cursor-pointer",
+                                          uploadingTestimonialVideo && "opacity-60 cursor-not-allowed",
+                                        )}
+                                      >
+                                        {uploadingTestimonialVideo ? "Uploading…" : "Upload video"}
+                                      </span>
+                                    </label>
+                                  </div>
+                                </div>
+                              )}
                             </Field>
                             <Field label="Poster image URL" className="sm:col-span-2">
                               <Input value={selectedVideo.posterSrc} onChange={(e) => updateVideo(selectedVideoIndex, { posterSrc: e.target.value })} />

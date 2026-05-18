@@ -81,6 +81,7 @@ export type Database = {
           credential: string;
           summary: string;
           youtube_video_id: string;
+          video_src: string | null;
           poster_src: string;
           sort_order: number;
           created_at: string;

@@ -7,6 +7,7 @@ import { Play } from "lucide-react";
 
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import { testimonialHasUploadedVideo } from "@/lib/video-testimonial-media";
 
 function embedSrc(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
@@ -14,6 +15,7 @@ function embedSrc(videoId: string): string {
 
 function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }) {
   const [playing, setPlaying] = useState(false);
+  const uploaded = testimonialHasUploadedVideo(item);
 
   return (
     <motion.article
@@ -25,16 +27,27 @@ function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }
     >
       <span className="mx-6 mt-6 h-px bg-linear-to-r from-primary/60 via-primary/20 to-transparent md:mx-8 md:mt-8" aria-hidden />
 
-      <div className="relative mx-6 mt-6 aspect-video overflow-hidden rounded-xl bg-muted md:mx-8 md:mt-7">
+      <motion.div className="relative mx-6 mt-6 aspect-video overflow-hidden rounded-xl bg-muted md:mx-8 md:mt-7">
         {playing ? (
-          <iframe
-            title={`Video testimonial — ${item.studentName}`}
-            src={embedSrc(item.youtubeVideoId)}
-            className="absolute inset-0 h-full w-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
+          uploaded ? (
+            <video
+              src={item.videoSrc}
+              controls
+              autoPlay
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+              poster={item.posterSrc || undefined}
+            />
+          ) : (
+            <iframe
+              title={`Video testimonial — ${item.studentName}`}
+              src={embedSrc(item.youtubeVideoId)}
+              className="absolute inset-0 h-full w-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          )
         ) : (
           <button
             type="button"
@@ -42,13 +55,24 @@ function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }
             className="group relative h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label={`Play video testimonial from ${item.studentName}`}
           >
-            <Image
-              src={item.posterSrc}
-              alt=""
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-            />
+            {uploaded ? (
+              <video
+                src={item.videoSrc}
+                muted
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                poster={item.posterSrc || undefined}
+              />
+            ) : (
+              <Image
+                src={item.posterSrc}
+                alt=""
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              />
+            )}
             <span className="absolute inset-0 bg-linear-to-t from-foreground/55 via-foreground/25 to-foreground/15" aria-hidden />
             <span className="absolute inset-0 flex items-center justify-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_40px_-10px_hsl(42_72%_38%/0.75)] ring-4 ring-background/90 transition-transform duration-200 group-hover:scale-105 md:h-18 md:w-18">
@@ -57,7 +81,7 @@ function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }
             </span>
           </button>
         )}
-      </div>
+      </motion.div>
 
       {playing ? (
         <div className="border-b border-border px-6 pb-4 pt-3 md:px-8">

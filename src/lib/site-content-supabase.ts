@@ -130,7 +130,8 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     studentName: r.student_name,
     credential: r.credential,
     summary: r.summary,
-    youtubeVideoId: r.youtube_video_id,
+    youtubeVideoId: r.youtube_video_id ?? "",
+    videoSrc: r.video_src?.trim() || undefined,
     posterSrc: r.poster_src,
   }));
 
@@ -229,13 +230,15 @@ export async function persistCmsToSupabase(payload: {
       const { error: delErr } = await db.from("video_testimonials").delete().in("id", videoIds);
       if (delErr) throw delErr;
     }
-    if (data.videoTestimonials.length) {
-      const rows = data.videoTestimonials.map((v, i) => ({
+    const videos = data.videoTestimonials;
+    if (videos.length) {
+      const rows = videos.map((v, i) => ({
         id: v.id,
         student_name: v.studentName,
         credential: v.credential,
         summary: v.summary,
-        youtube_video_id: v.youtubeVideoId,
+        youtube_video_id: v.videoSrc?.trim() ? "" : v.youtubeVideoId.trim(),
+        video_src: v.videoSrc?.trim() || null,
         poster_src: v.posterSrc,
         sort_order: i,
       }));
