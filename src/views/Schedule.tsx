@@ -65,6 +65,9 @@ function StatusCell({ status }: { status: TrainingSession["status"] }) {
   if (status === "open") {
     return <span className="text-sm font-medium text-primary">Open</span>;
   }
+  if (status === "ongoing") {
+    return <span className="text-sm font-medium text-amber-700">Ongoing</span>;
+  }
   if (status === "finished") {
     return <span className="text-sm text-muted-foreground">Finished</span>;
   }

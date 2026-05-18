@@ -211,7 +211,7 @@ function mapTmsSchedules(
       startDate,
       location: item.branch ? formatBranch(item.branch) : "TBA",
       status: mapStatus(item.status),
-      actionLabel: item.status === "planned" || item.status === "ongoing" ? "Enroll" : "Closed",
+      actionLabel: item.status === "planned" ? "Enroll" : "Closed",
       price:
         registrationFeeFromCourseRow(courseRow) ??
         getPrice(
@@ -476,8 +476,9 @@ function mapStatus(status: string): TrainingSession["status"] {
     case "cancelled":
       return "cancelled";
     case "planned":
-    case "ongoing":
       return "open";
+    case "ongoing":
+      return "ongoing";
     default:
       return "closed";
   }

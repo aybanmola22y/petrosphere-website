@@ -46,6 +46,14 @@ function SessionStatus({ status }: { status: TrainingSession["status"] }) {
       </div>
     );
   }
+  if (status === "ongoing") {
+    return (
+      <div className={shell}>
+        <span className="text-xs font-semibold text-amber-700">Ongoing</span>
+        <span className="mt-0.5 block text-[10px] text-muted-foreground">Enrollment closed</span>
+      </div>
+    );
+  }
   if (status === "finished") {
     return (
       <div className={shell}>

@@ -598,7 +598,7 @@ export interface TrainingSession {
   /** ISO date string for sorting */
   startDate: string;
   location: string;
-  status: "finished" | "cancelled" | "open" | "closed";
+  status: "finished" | "cancelled" | "open" | "ongoing" | "closed";
   actionLabel: string;
   price?: string;
   /** Direct link to TMS enrollment form for this schedule run */
