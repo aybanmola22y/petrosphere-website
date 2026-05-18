@@ -15,7 +15,7 @@ import {
   getSiteContentStorage,
   isSupabaseSiteContentEnabled,
 } from "@/lib/supabase/env";
-import { persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
+import { isAuthoredNewsId, persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -25,6 +25,8 @@ type StoredShape = Partial<SiteContentSnapshot> & {
    * (not the full fetched list).
    */
   removedNewsSlugs?: string[];
+  authoredNews?: CompanyNewsItem[];
+  fetchedOverrides?: CompanyNewsItem[];
 };
 
 function readStoredFromFile(): StoredShape | null {
@@ -37,12 +39,57 @@ function readStoredFromFile(): StoredShape | null {
   }
 }
 
+type StoredNewsParts = {
+  authored: CompanyNewsItem[];
+  overrides: CompanyNewsItem[];
+  hiddenSlugs: string[];
+};
+
+function splitStoredNews(stored: StoredShape | null): StoredNewsParts {
+  if (!stored) return { authored: [], overrides: [], hiddenSlugs: [] };
+
+  const hiddenSlugs = stored.removedNewsSlugs ?? [];
+  if (Array.isArray(stored.authoredNews) || Array.isArray(stored.fetchedOverrides)) {
+    return {
+      authored: stored.authoredNews ?? [],
+      overrides: stored.fetchedOverrides ?? [],
+      hiddenSlugs,
+    };
+  }
+
+  const news = stored.news ?? [];
+  return {
+    authored: news.filter((n) => isAuthoredNewsId(n.id)),
+    overrides: news.filter((n) => !isAuthoredNewsId(n.id)),
+    hiddenSlugs,
+  };
+}
+
+function mergeNewsFromParts(
+  fetched: CompanyNewsItem[],
+  authored: CompanyNewsItem[],
+  overrides: CompanyNewsItem[],
+  hiddenSlugs: string[],
+): CompanyNewsItem[] {
+  const bySlug = new Map<string, CompanyNewsItem>();
+  for (const item of fetched) bySlug.set(item.slug, item);
+  for (const item of overrides) bySlug.set(item.slug, item);
+  for (const item of authored) bySlug.set(item.slug, item);
+
+  const hidden = new Set(hiddenSlugs.map((s) => s.toLowerCase()));
+  return Array.from(bySlug.values())
+    .filter((n) => !hidden.has(n.slug.toLowerCase()))
+    .sort(compareNewsNewestFirst);
+}
+
 async function readStoredAsync(): Promise<StoredShape | null> {
   if (isSupabaseSiteContentEnabled()) {
     try {
       const cms = await readCmsFromSupabase();
       return {
         news: cms.news,
+        authoredNews: cms.authoredNews,
+        fetchedOverrides: cms.fetchedOverrides,
         removedNewsSlugs: cms.removedNewsSlugs,
         videoTestimonials: cms.videoTestimonials,
         stats: cms.stats,
@@ -134,13 +181,11 @@ function removeDummySeedNews(items: CompanyNewsItem[]): CompanyNewsItem[] {
 /** Merged Petrosphere fetch + local overrides, with seed/dummy posts removed. */
 export async function getCompanyNewsMergedAsync(limit = 6): Promise<CompanyNewsItem[]> {
   const stored = await readStoredAsync();
-  const overrides = stored?.news && Array.isArray(stored.news) ? stored.news : undefined;
-  const removedSlugs = stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : undefined;
+  const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
   const fetched = await fetchPetrosphereLatestNews(limit);
-  const merged = applyNewsOverrides(fetched, overrides, removedSlugs);
-  const ordered = merged.slice().sort(compareNewsNewestFirst);
-  return removeDummySeedNews(ordered).slice(0, limit);
+  const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
+  return removeDummySeedNews(merged).slice(0, limit);
 }
 
 export async function getCompanyNewsForHome(limit = 6): Promise<CompanyNewsItem[]> {
@@ -159,28 +204,27 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
   const hydrateBodies = options?.hydrateBodies ?? true;
 
   const stored = await readStoredAsync();
-  const storedNewsOverrides = stored?.news && Array.isArray(stored.news) ? stored.news : [];
-  const removedSlugs =
-    stored?.removedNewsSlugs && Array.isArray(stored.removedNewsSlugs) ? stored.removedNewsSlugs : [];
+  const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
   const storedVideos =
     stored?.videoTestimonials && Array.isArray(stored.videoTestimonials) ? stored.videoTestimonials : defaultVideoTestimonials;
   const mergedVideos = mergeVideoPreferLocal(storedVideos, defaultVideoTestimonials);
 
+  const fallbackNews = removeDummySeedNews(
+    mergeNewsFromParts([], authored, overrides, hiddenSlugs),
+  );
+
   const base: SiteContentSnapshot = {
-    // Local/admin overrides applied to seed data (used only as fallback if fetch fails).
-    news: removeDummySeedNews(applyNewsOverrides(companyNewsItems, storedNewsOverrides, removedSlugs)),
+    news: fallbackNews,
     videoTestimonials: mergedVideos,
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
 
-  // Fetch latest index cards.
   const fetched = await fetchPetrosphereLatestNews(limit).catch(() => []);
 
-  // Optionally fetch full bodies for any new items (so admin starts with real content).
   let hydrated: CompanyNewsItem[] = fetched;
   if (hydrateBodies && fetched.length) {
-    const existingSlugs = new Set(base.news.map((n) => n.slug));
+    const existingSlugs = new Set([...authored, ...overrides].map((n) => n.slug));
     const toHydrate = fetched.filter((n) => !existingSlugs.has(n.slug)).slice(0, limit);
     const hydratedNew = await Promise.all(
       toHydrate.map(async (n) => {
@@ -196,9 +240,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
 
   if (!hydrated.length) return base;
 
-  // Apply local overrides on top of fetched items, and include any local-only posts.
-  const fetchedWithOverrides = applyNewsOverrides(hydrated, storedNewsOverrides, removedSlugs);
-  const mergedNews = mergeNewsPreferLocal(fetchedWithOverrides, storedNewsOverrides);
+  const mergedNews = removeDummySeedNews(mergeNewsFromParts(hydrated, authored, overrides, hiddenSlugs));
   return { ...base, news: mergedNews };
 }
 
@@ -214,8 +256,8 @@ export function getRelatedCompanyNews(slug: string, limit = 4): CompanyNewsItem[
 
 export async function getNewsArticleBySlugAsync(slug: string): Promise<CompanyNewsItem | undefined> {
   const normalized = slug.toLowerCase();
-  const local = getNewsArticleBySlug(normalized) ?? getNewsArticleBySlug(slug);
-  return local;
+  const pool = await getCompanyNewsMergedAsync(50).catch(() => getCompanyNewsForSite());
+  return pool.find((item) => item.slug.toLowerCase() === normalized);
 }
 
 export async function getRelatedCompanyNewsAsync(slug: string, limit = 4): Promise<CompanyNewsItem[]> {

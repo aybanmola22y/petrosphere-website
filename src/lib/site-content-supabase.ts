@@ -76,7 +76,10 @@ function newsItemToOverrideRow(item: CompanyNewsItem) {
 }
 
 export type StoredCmsShape = {
+  /** @deprecated Use authoredNews + fetchedOverrides */
   news: CompanyNewsItem[];
+  authoredNews: CompanyNewsItem[];
+  fetchedOverrides: CompanyNewsItem[];
   removedNewsSlugs: string[];
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
@@ -120,7 +123,6 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
       }),
     );
 
-  const news = [...authored, ...overrides];
   const removedNewsSlugs = (hiddenRes.data ?? []).map((r) => r.slug);
 
   const videoTestimonials: StudentVideoTestimonial[] = (videosRes.data ?? []).map((r) => ({
@@ -137,7 +139,14 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     label: r.label,
   }));
 
-  return { news, removedNewsSlugs, videoTestimonials, stats };
+  return {
+    news: [...authored, ...overrides],
+    authoredNews: authored,
+    fetchedOverrides: overrides,
+    removedNewsSlugs,
+    videoTestimonials,
+    stats,
+  };
 }
 
 function stableStringify(obj: unknown): string {
@@ -171,48 +180,38 @@ export async function persistCmsToSupabase(payload: {
   }
 
   const overrideUpserts: ReturnType<typeof newsItemToOverrideRow>[] = [];
-  const overrideSlugsToDelete: string[] = [];
 
-  for (const [slug, item] of dataBySlug.entries()) {
+  for (const item of data.news) {
     if (isAuthoredNewsId(item.id)) continue;
-    const base = baseBySlug.get(slug);
+    const base = baseBySlug.get(item.slug);
     if (!base) continue;
     if (stableStringify(base) !== stableStringify(item)) {
       overrideUpserts.push(newsItemToOverrideRow(item));
     }
   }
-  for (const slug of baseBySlug.keys()) {
-    if (isAuthoredNewsId(baseBySlug.get(slug)!.id)) continue;
-    if (!dataBySlug.has(slug)) continue;
-    const base = baseBySlug.get(slug)!;
-    const item = dataBySlug.get(slug)!;
-    if (stableStringify(base) === stableStringify(item)) {
-      overrideSlugsToDelete.push(slug);
-    }
-  }
 
-  if (overrideSlugsToDelete.length) {
-    const { error } = await db.from("news_fetched_overrides").delete().in("slug", overrideSlugsToDelete);
-    if (error) throw error;
-  }
   if (overrideUpserts.length) {
     const { error } = await db.from("news_fetched_overrides").upsert(overrideUpserts as never);
     if (error) throw error;
   }
 
-  const removedSlugs: string[] = [];
-  for (const slug of baseBySlug.keys()) {
-    if (!dataBySlug.has(slug) && !isAuthoredNewsId(baseBySlug.get(slug)!.id)) {
-      removedSlugs.push(slug);
-    }
-  }
-
   const { data: existingHidden } = await db.from("news_fetched_hidden").select("slug");
   const existingHiddenSet = new Set((existingHidden ?? []).map((r) => r.slug));
-  const removedSet = new Set(removedSlugs);
 
-  const toHide = removedSlugs.filter((s) => !existingHiddenSet.has(s));
-  const toUnhide = [...existingHiddenSet].filter((s) => !removedSet.has(s));
+  const targetHidden = new Set<string>();
+
+  for (const slug of baseBySlug.keys()) {
+    const baseItem = baseBySlug.get(slug)!;
+    if (!dataBySlug.has(slug) && !isAuthoredNewsId(baseItem.id)) {
+      targetHidden.add(slug);
+    }
+  }
+  for (const slug of existingHiddenSet) {
+    if (!dataBySlug.has(slug)) targetHidden.add(slug);
+  }
+
+  const toHide = [...targetHidden].filter((s) => !existingHiddenSet.has(s));
+  const toUnhide = [...existingHiddenSet].filter((s) => !targetHidden.has(s));
 
   if (toHide.length) {
     const { error } = await db.from("news_fetched_hidden").upsert(toHide.map((slug) => ({ slug })));
