@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: rootDir,
   // Use the default Next.js dist directory (`.next`) for reliable caching on Windows.
   reactStrictMode: true,
+  // Avoid dev-only RSC manifest errors from the segment explorer (Next.js 15.5+).
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
   async headers() {
     return [
       {
