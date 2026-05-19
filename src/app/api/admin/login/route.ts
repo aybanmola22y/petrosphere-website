@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 
-import {
-  getEffectiveAdminCredentials,
-  isAdminPasswordConfigured,
-  setAdminSessionCookie,
-} from "@/lib/admin-session";
+import { isAdminUserId, isCmsAuthConfigured } from "@/lib/admin-auth";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
-  if (!isAdminPasswordConfigured()) {
+  if (!isCmsAuthConfigured()) {
     return NextResponse.json(
-      { error: "ADMIN_PASSWORD must be set in production. Add ADMIN_PASSWORD on your server or in .env." },
+      {
+        error:
+          "CMS auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL_WEBSITE and NEXT_PUBLIC_SUPABASE_ANON_KEY_WEBSITE.",
+      },
       { status: 503 },
     );
   }
@@ -23,18 +23,32 @@ export async function POST(req: Request) {
 
   const email =
     typeof body === "object" && body !== null && "email" in body && typeof (body as { email: unknown }).email === "string"
-      ? (body as { email: string }).email
+      ? (body as { email: string }).email.trim()
       : "";
   const password =
     typeof body === "object" && body !== null && "password" in body && typeof (body as { password: unknown }).password === "string"
       ? (body as { password: string }).password
       : "";
 
-  const expected = getEffectiveAdminCredentials();
-  if (!email || !password || !expected || email !== expected.email || password !== expected.password) {
+  if (!email || !password) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  await setAdminSessionCookie();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error || !data.user) {
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }
+
+  const allowed = await isAdminUserId(data.user.id, data.user.email);
+  if (!allowed) {
+    await supabase.auth.signOut();
+    return NextResponse.json(
+      { error: "This account is not authorized for admin access. Ask an owner to add you in admin_users." },
+      { status: 403 },
+    );
+  }
+
   return NextResponse.json({ ok: true });
 }

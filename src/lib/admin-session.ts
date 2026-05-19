@@ -1,80 +1,46 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "crypto";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isAdminUserId, isCmsAuthConfigured } from "@/lib/admin-auth";
 
-import { cookies } from "next/headers";
+export { isCmsAuthConfigured };
 
-import { DEV_FALLBACK_ADMIN_EMAIL, DEV_FALLBACK_ADMIN_PASSWORD } from "@/constants/admin-auth";
-
-export const ADMIN_COOKIE_NAME = "petrosphere_admin";
-
-export type EffectiveAdminCredentials = { email: string; password: string };
-
-/** Resolved credentials used for login. */
-export function getEffectiveAdminCredentials(): EffectiveAdminCredentials | undefined {
-  const envPassword = process.env.ADMIN_PASSWORD;
-  if (envPassword?.length) {
-    const email = process.env.ADMIN_EMAIL?.trim() || DEV_FALLBACK_ADMIN_EMAIL;
-    return { email, password: envPassword };
-  }
-  if (process.env.NODE_ENV !== "production") {
-    return { email: DEV_FALLBACK_ADMIN_EMAIL, password: DEV_FALLBACK_ADMIN_PASSWORD };
-  }
-  return undefined;
-}
-
+/** @deprecated Use isCmsAuthConfigured */
 export function isAdminPasswordConfigured(): boolean {
-  return Boolean(getEffectiveAdminCredentials()?.password?.length);
+  return isCmsAuthConfigured();
 }
 
+/** @deprecated Env-password fallback removed; always false */
 export function usesDevelopmentAdminFallback(): boolean {
-  return process.env.NODE_ENV !== "production" && !process.env.ADMIN_PASSWORD?.length;
-}
-
-function signingSecret(): string | undefined {
-  const creds = getEffectiveAdminCredentials();
-  return process.env.ADMIN_SESSION_SECRET?.length ? process.env.ADMIN_SESSION_SECRET : creds?.password;
+  return false;
 }
 
 export async function verifyAdminSession(): Promise<boolean> {
-  const secret = signingSecret();
-  if (!secret) return false;
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-  if (!token || !token.includes(".")) return false;
-  const dot = token.indexOf(".");
-  const payloadB64 = token.slice(0, dot);
-  const sigHex = token.slice(dot + 1);
-  const expectedSig = createHmac("sha256", secret).update(payloadB64).digest("hex");
+  if (!isCmsAuthConfigured()) return false;
+
   try {
-    if (sigHex.length !== expectedSig.length) return false;
-    if (!timingSafeEqual(Buffer.from(sigHex), Buffer.from(expectedSig))) return false;
-    const json = Buffer.from(payloadB64, "base64url").toString("utf-8");
-    const payload = JSON.parse(json) as { exp?: number };
-    if (typeof payload.exp !== "number" || payload.exp < Date.now()) return false;
-    return true;
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) return false;
+    return isAdminUserId(user.id, user.email);
   } catch {
     return false;
   }
 }
 
-export async function setAdminSessionCookie(): Promise<void> {
-  const secret = signingSecret();
-  if (!secret) throw new Error("ADMIN_PASSWORD or ADMIN_SESSION_SECRET is not set");
-  const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
-  const payloadB64 = Buffer.from(JSON.stringify({ exp })).toString("base64url");
-  const sigHex = createHmac("sha256", secret).update(payloadB64).digest("hex");
-  const cookieStore = await cookies();
-  cookieStore.set(ADMIN_COOKIE_NAME, `${payloadB64}.${sigHex}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60,
-  });
-}
+export async function getAdminSessionUser(): Promise<{ id: string; email: string } | null> {
+  if (!isCmsAuthConfigured()) return null;
 
-export async function clearAdminSessionCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_COOKIE_NAME);
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) return null;
+  if (!(await isAdminUserId(user.id, user.email))) return null;
+  return { id: user.id, email: user.email };
 }

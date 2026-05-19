@@ -143,17 +143,10 @@ function FormDividerOr() {
   );
 }
 
-export function AdminLoginForm({
-  passwordConfigured,
-  defaultDevPassword,
-}: {
-  passwordConfigured: boolean;
-  /** Prefills the field in dev so you can sign in immediately */
-  defaultDevPassword?: string | null;
-}) {
+export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@petrosphere.local");
-  const [password, setPassword] = useState(() => defaultDevPassword ?? "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -191,12 +184,19 @@ export function AdminLoginForm({
         {/* Form panel */}
         <div className="flex flex-1 flex-col bg-black px-5 pb-14 pt-8 sm:px-10 lg:justify-center lg:px-14 lg:py-16 xl:px-20">
           <div className="mx-auto w-full max-w-[420px]">
-            {!passwordConfigured ? (
+            {!authConfigured ? (
               <div>
                 <h2 className="admin-title text-3xl font-bold tracking-tight text-white">Setup required</h2>
                 <p className="mt-2 text-[15px] leading-relaxed text-neutral-400">
-                  Set <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">ADMIN_PASSWORD</code> in{" "}
-                  <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">.env.local</code>, restart the dev
+                  Set{" "}
+                  <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">
+                    NEXT_PUBLIC_SUPABASE_URL_WEBSITE
+                  </code>{" "}
+                  and{" "}
+                  <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">
+                    NEXT_PUBLIC_SUPABASE_ANON_KEY_WEBSITE
+                  </code>{" "}
+                  in <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">.env.local</code>, restart the dev
                   server, then reload.
                 </p>
                 <Button
@@ -272,7 +272,11 @@ export function AdminLoginForm({
                         {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
                       </button>
                     </div>
-                    <p className="text-[13px] text-neutral-600">Secure credentials required for administrator access.</p>
+                    <p className="text-[13px] text-neutral-600">
+                    Use your Supabase Auth account. New users must be added to{" "}
+                    <code className="font-mono text-neutral-500">admin_users</code> (or listed in{" "}
+                    <code className="font-mono text-neutral-500">ADMIN_BOOTSTRAP_EMAILS</code>).
+                  </p>
                   </div>
 
                   <button
