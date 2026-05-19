@@ -154,26 +154,31 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
   if (statsRes.error) throw statsRes.error;
 
   const authored = (authoredRes.data ?? []).map((r) => rowToNewsItem({ ...r, id: r.id }));
-  const overrides = (overridesRes.data ?? [])
-    .filter((r): r is typeof r & { slug: string; title: string; category: string; published_at: string } =>
-      Boolean(r.slug && r.title && r.category && r.published_at),
-    )
-    .map((r) =>
-      rowToNewsItem({
-        id: `override-${r.slug}`,
-        slug: r.slug,
-        category: r.category,
-        title: r.title,
-        published_at: r.published_at,
-        summary: r.summary ?? "",
-        image_src: r.image_src ?? "",
-        body: r.body ?? [],
-        external: r.external,
-        external_href: r.external_href,
-        cta: r.cta,
-        location: r.location,
-      }),
-    );
+  const overridesByCanonical = new Map<string, CompanyNewsItem>();
+  for (const r of overridesRes.data ?? []) {
+    if (!r.slug || !r.title || !r.category || !r.published_at) continue;
+    const item = rowToNewsItem({
+      id: `override-${r.slug}`,
+      slug: r.slug,
+      category: r.category,
+      title: r.title,
+      published_at: r.published_at,
+      summary: r.summary ?? "",
+      image_src: r.image_src ?? "",
+      body: r.body ?? [],
+      external: r.external,
+      external_href: r.external_href,
+      cta: r.cta,
+      location: r.location,
+    });
+    const key = canonicalNewsSlug(item.slug);
+    const existing = overridesByCanonical.get(key);
+    // Prefer the row whose stored slug is already canonical (no URL-encoded emoji).
+    if (!existing || (existing.slug.includes("%") && !item.slug.includes("%"))) {
+      overridesByCanonical.set(key, item);
+    }
+  }
+  const overrides = Array.from(overridesByCanonical.values());
 
   const removedNewsSlugs = (hiddenRes.data ?? []).map((r) => r.slug);
 
@@ -192,6 +197,10 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     label: r.label,
   }));
 
+  await pruneDuplicateFetchedOverrides(db).catch((e) => {
+    console.error("Failed to prune duplicate news overrides:", e);
+  });
+
   return {
     news: [...authored, ...overrides],
     authoredNews: authored,
@@ -206,6 +215,38 @@ function stableStringify(obj: unknown): string {
   return JSON.stringify(obj, (_k, v) => (v === undefined ? undefined : v));
 }
 
+/** Remove legacy override rows whose slug differs only by emoji / URL encoding. */
+async function pruneDuplicateFetchedOverrides(db: ReturnType<typeof createCmsAdminClient>): Promise<void> {
+  const { data: rows, error } = await db.from("news_fetched_overrides").select("slug");
+  if (error || !rows?.length) return;
+
+  const groups = new Map<string, string[]>();
+  for (const r of rows) {
+    if (!r.slug) continue;
+    const key = canonicalNewsSlug(r.slug);
+    const list = groups.get(key) ?? [];
+    list.push(r.slug);
+    groups.set(key, list);
+  }
+
+  const toDelete: string[] = [];
+  for (const [canonical, slugs] of groups) {
+    if (slugs.length <= 1) continue;
+    const keep =
+      slugs.find((s) => canonicalNewsSlug(s) === s && !s.includes("%")) ??
+      slugs.find((s) => canonicalNewsSlug(s) === canonical) ??
+      canonical;
+    for (const s of slugs) {
+      if (s !== keep) toDelete.push(s);
+    }
+  }
+
+  if (toDelete.length) {
+    const { error: delErr } = await db.from("news_fetched_overrides").delete().in("slug", toDelete);
+    if (delErr) throw delErr;
+  }
+}
+
 export async function persistCmsToSupabase(payload: {
   baseline: SiteContentSnapshot;
   data: SiteContentSnapshot;
@@ -213,8 +254,8 @@ export async function persistCmsToSupabase(payload: {
   const { baseline, data } = payload;
   const db = createCmsAdminClient();
 
-  const baseBySlug = new Map(baseline.news.map((n) => [n.slug, n]));
-  const dataBySlug = new Map(data.news.map((n) => [n.slug, n]));
+  const baseBySlug = new Map(baseline.news.map((n) => [canonicalNewsSlug(n.slug), n]));
+  const dataBySlug = new Map(data.news.map((n) => [canonicalNewsSlug(n.slug), n]));
 
   const authored = data.news.filter((n) => isAuthoredNewsId(n.id));
   const authoredIds = authored.map((n) => n.id);
@@ -236,7 +277,8 @@ export async function persistCmsToSupabase(payload: {
 
   for (const item of data.news) {
     if (isAuthoredNewsId(item.id)) continue;
-    const base = baseBySlug.get(item.slug);
+    const key = canonicalNewsSlug(item.slug);
+    const base = baseBySlug.get(key);
     if (!base) continue;
     if (stableStringify(base) !== stableStringify(item)) {
       overrideUpserts.push(newsItemToOverrideRow(item));
@@ -248,8 +290,10 @@ export async function persistCmsToSupabase(payload: {
     if (error) throw error;
   }
 
+  await pruneDuplicateFetchedOverrides(db);
+
   const { data: existingHidden } = await db.from("news_fetched_hidden").select("slug");
-  const existingHiddenSet = new Set((existingHidden ?? []).map((r) => r.slug));
+  const existingHiddenSet = new Set((existingHidden ?? []).map((r) => canonicalNewsSlug(r.slug)));
 
   const targetHidden = new Set<string>();
 

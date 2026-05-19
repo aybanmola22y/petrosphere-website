@@ -76,6 +76,22 @@ function splitStoredNews(stored: StoredShape | null): StoredNewsParts {
   };
 }
 
+function withCanonicalNewsSlug(item: CompanyNewsItem): CompanyNewsItem {
+  const slug = canonicalNewsSlug(item.slug);
+  return slug === item.slug ? item : { ...item, slug };
+}
+
+/** Collapse emoji/encoded slug variants (e.g. …-princesa vs …-%f0%9f%8c%8a). */
+function dedupeNewsByCanonicalSlug(items: CompanyNewsItem[]): CompanyNewsItem[] {
+  const bySlug = new Map<string, CompanyNewsItem>();
+  for (const item of items) {
+    const key = canonicalNewsSlug(item.slug);
+    if (!key) continue;
+    bySlug.set(key, withCanonicalNewsSlug(item));
+  }
+  return Array.from(bySlug.values());
+}
+
 function mergeNewsFromParts(
   fetched: CompanyNewsItem[],
   authored: CompanyNewsItem[],
@@ -83,13 +99,18 @@ function mergeNewsFromParts(
   hiddenSlugs: string[],
 ): CompanyNewsItem[] {
   const bySlug = new Map<string, CompanyNewsItem>();
-  for (const item of fetched) bySlug.set(item.slug, item);
-  for (const item of overrides) bySlug.set(item.slug, item);
-  for (const item of authored) bySlug.set(item.slug, item);
+  const put = (item: CompanyNewsItem) => {
+    const key = canonicalNewsSlug(item.slug);
+    if (!key) return;
+    bySlug.set(key, withCanonicalNewsSlug(item));
+  };
+  for (const item of fetched) put(item);
+  for (const item of overrides) put(item);
+  for (const item of authored) put(item);
 
-  const hidden = new Set(hiddenSlugs.map((s) => s.toLowerCase()));
+  const hidden = new Set(hiddenSlugs.map((s) => canonicalNewsSlug(s)));
   return Array.from(bySlug.values())
-    .filter((n) => !hidden.has(n.slug.toLowerCase()))
+    .filter((n) => !hidden.has(canonicalNewsSlug(n.slug)))
     .sort(compareNewsNewestFirst);
 }
 
@@ -125,12 +146,17 @@ async function readStoredForPublic(): Promise<StoredShape | null> {
 
 function applyNewsOverrides(base: CompanyNewsItem[], overrides?: CompanyNewsItem[], removedSlugs?: string[]): CompanyNewsItem[] {
   const bySlug = new Map<string, CompanyNewsItem>();
-  for (const item of base) bySlug.set(item.slug, item);
+  const put = (item: CompanyNewsItem) => {
+    const key = canonicalNewsSlug(item.slug);
+    if (!key) return;
+    bySlug.set(key, withCanonicalNewsSlug(item));
+  };
+  for (const item of base) put(item);
   if (overrides) {
-    for (const item of overrides) bySlug.set(item.slug, item);
+    for (const item of overrides) put(item);
   }
-  const removed = new Set((removedSlugs ?? []).map((s) => s.toLowerCase()));
-  return Array.from(bySlug.values()).filter((n) => !removed.has(n.slug.toLowerCase()));
+  const removed = new Set((removedSlugs ?? []).map((s) => canonicalNewsSlug(s)));
+  return Array.from(bySlug.values()).filter((n) => !removed.has(canonicalNewsSlug(n.slug)));
 }
 
 export function getCompanyNewsForSite(): CompanyNewsItem[] {
@@ -165,9 +191,15 @@ function compareNewsNewestFirst(a: CompanyNewsItem, b: CompanyNewsItem): number 
 
 function mergeNewsPreferLocal(local: CompanyNewsItem[], incoming: CompanyNewsItem[]): CompanyNewsItem[] {
   const bySlug = new Map<string, CompanyNewsItem>();
-  for (const item of local) bySlug.set(item.slug, item);
+  const put = (item: CompanyNewsItem) => {
+    const key = canonicalNewsSlug(item.slug);
+    if (!key) return;
+    bySlug.set(key, withCanonicalNewsSlug(item));
+  };
+  for (const item of local) put(item);
   for (const item of incoming) {
-    if (!bySlug.has(item.slug)) bySlug.set(item.slug, item);
+    const key = canonicalNewsSlug(item.slug);
+    if (key && !bySlug.has(key)) put(item);
   }
   return Array.from(bySlug.values()).sort(compareNewsNewestFirst);
 }
@@ -239,12 +271,12 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
 
-  const fetched = await getCachedPetrosphereNews(limit).catch(() => []);
+  const fetched = dedupeNewsByCanonicalSlug(await getCachedPetrosphereNews(limit).catch(() => []));
 
   let hydrated: CompanyNewsItem[] = fetched;
   if (hydrateBodies && fetched.length) {
-    const existingSlugs = new Set([...authored, ...overrides].map((n) => n.slug));
-    const toHydrate = fetched.filter((n) => !existingSlugs.has(n.slug)).slice(0, limit);
+    const existingSlugs = new Set([...authored, ...overrides].map((n) => canonicalNewsSlug(n.slug)));
+    const toHydrate = fetched.filter((n) => !existingSlugs.has(canonicalNewsSlug(n.slug))).slice(0, limit);
     const hydratedNew = await Promise.all(
       toHydrate.map(async (n) => {
         const src = n.externalHref;
@@ -253,8 +285,8 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
       }),
     );
 
-    const hydratedBySlug = new Map(hydratedNew.map((n) => [n.slug, n]));
-    hydrated = fetched.map((n) => hydratedBySlug.get(n.slug) ?? n);
+    const hydratedBySlug = new Map(hydratedNew.map((n) => [canonicalNewsSlug(n.slug), n]));
+    hydrated = fetched.map((n) => hydratedBySlug.get(canonicalNewsSlug(n.slug)) ?? n);
   }
 
   if (!hydrated.length) return base;

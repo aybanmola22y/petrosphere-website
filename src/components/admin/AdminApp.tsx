@@ -81,6 +81,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { canonicalNewsSlug } from "@/lib/news-slug";
 import { cn } from "@/lib/utils";
 
 type AdminTab = "overview" | "news" | "videos" | "stats";
@@ -101,8 +102,9 @@ function cloneSnapshot(s: SiteContentSnapshot): SiteContentSnapshot {
 function validateSnapshot(s: SiteContentSnapshot): string | null {
   const slugs = new Set<string>();
   for (const item of s.news) {
-    if (slugs.has(item.slug)) return `Duplicate slug: ${item.slug}`;
-    slugs.add(item.slug);
+    const key = canonicalNewsSlug(item.slug);
+    if (slugs.has(key)) return `Duplicate slug: ${item.slug}`;
+    slugs.add(key);
   }
   const ids = new Set<string>();
   for (const v of s.videoTestimonials) {
