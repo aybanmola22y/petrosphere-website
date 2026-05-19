@@ -5,11 +5,14 @@ import { Newspaper } from "lucide-react";
 import { FiArrowUpRight, FiMapPin } from "react-icons/fi";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
-import { formatCompanyNewsDate, newsReferenceLabel } from "@/data/companyNews";
+import { formatCompanyNewsDate, newsDisplayLocation, newsReferenceLabel } from "@/data/companyNews";
+import { isSafeExternalUrl } from "@/lib/security";
 import { cn } from "@/lib/utils";
 
 function detailHref(item: CompanyNewsItem): string {
-  if (item.external && item.externalHref) return item.externalHref;
+  if (item.external && item.externalHref && isSafeExternalUrl(item.externalHref)) {
+    return item.externalHref;
+  }
   return `/news/${item.slug}`;
 }
 
@@ -112,7 +115,7 @@ export function NewsGridCard({
 
           <p className="mb-6 flex min-h-11.5 items-start gap-2 text-sm leading-snug text-muted-foreground">
             <FiMapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary/80" aria-hidden />
-            <span className="line-clamp-2 leading-snug">Nationwide · Puerto Princesa</span>
+            <span className="line-clamp-2 leading-snug">{newsDisplayLocation(item)}</span>
           </p>
 
           <div className="mt-auto flex shrink-0 flex-col pt-1">

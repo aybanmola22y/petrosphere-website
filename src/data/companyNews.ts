@@ -26,7 +26,16 @@ export type CompanyNewsItem = {
   externalHref?: string;
   /** Optional footer CTA on article page */
   cta?: { label: string; href: string };
+  /** Shown on news cards with the map pin (e.g. "Nationwide · Puerto Princesa"). */
+  location?: string;
 };
+
+export const DEFAULT_NEWS_LOCATION = "Nationwide · Puerto Princesa";
+
+export function newsDisplayLocation(item: Pick<CompanyNewsItem, "location">): string {
+  const value = item.location?.trim();
+  return value || DEFAULT_NEWS_LOCATION;
+}
 
 /** Accept legacy `string[]` snapshots from admin JSON. */
 export function normalizeNewsBody(body: string[] | NewsBodyBlock[] | undefined): NewsBodyBlock[] {

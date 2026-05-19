@@ -1,15 +1,49 @@
 import { z } from "zod";
 
+import {
+  isSafeAssetHref,
+  isSafeContentId,
+  isSafeExternalUrl,
+  isSafeNavHref,
+  isSafeSlug,
+} from "@/lib/security";
+
 const newsCategories = ["CSR", "HSE NEWS", "NEWS", "PARTNERSHIP", "TRAINING"] as const;
 
+const safeSlug = z
+  .string()
+  .min(1)
+  .max(120)
+  .refine((s) => isSafeSlug(s), { message: "Invalid slug format" });
+
+const safeContentId = z
+  .string()
+  .min(1)
+  .max(128)
+  .refine((s) => isSafeContentId(s), { message: "Invalid id format" });
+
+const safeAssetHref = z
+  .string()
+  .min(1)
+  .refine((s) => isSafeAssetHref(s), { message: "Asset URL must be http(s) or a site path" });
+
+const safeExternalHref = z
+  .string()
+  .refine((s) => isSafeExternalUrl(s), { message: "External link must be a valid http(s) URL" });
+
+const safeNavHref = z
+  .string()
+  .min(1)
+  .refine((s) => isSafeNavHref(s), { message: "Link must be a valid http(s) URL or site path" });
+
 const newsItemSchema = z.object({
-  id: z.string().min(1),
-  slug: z.string().min(1),
+  id: safeContentId,
+  slug: safeSlug,
   category: z.enum(newsCategories),
   title: z.string().min(1),
   publishedAt: z.string().min(1),
   summary: z.string(),
-  imageSrc: z.string().min(1),
+  imageSrc: safeAssetHref,
   body: z.preprocess(
     (val) => {
       if (!Array.isArray(val)) return val;
@@ -22,25 +56,31 @@ const newsItemSchema = z.object({
         z.discriminatedUnion("type", [
           z.object({ type: z.literal("paragraph"), text: z.string() }),
           z.object({ type: z.literal("heading"), text: z.string() }),
-          z.object({ type: z.literal("image"), src: z.string(), alt: z.string().optional() }),
+          z.object({ type: z.literal("image"), src: safeAssetHref, alt: z.string().optional() }),
         ]),
       )
       .min(1),
   ),
   external: z.boolean().optional(),
-  externalHref: z.string().optional(),
-  cta: z.object({ label: z.string(), href: z.string() }).optional(),
+  externalHref: z
+    .string()
+    .optional()
+    .refine((s) => !s?.trim() || isSafeExternalUrl(s), {
+      message: "External link must be a valid http(s) URL",
+    }),
+  cta: z.object({ label: z.string(), href: safeNavHref }).optional(),
+  location: z.string().optional(),
 });
 
 const videoSchema = z
   .object({
-    id: z.string().min(1),
+    id: safeContentId,
     studentName: z.string().min(1),
     credential: z.string(),
     summary: z.string(),
     youtubeVideoId: z.string(),
     videoSrc: z.string().optional(),
-    posterSrc: z.string().min(1),
+    posterSrc: safeAssetHref,
   })
   .refine((v) => Boolean(v.videoSrc?.trim()) || Boolean(v.youtubeVideoId?.trim()), {
     message: "Each testimonial needs a YouTube video ID or an uploaded video file.",

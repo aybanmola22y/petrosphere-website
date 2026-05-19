@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { GraduationCap, BookOpenCheck, Briefcase } from "lucide-react";
@@ -11,6 +12,18 @@ import type { CompanyNewsItem } from "@/data/companyNews";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import type { SiteStat } from "@/types/site-content";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+
+const LoopingTypewriter = dynamic(
+  () => import("@/components/ui/LoopingTypewriter").then((m) => m.LoopingTypewriter),
+  {
+    ssr: false,
+    loading: () => (
+      <span className="inline-block min-h-[1.1em] w-[2ch]" aria-hidden>
+        &nbsp;
+      </span>
+    ),
+  },
+);
 import { CourseCard } from "@/components/ui/CourseCard";
 import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { LatestUpdatesSection } from "@/components/sections/LatestUpdatesSection";
@@ -53,7 +66,9 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-display-1 text-foreground mb-8 text-balance"
           >
-            Enterprise compliance,<br /> engineered for scale.
+            Petrosphere Incorporated.
+            <br />
+            <LoopingTypewriter text="Where Quality Matters." />
           </motion.h1>
 
           <motion.p
@@ -62,7 +77,7 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-muted-foreground mb-12 max-w-2xl text-balance leading-relaxed"
           >
-            Deploy rigorous, standardized competence programs across your entire workforce. We partner with the world's leading industrial firms to protect lives and optimize performance.
+            We deliver world-class technical and training services that cater to the need of oil and gas, construction, mining and healthcare industries.
           </motion.p>
 
           <motion.div
@@ -275,14 +290,9 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
-            {featuredCourses.map((course, index) => (
-              <div
-                key={course.id}
-                className={index === 3 ? "md:col-span-2 md:col-start-2" : "md:col-span-2"}
-              >
-                <CourseCard course={course} />
-              </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {featuredCourses.map((course) => (
+              <CourseCard key={course.id} course={course} />
             ))}
           </div>
         </div>

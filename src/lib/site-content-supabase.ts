@@ -28,6 +28,7 @@ function rowToNewsItem(row: {
   external?: boolean | null;
   external_href?: string | null;
   cta?: Json | null;
+  location?: string | null;
 }): CompanyNewsItem {
   return {
     id: row.id ?? row.slug,
@@ -41,6 +42,7 @@ function rowToNewsItem(row: {
     external: row.external ?? undefined,
     externalHref: row.external_href ?? undefined,
     cta: (row.cta as CompanyNewsItem["cta"]) ?? undefined,
+    location: row.location?.trim() || undefined,
   };
 }
 
@@ -57,6 +59,7 @@ function newsItemToAuthoredRow(item: CompanyNewsItem) {
     external: item.external ?? false,
     external_href: item.externalHref ?? null,
     cta: (item.cta as Json) ?? null,
+    location: item.location?.trim() || null,
   };
 }
 
@@ -72,6 +75,7 @@ function newsItemToOverrideRow(item: CompanyNewsItem) {
     external: item.external ?? null,
     external_href: item.externalHref ?? null,
     cta: (item.cta as Json) ?? null,
+    location: item.location?.trim() || null,
   };
 }
 
@@ -120,6 +124,7 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
         external: r.external,
         external_href: r.external_href,
         cta: r.cta,
+        location: r.location,
       }),
     );
 

@@ -17,6 +17,7 @@ export type Database = {
           external: boolean;
           external_href: string | null;
           cta: Json | null;
+          location: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -39,6 +40,7 @@ export type Database = {
           external: boolean | null;
           external_href: string | null;
           cta: Json | null;
+          location: string | null;
           updated_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["news_fetched_overrides"]["Row"], "updated_at"> & {

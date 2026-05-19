@@ -148,7 +148,7 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
 
   return (
     <div className="min-h-screen bg-background pt-28 pb-24 md:pt-32 md:pb-32">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto min-w-0 px-6">
         <SectionHeader
           eyebrow="Training calendar"
           title="Schedule"
@@ -267,26 +267,29 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
             </div>
           </Card>
         ) : view === "table" ? (
-          <Card className="overflow-hidden rounded-2xl border-border shadow-sm">
-            <Table>
+          <Card className="max-w-full min-w-0 rounded-2xl border-border shadow-sm">
+            <p className="border-b border-border px-4 py-2.5 text-xs text-muted-foreground md:hidden">
+              Swipe sideways to view all columns
+            </p>
+            <Table className="min-w-[52rem]">
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="min-w-[12rem] px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Training course
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="whitespace-nowrap px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Schedule date
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="min-w-[7rem] px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Location
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="whitespace-nowrap px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Status
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Registration Fee
+                  <TableHead className="whitespace-nowrap px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Registration fee
                   </TableHead>
-                  <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">
+                  <TableHead className="min-w-[6.5rem] whitespace-nowrap px-4 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Action
                   </TableHead>
                 </TableRow>
@@ -294,7 +297,7 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
               <TableBody>
                 {sorted.map((session) => (
                   <TableRow key={session.id} className="border-border">
-                    <TableCell className="align-top py-6 max-w-md">
+                    <TableCell className="max-w-md min-w-[12rem] px-4 py-6 align-top">
                       <div className="font-semibold text-foreground leading-snug">
                         {session.courseTitle}
                       </div>
@@ -312,23 +315,23 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
                         </Link>
                       </div>
                     </TableCell>
-                    <TableCell className="align-top py-6 whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap px-4 py-6 align-top">
                       <div className="font-semibold text-foreground">{session.dateRange}</div>
                       <div className="text-sm text-muted-foreground">{session.year}</div>
                     </TableCell>
-                    <TableCell className="align-top py-6">
+                    <TableCell className="min-w-[7rem] px-4 py-6 align-top">
                       <span className="inline-flex items-start gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary/70" />
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
                         {session.location}
                       </span>
                     </TableCell>
-                    <TableCell className="align-top py-6">
+                    <TableCell className="whitespace-nowrap px-4 py-6 align-top">
                       <StatusCell status={session.status} />
                     </TableCell>
                     <TableCell className="align-top py-6 font-medium text-foreground">
                       {session.price || "—"}
                     </TableCell>
-                    <TableCell className="align-top py-6 text-right">
+                    <TableCell className="whitespace-nowrap px-4 py-6 text-right align-top">
                       <ActionCell session={session} />
                     </TableCell>
                   </TableRow>

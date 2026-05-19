@@ -205,14 +205,38 @@ export function Navbar() {
   const handleEnter = (name: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     setOpenMenu(name);
+    if (name === "Courses") {
+      const firstWithGroups = NAV.find((n) => n.name === name)?.children?.find((c) => c.groups?.length);
+      if (firstWithGroups) setOpenSub(firstWithGroups.name);
+    }
+  };
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
   };
 
   const handleLeave = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
+    cancelClose();
     closeTimer.current = setTimeout(() => {
       setOpenMenu(null);
       setOpenSub(null);
-    }, 140);
+    }, 250);
+  };
+
+  const handleMenuPointerLeave = (
+    e: React.PointerEvent<HTMLElement>,
+    hasChildren: boolean
+  ) => {
+    if (!hasChildren) return;
+    const related = e.relatedTarget;
+    if (related instanceof Node && e.currentTarget.contains(related)) return;
+    handleLeave();
+  };
+
+  const handleSubEnter = (child: SubLink) => {
+    cancelClose();
+    if (child.groups?.length) setOpenSub(child.name);
+    // Keep the mega panel open when crossing link-only rows (e.g. CPD, Maritime).
   };
 
   const isActive = (href: string) => {
@@ -226,7 +250,7 @@ export function Navbar() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-50 w-full overflow-visible transition-all duration-300",
         isScrolled
           ? "bg-[#00044a]/95 backdrop-blur-md border-b border-white/10 py-4 shadow-sm"
           : "bg-[#00044a]/90 backdrop-blur-sm py-5"
@@ -242,17 +266,17 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-1 overflow-visible">
           {NAV.map((item) => {
             const hasChildren = !!item.children?.length;
             const active = isActive(item.href);
-            const activeSubLink = item.children?.find((c) => c.name === openSub);
+            const activeSubLink = item.children?.find((c) => c.name === openSub && c.groups?.length);
             return (
               <div
                 key={item.name}
                 className="relative"
-                onMouseEnter={() => hasChildren && handleEnter(item.name)}
-                onMouseLeave={() => hasChildren && handleLeave()}
+                onPointerEnter={() => hasChildren && handleEnter(item.name)}
+                onPointerLeave={(e) => handleMenuPointerLeave(e, hasChildren)}
               >
                 {isExternalHref(item.href) ? (
                   <a
@@ -291,21 +315,24 @@ export function Navbar() {
                 )}
 
                 {hasChildren && openMenu === item.name && (
-                  <div
-                    className="absolute left-1/2 -translate-x-1/2 top-full pt-3 z-50 flex items-start"
-                    onMouseEnter={() => handleEnter(item.name)}
-                    onMouseLeave={handleLeave}
-                  >
-                    {/* Primary panel */}
-                    <div className="rounded-xl border border-border bg-background shadow-lg overflow-hidden p-2 w-64">
-                      {item.children!.map((child) => {
-                        const hasGroups = !!child.groups?.length;
-                        const isOpen = openSub === child.name;
-                        return (
-                          <div
-                            key={child.name}
-                            onMouseEnter={() => setOpenSub(hasGroups ? child.name : null)}
-                          >
+                  <div className="absolute left-1/2 top-full z-[100] w-max -translate-x-1/2">
+                    <div className="h-2" aria-hidden />
+                    <div
+                      className="flex min-h-[22rem] items-stretch rounded-xl border border-border bg-background shadow-lg"
+                      onPointerMove={cancelClose}
+                    >
+                      <div
+                        className="w-64 shrink-0 border-r border-border p-2"
+                        onPointerEnter={cancelClose}
+                      >
+                        {item.children!.map((child) => {
+                          const hasGroups = !!child.groups?.length;
+                          const isOpen = openSub === child.name;
+                          return (
+                            <div
+                              key={child.name}
+                              onPointerEnter={() => handleSubEnter(child)}
+                            >
                             <Link
                               href={child.href}
                               className={cn(
@@ -321,23 +348,32 @@ export function Navbar() {
                               )}
                             </Link>
                           </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
 
-                    {/* Secondary mega panel for child.groups */}
-                    {activeSubLink?.groups && (
                       <div
                         className={cn(
-                          "ml-2 rounded-xl border border-border bg-background shadow-lg p-6 grid gap-x-8 gap-y-6",
-                          activeSubLink.groups.length === 1
-                            ? "w-72 grid-cols-1"
-                            : "w-[min(640px,calc(100vw-2rem))] max-w-[640px] grid-cols-2"
+                          "min-h-[22rem] shrink-0 p-6",
+                          activeSubLink?.groups
+                            ? activeSubLink.groups.length === 1
+                              ? "w-72"
+                              : "w-[min(640px,calc(100vw-2rem))] max-w-[640px]"
+                            : "hidden"
                         )}
-                        onMouseEnter={() => setOpenSub(activeSubLink.name)}
+                        onPointerEnter={() => activeSubLink && handleSubEnter(activeSubLink)}
                       >
-                        {activeSubLink.groups.map((group) => (
-                          <div key={group.name} className="flex flex-col gap-2">
+                        {activeSubLink?.groups && (
+                          <div
+                            className={cn(
+                              "grid gap-x-8 gap-y-6",
+                              activeSubLink.groups.length === 1
+                                ? "grid-cols-1"
+                                : "grid-cols-2"
+                            )}
+                          >
+                            {activeSubLink.groups.map((group) => (
+                              <div key={group.name} className="flex flex-col gap-2">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="w-1 h-1 rounded-full bg-accent" />
                               <h4 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
@@ -355,10 +391,12 @@ export function Navbar() {
                                 </Link>
                               ))}
                             </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>

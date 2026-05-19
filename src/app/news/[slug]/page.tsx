@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import NewsArticle from "@/views/NewsArticle";
+import { normalizeRouteSlug, resolveTrustedSiteOrigin } from "@/lib/security";
 import {
   getCompanyNewsForSite,
   getCompanyNewsMergedAsync,
@@ -22,8 +23,9 @@ export function generateStaticParams() {
 }
 
 async function resolveArticle(slug: string) {
-  const normalized = slug.toLowerCase();
-  const local = getNewsArticleBySlug(normalized) ?? getNewsArticleBySlug(slug);
+  const normalized = normalizeRouteSlug(slug);
+  if (!normalized) return null;
+  const local = getNewsArticleBySlug(normalized);
   if (local) return local;
   return await fetchPetrosphereNewsArticleBySlug(normalized);
 }
@@ -42,14 +44,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function resolveShareOrigin(): Promise<string> {
   const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  if (host) {
-    return `${proto}://${host}`;
-  }
-  const env = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  if (env) return env;
-  return "http://localhost:3000";
+  return resolveTrustedSiteOrigin(
+    h.get("x-forwarded-host") ?? h.get("host"),
+    h.get("x-forwarded-proto"),
+  );
 }
 
 export default async function Page({ params }: Props) {

@@ -121,6 +121,7 @@ function blankNews(): CompanyNewsItem {
     title: "New story title",
     publishedAt: new Date().toISOString().slice(0, 10),
     summary: "Short summary shown on the article page and news cards.",
+    location: "Nationwide · Puerto Princesa",
     imageSrc: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
     body: [
       { type: "paragraph", text: "Opening paragraph for the article body." },
@@ -838,6 +839,17 @@ export function AdminApp({
                             </Field>
                             <Field label="Published date" hint="Format: YYYY-MM-DD">
                               <Input value={selectedNews.publishedAt} onChange={(e) => updateNews(selectedNewsIndex, { publishedAt: e.target.value })} />
+                            </Field>
+                            <Field
+                              label="Location"
+                              className="sm:col-span-2"
+                              hint='Shown on news cards with the map pin. Use a middle dot between areas, e.g. "Nationwide · Puerto Princesa".'
+                            >
+                              <Input
+                                value={selectedNews.location ?? ""}
+                                onChange={(e) => updateNews(selectedNewsIndex, { location: e.target.value })}
+                                placeholder="Nationwide · Puerto Princesa"
+                              />
                             </Field>
                             <Field label="Card image URL" className="sm:col-span-2" hint="Use a full image URL or /public path later.">
                               <Input value={selectedNews.imageSrc} onChange={(e) => updateNews(selectedNewsIndex, { imageSrc: e.target.value })} />

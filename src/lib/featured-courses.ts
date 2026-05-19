@@ -8,6 +8,7 @@ export const FEATURED_COURSE_SLUGS = [
   "mesh",
   "acls",
   "cosh",
+  "bls",
 ] as const;
 
 const SLUG_ALTERNATES: Partial<Record<(typeof FEATURED_COURSE_SLUGS)[number], string[]>> = {
@@ -62,12 +63,22 @@ function isCosh(course: Course): boolean {
   return b.includes("cosh") || b.includes("construction occupational");
 }
 
+function isBls(course: Course): boolean {
+  const b = courseBlob(course);
+  return (
+    (b.includes("bls") || b.includes("basic life support")) &&
+    !b.includes("acls") &&
+    !b.includes("pals")
+  );
+}
+
 const TITLE_MATCHERS: Record<(typeof FEATURED_COURSE_SLUGS)[number], (course: Course) => boolean> = {
   "bosh-so2": isBoshSo2,
   "bosh-so1": isBoshSo1,
   mesh: isMesh,
   acls: isAcls,
   cosh: isCosh,
+  bls: isBls,
 };
 
 function findCourseForFeaturedSlug(courses: Course[], canonical: string): Course | undefined {

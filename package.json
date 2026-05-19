@@ -8,11 +8,7 @@
     "build": "next build",
     "postbuild": "npx tsx scripts/generate-sitemap.ts",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "supabase:link": "supabase link",
-    "supabase:db:push": "supabase db push",
-    "supabase:db:reset": "supabase db reset",
-    "supabase:gen:types": "supabase gen types typescript --linked > src/lib/supabase/types/database.generated.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

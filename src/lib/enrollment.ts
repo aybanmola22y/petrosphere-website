@@ -1,6 +1,8 @@
 import type { TrainingSession } from "@/data/mockData";
 
-const EXTERNAL = /^https?:\/\//i;
+import { isExternalHref, isSafeExternalUrl } from "@/lib/security";
+
+export { isExternalHref };
 
 /** On-site registration / inquiry form for a single course (public enroll). */
 export function contactEnrollHref(_courseSlug: string): string {
@@ -13,7 +15,7 @@ export function contactCorporateHref(_courseSlug: string): string {
 
 /** Public enroll target: TMS URL when provided, otherwise same flow as course page Enroll. */
 export function sessionEnrollHref(session: TrainingSession): string {
-  return session.enrollmentUrl ?? contactEnrollHref(session.courseSlug);
+  return safeEnrollmentHref(session.enrollmentUrl) ?? contactEnrollHref(session.courseSlug);
 }
 
 /**
@@ -34,6 +36,8 @@ export function resolveEnrollHrefForCourse(
   return contactEnrollHref(courseSlug);
 }
 
-export function isExternalHref(href: string): boolean {
-  return EXTERNAL.test(href);
+/** TMS enrollment URLs must be http(s) only. */
+export function safeEnrollmentHref(href: string | undefined): string | undefined {
+  if (!href?.trim()) return undefined;
+  return isSafeExternalUrl(href) ? href.trim() : undefined;
 }

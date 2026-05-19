@@ -147,3 +147,33 @@
 .hover-lift {
   @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-sm;
 }
+
+/* Hero typewriter — smooth cursor + subtle text fade */
+.typewriter-text {
+  transition: opacity 0.2s ease-out;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-left: 0.125rem;
+  vertical-align: middle;
+  background-color: currentColor;
+  transform: translateY(-0.05em);
+  animation: typewriter-cursor 1.15s ease-in-out infinite;
+}
+
+@keyframes typewriter-cursor {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  50%,
+  92% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 1;
+  }
+}

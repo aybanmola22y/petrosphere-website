@@ -48,11 +48,6 @@ Thumbs.db
 .env.production.local
 !.env.example
 
-## Supabase CLI local state (keep migrations/ config in git)
-supabase/.branches
-supabase/.temp
-supabase/.env
-
 ## Local CMS snapshot from /admin (file storage fallback)
 site-content.local.json
 

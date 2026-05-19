@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+
+import { SafeLink } from "@/components/ui/SafeLink";
 import {
   Calendar,
   Clock,
@@ -189,12 +191,12 @@ export default function NewsArticle({ article, shareUrl, related, referenceIndex
               {article.cta ? (
                 <div className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
                   <p className="text-sm font-medium text-muted-foreground">Recommended next step</p>
-                  <Link
+                  <SafeLink
                     href={article.cta.href}
                     className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
                     {article.cta.label}
-                  </Link>
+                  </SafeLink>
                 </div>
               ) : null}
             </article>

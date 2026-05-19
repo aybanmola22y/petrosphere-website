@@ -1,9 +1,22 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isSuspiciousRequestUrl } from "@/lib/security";
 import type { Database } from "@/lib/supabase/types/database";
 
+function isAdminPath(pathname: string): boolean {
+  return pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+}
+
 export async function middleware(request: NextRequest) {
+  if (isSuspiciousRequestUrl(request.nextUrl)) {
+    return new NextResponse("Bad Request", { status: 400 });
+  }
+
+  if (!isAdminPath(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL_WEBSITE?.trim();
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_WEBSITE?.trim();
 
@@ -31,5 +44,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|xml|txt)$).*)",
+  ],
 };

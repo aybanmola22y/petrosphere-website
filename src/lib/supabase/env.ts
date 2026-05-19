@@ -81,6 +81,6 @@ export function assertSiteContentWritable(): void {
   if (isSupabaseSiteContentEnabled()) return;
   if (!isReadOnlyDeployFs()) return;
   throw new Error(
-    "Saving is not configured for this deployment. Add NEXT_PUBLIC_SUPABASE_URL_WEBSITE and SUPABASE_SERVICE_ROLE_KEY_WEBSITE (run supabase/RUN_IN_SUPABASE_SQL_EDITOR.sql in your project), or set SITE_CONTENT_STORAGE=supabase.",
+    "Saving is not configured for this deployment. Add NEXT_PUBLIC_SUPABASE_URL_WEBSITE and SUPABASE_SERVICE_ROLE_KEY_WEBSITE, or set SITE_CONTENT_STORAGE=supabase.",
   );
 }
