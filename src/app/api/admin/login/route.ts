@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { isAdminUserId, isCmsAuthConfigured } from "@/lib/admin-auth";
+import { isCmsAuthConfigured } from "@/lib/admin-auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -39,15 +39,6 @@ export async function POST(req: Request) {
 
   if (error || !data.user) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-  }
-
-  const allowed = await isAdminUserId(data.user.id, data.user.email);
-  if (!allowed) {
-    await supabase.auth.signOut();
-    return NextResponse.json(
-      { error: "This account is not authorized for admin access. Ask an owner to add you in admin_users." },
-      { status: 403 },
-    );
   }
 
   return NextResponse.json({ ok: true });

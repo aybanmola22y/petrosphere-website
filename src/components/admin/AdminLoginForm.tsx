@@ -273,10 +273,8 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
                       </button>
                     </div>
                     <p className="text-[13px] text-neutral-600">
-                    Use your Supabase Auth account. New users must be added to{" "}
-                    <code className="font-mono text-neutral-500">admin_users</code> (or listed in{" "}
-                    <code className="font-mono text-neutral-500">ADMIN_BOOTSTRAP_EMAILS</code>).
-                  </p>
+                      Use an account from Supabase Authentication → Users. Add new teammates there, then sign in here.
+                    </p>
                   </div>
 
                   <button

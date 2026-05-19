@@ -133,18 +133,5 @@ on conflict (id) do update set
   sort_order = excluded.sort_order,
   updated_at = now();
 
--- Admin dashboard allowlist (see supabase/migrations/20250521000000_admin_users.sql)
-create table if not exists public.admin_users (
-  user_id uuid primary key references auth.users (id) on delete cascade,
-  email text not null,
-  created_at timestamptz not null default now()
-);
-create index if not exists admin_users_email_idx on public.admin_users (lower(email));
-alter table public.admin_users enable row level security;
-drop policy if exists "admin_users_select_own" on public.admin_users;
-create policy "admin_users_select_own"
-  on public.admin_users for select to authenticated using (auth.uid() = user_id);
-
--- After creating a user in Authentication → Users, grant admin access:
--- insert into public.admin_users (user_id, email)
--- select id, email from auth.users where email = 'you@petrosphere.com.ph';
+-- Optional: remove old admin allowlist table if you created it earlier
+-- drop table if exists public.admin_users;

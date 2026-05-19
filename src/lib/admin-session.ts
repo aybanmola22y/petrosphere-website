@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { isAdminUserId, isCmsAuthConfigured } from "@/lib/admin-auth";
+import { isCmsAuthConfigured } from "@/lib/admin-auth";
 
 export { isCmsAuthConfigured };
 
@@ -25,8 +25,7 @@ export async function verifyAdminSession(): Promise<boolean> {
       error,
     } = await supabase.auth.getUser();
 
-    if (error || !user) return false;
-    return isAdminUserId(user.id, user.email);
+    return !error && Boolean(user);
   } catch {
     return false;
   }
@@ -41,6 +40,5 @@ export async function getAdminSessionUser(): Promise<{ id: string; email: string
   } = await supabase.auth.getUser();
 
   if (!user?.email) return null;
-  if (!(await isAdminUserId(user.id, user.email))) return null;
   return { id: user.id, email: user.email };
 }
