@@ -113,11 +113,16 @@ async function main(): Promise<void> {
   const nestedDir = resolve(publicDir, "sitemap");
   const nestedOut = resolve(nestedDir, "sitemap.xml");
 
+  const googleOut = resolve(publicDir, "google-sitemap.xml");
+  const googleXml = urlsToSitemapXml(staticSitemapUrls(base));
+
   mkdirSync(nestedDir, { recursive: true });
   writeFileSync(mainOut, xml, "utf8");
   writeFileSync(nestedOut, xml, "utf8");
+  writeFileSync(googleOut, googleXml, "utf8");
   console.log(`Wrote ${mainOut} (${xml.length} bytes, ${deduped.size} URLs)`);
   console.log(`Wrote ${nestedOut}`);
+  console.log(`Wrote ${googleOut}`);
 }
 
 main().catch((error) => {
