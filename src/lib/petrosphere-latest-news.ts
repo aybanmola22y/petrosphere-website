@@ -2,6 +2,7 @@ import "server-only";
 
 import type { CompanyNewsItem, CompanyNewsCategory, NewsBodyBlock } from "@/data/companyNews";
 import { stripEmbeddedRelatedPosts } from "@/data/companyNews";
+import { canonicalNewsSlug, newsSlugsMatch, normalizeNewsRouteSlug } from "@/lib/news-slug";
 
 const SOURCE_URL = "https://petrosphere.com.ph/latest-news/";
 const REQUEST_HEADERS = {
@@ -69,11 +70,14 @@ function parseWpOrdinalDateToIso(input: string): string | null {
 function slugFromUrl(href: string): string {
   try {
     const u = new URL(href);
-    const path = u.pathname.replace(/^\/+|\/+$/g, "");
-    if (!path) return "latest-news";
-    return path.replaceAll("/", "-").toLowerCase();
+    const segments = u.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+    if (segments.length === 0) return "latest-news";
+    // e.g. /hse/beyond-the-shoreline-.../ → hse-beyond-the-shoreline-... (emoji stripped)
+    const slug = segments.join("-").toLowerCase();
+    return canonicalNewsSlug(slug) || "latest-news";
   } catch {
-    return href.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "latest-news";
+    const slug = href.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    return canonicalNewsSlug(slug) || "latest-news";
   }
 }
 
@@ -284,7 +288,9 @@ export async function fetchPetrosphereNewsArticleByUrl(sourceUrl: string): Promi
 }
 
 export async function fetchPetrosphereNewsArticleBySlug(slug: string): Promise<CompanyNewsItem | null> {
-  const normalizedSlug = slug.toLowerCase();
+  const normalizedSlug = normalizeNewsRouteSlug(slug) ?? canonicalNewsSlug(slug);
+  if (!normalizedSlug) return null;
+
   // Search the latest-news index pages for the matching slug, then fetch the full article page.
   const maxPages = 8;
   for (let page = 1; page <= maxPages; page++) {
@@ -294,7 +300,7 @@ export async function fetchPetrosphereNewsArticleBySlug(slug: string): Promise<C
     const parsed = parseLatestNewsHtml(html);
     if (parsed.length === 0) break;
 
-    const hit = parsed.find((p) => slugFromUrl(p.href) === normalizedSlug);
+    const hit = parsed.find((p) => newsSlugsMatch(slugFromUrl(p.href), normalizedSlug));
     if (hit?.href) {
       // Prefer index summary/image if present; body/title/date from article page.
       const article = await fetchPetrosphereNewsArticleByUrl(hit.href);

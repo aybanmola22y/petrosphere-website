@@ -3,14 +3,18 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import NewsArticle from "@/views/NewsArticle";
-import { normalizeRouteSlug, resolveTrustedSiteOrigin } from "@/lib/security";
+import { newsSlugsMatch, resolveNewsSlugParam } from "@/lib/news-slug";
+import { resolveTrustedSiteOrigin } from "@/lib/security";
 import {
   getCompanyNewsForSite,
   getCompanyNewsMergedAsync,
-  getNewsArticleBySlug,
+  getNewsArticleBySlugAsync,
   getRelatedCompanyNewsAsync,
 } from "@/lib/site-content";
-import { fetchPetrosphereNewsArticleBySlug } from "@/lib/petrosphere-latest-news";
+import {
+  fetchPetrosphereNewsArticleBySlug,
+  fetchPetrosphereNewsArticleByUrl,
+} from "@/lib/petrosphere-latest-news";
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +26,33 @@ export function generateStaticParams() {
   return getCompanyNewsForSite().map((item) => ({ slug: item.slug }));
 }
 
+async function hydrateFromExternal(item: Awaited<ReturnType<typeof getNewsArticleBySlugAsync>>) {
+  if (!item) return null;
+  if (item.externalHref && (!item.body?.length || item.body.length <= 1)) {
+    try {
+      return await fetchPetrosphereNewsArticleByUrl(item.externalHref);
+    } catch {
+      return item;
+    }
+  }
+  return item;
+}
+
 async function resolveArticle(slug: string) {
-  const normalized = normalizeRouteSlug(slug);
+  const normalized = resolveNewsSlugParam(slug);
   if (!normalized) return null;
-  const local = getNewsArticleBySlug(normalized);
-  if (local) return local;
-  return await fetchPetrosphereNewsArticleBySlug(normalized);
+
+  const fromSite = await hydrateFromExternal(await getNewsArticleBySlugAsync(slug));
+  if (fromSite) return fromSite;
+
+  const fetched = await fetchPetrosphereNewsArticleBySlug(slug);
+  if (fetched) return fetched;
+
+  const pool = await getCompanyNewsMergedAsync(100).catch(() => getCompanyNewsForSite());
+  const hit = pool.find((item) => newsSlugsMatch(item.slug, normalized));
+  if (hit) return hydrateFromExternal(hit);
+
+  return null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

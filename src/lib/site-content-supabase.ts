@@ -5,6 +5,7 @@ import { normalizeNewsBody } from "@/data/companyNews";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import { createCmsAdminClient } from "@/lib/supabase/cms-admin";
 import type { Json } from "@/lib/supabase/types/database";
+import { canonicalNewsSlug, newsSlugsMatch } from "@/lib/news-slug";
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
 /** Admin-created posts use ids like `news-1730000000000`. */
@@ -32,7 +33,7 @@ function rowToNewsItem(row: {
 }): CompanyNewsItem {
   return {
     id: row.id ?? row.slug,
-    slug: row.slug,
+    slug: canonicalNewsSlug(row.slug),
     category: row.category as CompanyNewsItem["category"],
     title: row.title,
     publishedAt: toDateString(String(row.published_at)),
@@ -49,7 +50,7 @@ function rowToNewsItem(row: {
 function newsItemToAuthoredRow(item: CompanyNewsItem) {
   return {
     id: item.id,
-    slug: item.slug,
+    slug: canonicalNewsSlug(item.slug),
     category: item.category,
     title: item.title,
     published_at: toDateString(item.publishedAt),
@@ -65,7 +66,7 @@ function newsItemToAuthoredRow(item: CompanyNewsItem) {
 
 function newsItemToOverrideRow(item: CompanyNewsItem) {
   return {
-    slug: item.slug,
+    slug: canonicalNewsSlug(item.slug),
     category: item.category,
     title: item.title,
     published_at: toDateString(item.publishedAt),
@@ -88,6 +89,52 @@ export type StoredCmsShape = {
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
 };
+
+/** Load a single news post from CMS by slug (authored or fetched override). */
+export async function fetchNewsBySlugFromCms(slug: string): Promise<CompanyNewsItem | null> {
+  const normalized = canonicalNewsSlug(slug);
+  if (!normalized) return null;
+
+  const db = createCmsAdminClient();
+
+  const [hiddenRes, authoredRes, overrideRes] = await Promise.all([
+    db.from("news_fetched_hidden").select("slug"),
+    db.from("news_authored").select("*"),
+    db.from("news_fetched_overrides").select("*"),
+  ]);
+
+  if (hiddenRes.error) throw hiddenRes.error;
+  if (authoredRes.error) throw authoredRes.error;
+  if (overrideRes.error) throw overrideRes.error;
+
+  const isHidden = (hiddenRes.data ?? []).some((r) => newsSlugsMatch(r.slug, normalized));
+  if (isHidden) return null;
+
+  const authoredRow = (authoredRes.data ?? []).find((r) => newsSlugsMatch(r.slug, normalized));
+  if (authoredRow) {
+    return rowToNewsItem({ ...authoredRow, id: authoredRow.id });
+  }
+
+  const row = (overrideRes.data ?? []).find((r) => r.slug && newsSlugsMatch(r.slug, normalized));
+  if (row?.slug && row.title && row.category && row.published_at) {
+    return rowToNewsItem({
+      id: `override-${row.slug}`,
+      slug: row.slug,
+      category: row.category,
+      title: row.title,
+      published_at: row.published_at,
+      summary: row.summary ?? "",
+      image_src: row.image_src ?? "",
+      body: row.body ?? [],
+      external: row.external,
+      external_href: row.external_href,
+      cta: row.cta,
+      location: row.location,
+    });
+  }
+
+  return null;
+}
 
 export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
   const db = createCmsAdminClient();

@@ -15,11 +15,17 @@ import {
   getSiteContentStorage,
   isSupabaseSiteContentEnabled,
 } from "@/lib/supabase/env";
-import { isAuthoredNewsId, persistCmsToSupabase, readCmsFromSupabase } from "@/lib/site-content-supabase";
+import {
+  fetchNewsBySlugFromCms,
+  isAuthoredNewsId,
+  persistCmsToSupabase,
+  readCmsFromSupabase,
+} from "@/lib/site-content-supabase";
 import {
   capVideoTestimonialsNewestFirst,
   videoTestimonialsForHomepageDisplay,
 } from "@/lib/video-testimonials";
+import { canonicalNewsSlug, newsSlugsMatch, normalizeNewsRouteSlug } from "@/lib/news-slug";
 import { getCachedCmsSnapshot, getCachedPetrosphereNews } from "@/lib/server-cache";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
@@ -268,9 +274,44 @@ export function getRelatedCompanyNews(slug: string, limit = 4): CompanyNewsItem[
 }
 
 export async function getNewsArticleBySlugAsync(slug: string): Promise<CompanyNewsItem | undefined> {
-  const normalized = slug.toLowerCase();
-  const pool = await getCompanyNewsMergedAsync(50).catch(() => getCompanyNewsForSite());
-  return pool.find((item) => item.slug.toLowerCase() === normalized);
+  const normalized = normalizeNewsRouteSlug(slug) ?? canonicalNewsSlug(slug);
+  if (!normalized) return undefined;
+
+  if (isSupabaseSiteContentEnabled()) {
+    try {
+      const fromCms = await fetchNewsBySlugFromCms(normalized);
+      if (fromCms) return fromCms;
+    } catch (e) {
+      console.error("CMS news slug lookup failed:", e);
+    }
+  }
+
+  const stored = await readStoredForPublic();
+  const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
+  const hidden = new Set(hiddenSlugs.map((s) => canonicalNewsSlug(s)));
+  if (hidden.has(normalized)) return undefined;
+
+  const localAuthored = authored.find((n) => newsSlugsMatch(n.slug, normalized));
+  if (localAuthored) return localAuthored;
+
+  const localOverride = overrides.find((n) => newsSlugsMatch(n.slug, normalized));
+  if (localOverride) return localOverride;
+
+  const fetched = await getCachedPetrosphereNews(100).catch(() => []);
+  const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
+  const fromMerged = merged.find((item) => newsSlugsMatch(item.slug, normalized));
+  if (fromMerged) {
+    if (fromMerged.externalHref && (!fromMerged.body || fromMerged.body.length <= 1)) {
+      try {
+        return await fetchPetrosphereNewsArticleByUrl(fromMerged.externalHref);
+      } catch {
+        return fromMerged;
+      }
+    }
+    return fromMerged;
+  }
+
+  return getCompanyNewsForSite().find((item) => newsSlugsMatch(item.slug, normalized));
 }
 
 export async function getRelatedCompanyNewsAsync(slug: string, limit = 4): Promise<CompanyNewsItem[]> {
