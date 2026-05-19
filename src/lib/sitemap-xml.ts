@@ -5,15 +5,16 @@ import { resolveCatalogList } from "@/lib/catalog";
 import { fetchCatalogCourses } from "@/lib/catalog-tms";
 import { getCompanyNewsForSite } from "@/lib/site-content";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  staticSitemapUrls,
+  urlsToSitemapXml,
+  type SitemapUrl,
+} from "@/lib/sitemap-xml-core";
 
 const FETCH_TIMEOUT_MS = 6_000;
 
-export type SitemapUrl = {
-  loc: string;
-  lastmod?: string;
-  changefreq?: string;
-  priority?: string;
-};
+export type { SitemapUrl } from "@/lib/sitemap-xml-core";
+export { escapeXml, urlsToSitemapXml } from "@/lib/sitemap-xml-core";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -22,15 +23,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
       setTimeout(() => reject(new Error("timeout")), ms);
     }),
   ]);
-}
-
-export function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
 }
 
 function toIsoDate(input: string | undefined): string {
@@ -46,32 +38,6 @@ function safeLoc(base: string, pathname: string): string | null {
   } catch {
     return null;
   }
-}
-
-export function urlsToSitemapXml(urls: SitemapUrl[]): string {
-  const body = urls
-    .map((entry) => {
-      const lines = [`    <loc>${escapeXml(entry.loc)}</loc>`];
-      if (entry.lastmod) lines.push(`    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`);
-      if (entry.changefreq) lines.push(`    <changefreq>${escapeXml(entry.changefreq)}</changefreq>`);
-      if (entry.priority) lines.push(`    <priority>${escapeXml(entry.priority)}</priority>`);
-      return `  <url>\n${lines.join("\n")}\n  </url>`;
-    })
-    .join("\n");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
-}
-
-function staticUrls(base: string): SitemapUrl[] {
-  const now = new Date().toISOString();
-  return [
-    { loc: base, lastmod: now, changefreq: "weekly", priority: "1" },
-    { loc: `${base}/about`, lastmod: now, changefreq: "monthly", priority: "0.8" },
-    { loc: `${base}/courses`, lastmod: now, changefreq: "daily", priority: "0.9" },
-    { loc: `${base}/schedule`, lastmod: now, changefreq: "daily", priority: "0.9" },
-    { loc: `${base}/services`, lastmod: now, changefreq: "monthly", priority: "0.75" },
-    { loc: `${base}/review`, lastmod: now, changefreq: "monthly", priority: "0.75" },
-  ];
 }
 
 async function loadCourseUrls(base: string): Promise<SitemapUrl[]> {
@@ -126,12 +92,12 @@ function loadNewsUrls(base: string): SitemapUrl[] {
   return entries;
 }
 
-/** Build sitemap XML without Next.js MetadataRoute (reliable for Googlebot). */
+/** Build sitemap XML (server components / API). */
 export async function buildSitemapXml(): Promise<string> {
   const base = getSiteUrl();
   const deduped = new Map<string, SitemapUrl>();
 
-  for (const entry of staticUrls(base)) deduped.set(entry.loc, entry);
+  for (const entry of staticSitemapUrls(base)) deduped.set(entry.loc, entry);
 
   const [courseUrls, newsUrls] = await Promise.all([loadCourseUrls(base), Promise.resolve(loadNewsUrls(base))]);
 
@@ -141,5 +107,5 @@ export async function buildSitemapXml(): Promise<string> {
 }
 
 export function buildStaticSitemapXml(): string {
-  return urlsToSitemapXml(staticUrls(getSiteUrl()));
+  return urlsToSitemapXml(staticSitemapUrls(getSiteUrl()));
 }

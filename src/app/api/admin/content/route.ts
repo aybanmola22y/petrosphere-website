@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   revalidatePath("/");
   revalidatePath("/courses");
   revalidatePath("/schedule");
-  revalidatePath("/sitemap.xml");
+  // sitemap is a static public/sitemap.xml (regenerated on deploy via postbuild)
   revalidateTag(CACHE_TAGS.cms);
   revalidateTag(CACHE_TAGS.news);
 

@@ -9,6 +9,19 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: rootDir,
   // Use the default Next.js dist directory (`.next`) for reliable caching on Windows.
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: "/sitemap.xml",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=86400",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       {
