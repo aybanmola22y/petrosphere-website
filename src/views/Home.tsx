@@ -275,23 +275,23 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
       {/* Featured Courses */}
       <section className="py-24 md:py-32 bg-secondary/30 border-y border-border">
         <div className="container mx-auto px-6">
-          <div className="mb-12 md:mb-16 flex flex-col items-center text-center gap-4 md:flex-row md:justify-between md:items-end md:text-left md:gap-6">
-            <SectionHeader
-              eyebrow="Curriculum"
-              title="Popular Programs"
-              description="Our most enrolled DOLE and EMS pathways — the programs teams choose first for safety officer accreditation, mandatory orientation, and advanced life support."
-              alignment="center"
-              className="mb-0 w-full md:max-w-3xl md:mx-0 md:text-left md:items-start [&_p]:mt-4 [&_p]:max-w-xl [&_p]:text-base [&_p]:md:text-[17px]"
-            />
+          <SectionHeader
+            alignment="center"
+            eyebrow="Curriculum"
+            title="Popular Programs"
+            description="Our most enrolled DOLE and EMS pathways — the programs teams choose first for safety officer accreditation, mandatory orientation, and advanced life support."
+            className="mb-0"
+          />
+          <div className="mt-8 flex justify-center">
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               View all programs <FiArrowRight />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-6 md:mt-16 md:grid-cols-2 lg:grid-cols-3">
             {featuredCourses.map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
