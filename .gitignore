@@ -5,6 +5,7 @@ node_modules/
 .next/
 out/
 public/sitemap.xml
+public/sitemap/sitemap.xml
 
 ## Project-specific distDir (historical)
 .next-cache/

@@ -6,6 +6,7 @@ import { fetchCatalogCourses } from "@/lib/catalog-tms";
 import { getCompanyNewsForSite } from "@/lib/site-content";
 import { getSiteUrl } from "@/lib/site-url";
 import {
+  absoluteUrl,
   staticSitemapUrls,
   urlsToSitemapXml,
   type SitemapUrl,
@@ -31,15 +32,6 @@ function toIsoDate(input: string | undefined): string {
   return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 }
 
-function safeLoc(base: string, pathname: string): string | null {
-  try {
-    const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
-    return new URL(path, base).toString();
-  } catch {
-    return null;
-  }
-}
-
 async function loadCourseUrls(base: string): Promise<SitemapUrl[]> {
   const now = new Date().toISOString();
   const seen = new Set<string>();
@@ -52,7 +44,7 @@ async function loadCourseUrls(base: string): Promise<SitemapUrl[]> {
       const slug = course.slug?.trim();
       if (!slug || seen.has(slug)) continue;
       seen.add(slug);
-      const loc = safeLoc(base, `/courses/${encodeURIComponent(slug)}`);
+      const loc = absoluteUrl(base, `/courses/${encodeURIComponent(slug)}`);
       if (!loc) continue;
       entries.push({ loc, lastmod: now, changefreq: "weekly", priority: "0.8" });
     }
@@ -79,7 +71,7 @@ function loadNewsUrls(base: string): SitemapUrl[] {
     const slug = item.slug?.trim();
     if (!slug || seen.has(slug)) continue;
     seen.add(slug);
-    const loc = safeLoc(base, `/news/${slug}`);
+    const loc = absoluteUrl(base, `/news/${slug}`);
     if (!loc) continue;
     entries.push({
       loc,
