@@ -2,7 +2,7 @@
  * Postbuild: writes public/sitemap.xml (static file for Google Search Console).
  * Uses sitemap-xml-core only — no `server-only` imports.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { companyNewsItems } from "../src/data/companyNews";
@@ -108,21 +108,9 @@ async function main(): Promise<void> {
   }
 
   const xml = urlsToSitemapXml([...deduped.values()]);
-  const publicDir = resolve(process.cwd(), "public");
-  const mainOut = resolve(publicDir, "sitemap.xml");
-  const nestedDir = resolve(publicDir, "sitemap");
-  const nestedOut = resolve(nestedDir, "sitemap.xml");
-
-  const googleOut = resolve(publicDir, "google-sitemap.xml");
-  const googleXml = urlsToSitemapXml(staticSitemapUrls(base));
-
-  mkdirSync(nestedDir, { recursive: true });
-  writeFileSync(mainOut, xml, "utf8");
-  writeFileSync(nestedOut, xml, "utf8");
-  writeFileSync(googleOut, googleXml, "utf8");
-  console.log(`Wrote ${mainOut} (${xml.length} bytes, ${deduped.size} URLs)`);
-  console.log(`Wrote ${nestedOut}`);
-  console.log(`Wrote ${googleOut}`);
+  const out = resolve(process.cwd(), "public", "sitemap.xml");
+  writeFileSync(out, xml, "utf8");
+  console.log(`Wrote ${out} (${xml.length} bytes, ${deduped.size} URLs)`);
 }
 
 main().catch((error) => {

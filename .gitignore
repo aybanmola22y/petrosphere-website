@@ -5,8 +5,10 @@ node_modules/
 .next/
 out/
 public/sitemap.xml
-public/google-sitemap.xml
-public/sitemap/sitemap.xml
+
+# Local scratch / debug
+tmp-out.txt
+*.tmp
 
 ## Project-specific distDir (historical)
 .next-cache/
