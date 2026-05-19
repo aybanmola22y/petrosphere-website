@@ -47,6 +47,7 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
     { src: "/logos/accreditations/dole.svg", alt: "DOLE" },
     { src: "/logos/accreditations/oshc.png", alt: "OSHC", multiply: true },
     { src: "/logos/accreditations/prc.png", alt: "PRC" },
+    { src: "/logos/accreditations/TESDA.png", alt: "TESDA" },
     { src: "/logos/accreditations/pecb.png", alt: "PECB", multiply: true },
     { src: "/logos/accreditations/iadc.png", alt: "IADC", multiply: true },
     { src: "/logos/accreditations/british.svg", alt: "British Council" },

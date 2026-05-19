@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
 import { NewsGridCard } from "@/components/ui/NewsGridCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { cn } from "@/lib/utils";
 
 export function LatestUpdatesSection({ className, items }: { className?: string; items: CompanyNewsItem[] }) {
@@ -17,19 +18,15 @@ export function LatestUpdatesSection({ className, items }: { className?: string;
       )}
     >
       <div className="container mx-auto max-w-7xl px-6">
-        <div className="mb-12 max-w-2xl md:mb-14">
-          <div className="mb-4 flex items-center gap-3">
-            <span className="h-px w-12 bg-linear-to-r from-primary to-primary/20" aria-hidden />
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">Updates</p>
-          </div>
-          <h2 className="text-display-3 text-balance text-foreground">What we&apos;ve been up to</h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-[17px]">
-            CSR, partnerships, and training milestones — presented in the same grid layout as our training schedule for a
-            consistent experience.
-          </p>
-        </div>
+        <SectionHeader
+          alignment="center"
+          eyebrow="Updates"
+          title="What we've been up to"
+          description="CSR, partnerships, and training milestones — presented in the same grid layout as our training schedule for a consistent experience."
+          className="mb-0"
+        />
 
-        <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid items-stretch gap-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3">
           {items.map((item, idx) => (
             <motion.div
               key={item.id}
