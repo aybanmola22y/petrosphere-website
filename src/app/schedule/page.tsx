@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+
+import { getCachedTmsSchedules } from "@/lib/server-cache";
 import Schedule from "@/views/Schedule";
+
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
@@ -8,6 +11,7 @@ export const metadata: Metadata = {
     "View upcoming and completed public training runs across safety, EMS, and certification programs.",
 };
 
-export default function Page() {
-  return <Schedule />;
+export default async function Page() {
+  const initialSessions = await getCachedTmsSchedules();
+  return <Schedule initialSessions={initialSessions} />;
 }

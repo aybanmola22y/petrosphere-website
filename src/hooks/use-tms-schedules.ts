@@ -12,12 +12,14 @@ const canFetchSchedules =
   typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string" &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 0;
 
-export function useTmsSchedules() {
+export function useTmsSchedules(initialData?: TrainingSession[]) {
   return useQuery({
     queryKey: ["tms-schedules"],
     queryFn: () => fetchPublicSchedules<TrainingSession[]>(),
     staleTime: CACHE_REVALIDATE_SECONDS.tms * 1000,
     retry: 2,
     enabled: canFetchSchedules,
+    initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
   });
 }

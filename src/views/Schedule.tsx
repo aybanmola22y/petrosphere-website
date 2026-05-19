@@ -112,8 +112,13 @@ function ActionCell({ session }: { session: TrainingSession }) {
   );
 }
 
-export default function Schedule() {
-  const { data: trainingSessions = [], isLoading, error } = useTmsSchedules();
+type ScheduleProps = {
+  initialSessions?: TrainingSession[];
+};
+
+export default function Schedule({ initialSessions = [] }: ScheduleProps) {
+  const { data: trainingSessions = initialSessions, isLoading, error } =
+    useTmsSchedules(initialSessions);
 
   const months = useMemo(() => monthKeysSorted(trainingSessions), [trainingSessions]);
   const monthOptions = useMemo(() => {
@@ -123,7 +128,7 @@ export default function Schedule() {
   }, [months]);
 
   const [courseFilter, setCourseFilter] = useState<string>("all");
-  const [monthFilter, setMonthFilter] = useState<string>(() => getCurrentMonthKey());
+  const [monthFilter, setMonthFilter] = useState<string>("all");
   const [view, setView] = useState<"table" | "grid">("table");
 
   const filtered = useMemo(() => {
@@ -228,12 +233,14 @@ export default function Schedule() {
           </div>
         </div>
 
-        <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Showing {sorted.length}{" "}
-          {sorted.length === 1 ? "training session" : "training sessions"}
-        </p>
+        {!isLoading ? (
+          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Showing {sorted.length}{" "}
+            {sorted.length === 1 ? "training session" : "training sessions"}
+          </p>
+        ) : null}
 
-        {isLoading ? (
+        {isLoading && trainingSessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             <p className="text-muted-foreground font-medium">Fetching live training schedule...</p>
@@ -244,10 +251,20 @@ export default function Schedule() {
             <p className="text-sm text-muted-foreground">Please check your connection or try again later.</p>
           </Card>
         ) : sorted.length === 0 ? (
-          <Card className="rounded-2xl border-dashed border-border p-16 text-center">
+          <Card className="rounded-2xl border-dashed border-border p-16 text-center space-y-4">
             <p className="text-muted-foreground">
-              No sessions match these filters. Try &quot;All courses&quot; or a different month.
+              {trainingSessions.length === 0
+                ? "Public training dates are updated regularly. Browse our course catalog or contact admissions for the latest cohort schedule."
+                : "No sessions match these filters. Try \"All courses\" or a different month."}
             </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild variant="default" className="rounded-lg">
+                <Link href="/courses">View course catalog</Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-lg">
+                <Link href="/contact">Contact admissions</Link>
+              </Button>
+            </div>
           </Card>
         ) : view === "table" ? (
           <Card className="overflow-hidden rounded-2xl border-border shadow-sm">
