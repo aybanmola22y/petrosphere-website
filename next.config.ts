@@ -50,12 +50,34 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/google-sitemap.xml",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=86400",
+          },
+          {
+            key: "Content-Type",
+            value: "application/xml; charset=utf-8",
+          },
+        ],
+      },
     ];
   },
   async rewrites() {
     return [
       {
         source: "/sitemap.xml/",
+        destination: "/sitemap.xml",
+      },
+      {
+        source: "/google-sitemap.xml",
+        destination: "/sitemap.xml",
+      },
+      {
+        source: "/google-sitemap.xml/",
         destination: "/sitemap.xml",
       },
     ];

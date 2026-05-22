@@ -5,6 +5,7 @@ node_modules/
 .next/
 out/
 public/sitemap.xml
+public/google-sitemap.xml
 
 # Local scratch / debug
 tmp-out.txt

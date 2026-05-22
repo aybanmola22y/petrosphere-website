@@ -108,9 +108,12 @@ async function main(): Promise<void> {
   }
 
   const xml = urlsToSitemapXml([...deduped.values()]);
-  const out = resolve(process.cwd(), "public", "sitemap.xml");
-  writeFileSync(out, xml, "utf8");
-  console.log(`Wrote ${out} (${xml.length} bytes, ${deduped.size} URLs)`);
+  const publicDir = resolve(process.cwd(), "public");
+  for (const name of ["sitemap.xml", "google-sitemap.xml"] as const) {
+    const out = resolve(publicDir, name);
+    writeFileSync(out, xml, "utf8");
+    console.log(`Wrote ${out} (${xml.length} bytes, ${deduped.size} URLs)`);
+  }
 }
 
 main().catch((error) => {
