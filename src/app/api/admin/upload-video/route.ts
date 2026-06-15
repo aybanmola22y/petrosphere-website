@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 
 import { verifyAdminSession } from "@/lib/admin-session";
+import {
+  buildMediaFilename,
+  getHostingerMediaMode,
+  mediaUploadSuccessMessage,
+  uploadMediaFile,
+} from "@/lib/hostinger-media";
 
 export const runtime = "nodejs";
 
@@ -51,22 +54,24 @@ export async function POST(req: Request) {
   }
 
   const ext = safeExtFromMime(file.type);
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const rand = crypto.randomBytes(4).toString("hex");
-  const filename = `testimonial-${stamp}-${rand}.${ext}`;
-
-  const relDir = path.join("public", "uploads", "videos");
-  const absDir = path.join(process.cwd(), relDir);
-  const absPath = path.join(absDir, filename);
+  const filename = buildMediaFilename("testimonial", ext);
 
   try {
-    fs.mkdirSync(absDir, { recursive: true });
-    const buf = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(absPath, buf);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { url, storage } = await uploadMediaFile({
+      buffer,
+      folder: "videos",
+      filename,
+      mimeType: file.type,
+    });
+    return NextResponse.json({
+      ok: true,
+      url,
+      storage,
+      message: mediaUploadSuccessMessage(getHostingerMediaMode()),
+    });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Write failed";
+    const msg = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, url: `/uploads/videos/${filename}` });
 }

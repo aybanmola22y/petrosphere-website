@@ -4,9 +4,28 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { CACHE_TAGS } from "@/lib/cache";
 import { verifyAdminSession } from "@/lib/admin-session";
 import { getSiteContentSnapshotForAdminSync, persistSiteContent } from "@/lib/site-content";
+import { sanitizeNewsItem } from "@/lib/news-slug";
 import { siteContentSavePayloadSchema } from "@/lib/site-content-schema";
+import type { SiteContentSnapshot } from "@/types/site-content";
 
 export const runtime = "nodejs";
+
+function sanitizeSnapshot(snapshot: SiteContentSnapshot): SiteContentSnapshot {
+  return {
+    ...snapshot,
+    news: snapshot.news.map((item) => sanitizeNewsItem(item)),
+  };
+}
+
+function sanitizeSavePayload(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const payload = raw as { baseline?: SiteContentSnapshot; data?: SiteContentSnapshot };
+  return {
+    ...payload,
+    baseline: payload.baseline ? sanitizeSnapshot(payload.baseline) : payload.baseline,
+    data: payload.data ? sanitizeSnapshot(payload.data) : payload.data,
+  };
+}
 
 export async function GET() {
   if (!(await verifyAdminSession())) {
@@ -28,7 +47,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = siteContentSavePayloadSchema.safeParse(raw);
+  const parsed = siteContentSavePayloadSchema.safeParse(sanitizeSavePayload(raw));
   if (!parsed.success) {
     return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
   }

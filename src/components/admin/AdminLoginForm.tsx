@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { AdminMfaLoginStep } from "@/components/admin/AdminMfaLoginStep";
 
 /** Swap this file with any JSON export from LottieFiles (Animation → Download → Lottie JSON). */
 const LOGIN_LOTTIE_SRC = "/lottie/admin-login.json";
@@ -149,6 +150,8 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [step, setStep] = useState<"credentials" | "mfa">("credentials");
+  const [mfaChallenge, setMfaChallenge] = useState<{ factorId: string; challengeId: string } | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -160,13 +163,26 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
         credentials: "same-origin",
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
+      const j = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        needsMfa?: boolean;
+        factorId?: string;
+        challengeId?: string;
+      };
       if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        const needsTurnstile = res.status === 403 && j.error?.includes("security verification");
         toast({
           title: "Sign-in failed",
-          description: j.error ?? "Invalid password",
+          description: needsTurnstile
+            ? "Complete the security check on this page first, then try signing in again."
+            : j.error ?? "Invalid password",
           variant: "destructive",
         });
+        return;
+      }
+      if (j.needsMfa && j.factorId && j.challengeId) {
+        setMfaChallenge({ factorId: j.factorId, challengeId: j.challengeId });
+        setStep("mfa");
         return;
       }
       router.push("/admin");
@@ -174,6 +190,13 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
     } finally {
       setPending(false);
     }
+  }
+
+  async function backFromMfa() {
+    await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+    setStep("credentials");
+    setMfaChallenge(null);
+    setPassword("");
   }
 
   return (
@@ -208,6 +231,16 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
                   <Link href="/">Return to website</Link>
                 </Button>
               </div>
+            ) : step === "mfa" && mfaChallenge ? (
+              <AdminMfaLoginStep
+                factorId={mfaChallenge.factorId}
+                challengeId={mfaChallenge.challengeId}
+                onSuccess={() => {
+                  router.push("/admin");
+                  router.refresh();
+                }}
+                onBack={() => void backFromMfa()}
+              />
             ) : (
               <>
                 <div className="mb-10">

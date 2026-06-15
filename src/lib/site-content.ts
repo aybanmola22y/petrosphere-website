@@ -25,7 +25,7 @@ import {
   capVideoTestimonialsNewestFirst,
   videoTestimonialsForHomepageDisplay,
 } from "@/lib/video-testimonials";
-import { canonicalNewsSlug, newsSlugsMatch, normalizeNewsRouteSlug } from "@/lib/news-slug";
+import { canonicalNewsSlug, newsSlugsMatch, normalizeNewsRouteSlug, sanitizeNewsItem } from "@/lib/news-slug";
 import { getCachedCmsSnapshot, getCachedPetrosphereNews } from "@/lib/server-cache";
 
 export type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
@@ -77,8 +77,7 @@ function splitStoredNews(stored: StoredShape | null): StoredNewsParts {
 }
 
 function withCanonicalNewsSlug(item: CompanyNewsItem): CompanyNewsItem {
-  const slug = canonicalNewsSlug(item.slug);
-  return slug === item.slug ? item : { ...item, slug };
+  return sanitizeNewsItem(item);
 }
 
 /** Collapse emoji/encoded slug variants (e.g. …-princesa vs …-%f0%9f%8c%8a). */

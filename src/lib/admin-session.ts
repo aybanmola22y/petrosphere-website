@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isAdminMfaSatisfied } from "@/lib/admin-mfa";
 import { isCmsAuthConfigured } from "@/lib/admin-auth";
 
 export { isCmsAuthConfigured };
@@ -25,7 +26,8 @@ export async function verifyAdminSession(): Promise<boolean> {
       error,
     } = await supabase.auth.getUser();
 
-    return !error && Boolean(user);
+    if (error || !user) return false;
+    return await isAdminMfaSatisfied(supabase);
   } catch {
     return false;
   }

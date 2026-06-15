@@ -13,13 +13,13 @@ const newsCategories = ["CSR", "HSE NEWS", "NEWS", "PARTNERSHIP", "TRAINING"] as
 const safeSlug = z
   .string()
   .min(1)
-  .max(120)
+  .max(200)
   .refine((s) => isSafeSlug(s), { message: "Invalid slug format" });
 
 const safeContentId = z
   .string()
   .min(1)
-  .max(128)
+  .max(200)
   .refine((s) => isSafeContentId(s), { message: "Invalid id format" });
 
 const safeAssetHref = z
@@ -79,7 +79,12 @@ const videoSchema = z
     credential: z.string(),
     summary: z.string(),
     youtubeVideoId: z.string(),
-    videoSrc: z.string().optional(),
+    videoSrc: z
+      .string()
+      .optional()
+      .refine((s) => !s?.trim() || isSafeAssetHref(s), {
+        message: "Video URL must be http(s) or a site path",
+      }),
     posterSrc: safeAssetHref,
   })
   .refine((v) => Boolean(v.videoSrc?.trim()) || Boolean(v.youtubeVideoId?.trim()), {

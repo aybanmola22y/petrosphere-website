@@ -5,7 +5,7 @@ import { normalizeNewsBody } from "@/data/companyNews";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import { createCmsAdminClient } from "@/lib/supabase/cms-admin";
 import type { Json } from "@/lib/supabase/types/database";
-import { canonicalNewsSlug, newsSlugsMatch } from "@/lib/news-slug";
+import { canonicalNewsSlug, newsSlugsMatch, sanitizeNewsItem } from "@/lib/news-slug";
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
 /** Admin-created posts use ids like `news-1730000000000`. */
@@ -118,7 +118,7 @@ export async function fetchNewsBySlugFromCms(slug: string): Promise<CompanyNewsI
   const row = (overrideRes.data ?? []).find((r) => r.slug && newsSlugsMatch(r.slug, normalized));
   if (row?.slug && row.title && row.category && row.published_at) {
     return rowToNewsItem({
-      id: `override-${row.slug}`,
+      id: `override-${canonicalNewsSlug(row.slug)}`,
       slug: row.slug,
       category: row.category,
       title: row.title,
@@ -158,7 +158,7 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
   for (const r of overridesRes.data ?? []) {
     if (!r.slug || !r.title || !r.category || !r.published_at) continue;
     const item = rowToNewsItem({
-      id: `override-${r.slug}`,
+      id: `override-${canonicalNewsSlug(r.slug)}`,
       slug: r.slug,
       category: r.category,
       title: r.title,

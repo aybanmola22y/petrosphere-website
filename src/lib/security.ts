@@ -11,7 +11,7 @@ const DANGEROUS_SCHEME = /^(?:javascript|data|vbscript|file):/i;
 const SAFE_INTERNAL_PATH =
   /^\/[a-z0-9/_-]*(?:\?[a-z0-9_%.=&-]*)?(?:#[a-z0-9_-]*)?$/i;
 
-const SAFE_CONTENT_ID = /^[a-z0-9][a-z0-9_-]{0,127}$/i;
+const SAFE_CONTENT_ID = /^[a-z0-9][a-z0-9_-]{0,199}$/i;
 
 const SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
 
@@ -89,7 +89,7 @@ export function isSafeContentId(id: string): boolean {
 
 export function isSafeSlug(slug: string): boolean {
   const trimmed = slug.trim();
-  if (!trimmed || trimmed.length > 120) return false;
+  if (!trimmed || trimmed.length > 200) return false;
   return SAFE_SLUG.test(trimmed);
 }
 

@@ -21,6 +21,14 @@ const securityHeaders = [
     : []),
 ];
 
+const mediaBaseUrl = process.env.HOSTINGER_MEDIA_BASE_URL?.trim();
+let mediaHostname: string | undefined;
+try {
+  if (mediaBaseUrl) mediaHostname = new URL(mediaBaseUrl).hostname;
+} catch {
+  mediaHostname = undefined;
+}
+
 const nextConfig: NextConfig = {
   // D:\pnpm-lock.yaml exists outside this app; pin tracing to this package root.
   outputFileTracingRoot: rootDir,
@@ -109,6 +117,9 @@ const nextConfig: NextConfig = {
         hostname: "petrosphere.com.ph",
         pathname: "/**",
       },
+      ...(mediaHostname && mediaHostname !== "petrosphere.com.ph"
+        ? [{ protocol: "https" as const, hostname: mediaHostname, pathname: "/**" }]
+        : []),
     ],
   },
 };

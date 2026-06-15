@@ -51,3 +51,20 @@ export function resolveNewsSlugParam(slug: string): string | null {
   const resolved = normalizeNewsRouteSlug(slug) ?? canonicalNewsSlug(slug);
   return resolved || null;
 }
+
+/** Admin-authored posts use ids like `news-1730000000000`. */
+export function isAuthoredNewsId(id: string): boolean {
+  return /^news-\d+$/.test(id);
+}
+
+/** Strip URL-encoded emoji etc. from fetched/override slugs and ids before save. */
+export function sanitizeNewsItem<T extends { id: string; slug: string }>(item: T): T {
+  const slug = canonicalNewsSlug(item.slug);
+  if (isAuthoredNewsId(item.id)) {
+    return slug === item.slug ? item : { ...item, slug };
+  }
+  const prefix = item.id.startsWith("override-") ? "override" : "petrosphere";
+  const id = `${prefix}-${slug}`;
+  if (id === item.id && slug === item.slug) return item;
+  return { ...item, id, slug };
+}

@@ -81,6 +81,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { AdminMfaSecurityCard } from "@/components/admin/AdminMfaSecurityCard";
 import { canonicalNewsSlug } from "@/lib/news-slug";
 import { cn } from "@/lib/utils";
 
@@ -309,10 +310,22 @@ export function AdminApp({
         body: JSON.stringify({ baseline, data }),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        const j = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
+        };
+        const fieldMsgs = j.details?.fieldErrors
+          ? Object.entries(j.details.fieldErrors)
+              .flatMap(([k, v]) => (v ?? []).map((m) => `${k}: ${m}`))
+              .slice(0, 3)
+          : [];
+        const description =
+          fieldMsgs.length > 0
+            ? fieldMsgs.join(" · ")
+            : j.details?.formErrors?.[0] ?? j.error ?? `HTTP ${res.status}`;
         toast({
           title: "Save failed",
-          description: j.error ?? `HTTP ${res.status}`,
+          description,
           variant: "destructive",
         });
         return;
@@ -416,9 +429,9 @@ export function AdminApp({
         });
         return null;
       }
-      const j = (await res.json()) as { url?: string };
+      const j = (await res.json()) as { url?: string; message?: string };
       if (!j.url) return null;
-      toast({ title: "Uploaded", description: "Image added to /public/uploads/news/." });
+      toast({ title: "Uploaded", description: j.message ?? j.url });
       return j.url;
     } finally {
       setUploadingNewsImage(false);
@@ -440,9 +453,9 @@ export function AdminApp({
         });
         return null;
       }
-      const j = (await res.json()) as { url?: string };
+      const j = (await res.json()) as { url?: string; message?: string };
       if (!j.url) return null;
-      toast({ title: "Uploaded", description: "Video saved to /public/uploads/videos/." });
+      toast({ title: "Uploaded", description: j.message ?? j.url });
       return j.url;
     } finally {
       setUploadingTestimonialVideo(false);
@@ -661,6 +674,8 @@ export function AdminApp({
                     </Card>
 
                     <div className="grid gap-4">
+                      <AdminMfaSecurityCard />
+
                       <Card className="overflow-hidden rounded-3xl border-black/5 bg-white shadow-[0_10px_30px_-20px_rgba(16,24,40,0.35)]">
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between gap-3">
