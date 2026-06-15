@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 
-import { getVerifiedTotpFactor } from "@/lib/admin-mfa";
+import { getVerifiedTotpFactor, clearPendingTotpEnrollment } from "@/lib/admin-mfa";
 import { buildMfaTotpUri, MFA_TOTP_ISSUER } from "@/lib/totp-display";
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler";
 
@@ -22,11 +22,7 @@ export async function POST() {
       return jsonResponse({ error: "Two-factor authentication is already enabled." }, { status: 409 });
     }
 
-    const { data: factors } = await supabase.auth.mfa.listFactors();
-    const pending = factors?.totp?.find((f) => f.status === "unverified");
-    if (pending) {
-      await supabase.auth.mfa.unenroll({ factorId: pending.id });
-    }
+    await clearPendingTotpEnrollment(supabase);
 
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",

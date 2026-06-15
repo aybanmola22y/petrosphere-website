@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getVerifiedTotpFactor } from "@/lib/admin-mfa";
+import { getVerifiedTotpFactor, getUnverifiedTotpFactor } from "@/lib/admin-mfa";
 import { createRouteHandlerSupabaseClient } from "@/lib/supabase/route-handler";
 
 export const runtime = "nodejs";
@@ -16,8 +16,7 @@ export async function GET() {
     }
 
     const verified = await getVerifiedTotpFactor(supabase);
-    const { data: factors } = await supabase.auth.mfa.listFactors();
-    const pending = factors?.totp?.find((f) => f.status === "unverified") ?? null;
+    const pending = await getUnverifiedTotpFactor(supabase);
 
     return NextResponse.json({
       enrolled: Boolean(verified),

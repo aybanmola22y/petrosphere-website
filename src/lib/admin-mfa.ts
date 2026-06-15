@@ -12,6 +12,19 @@ export async function getVerifiedTotpFactor(supabase: SupabaseClient) {
   return data.totp.find((f) => f.status === "verified") ?? null;
 }
 
+export async function getUnverifiedTotpFactor(supabase: SupabaseClient) {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) throw error;
+  return data.all.find((f) => f.factor_type === "totp" && f.status === "unverified") ?? null;
+}
+
+export async function clearPendingTotpEnrollment(supabase: SupabaseClient) {
+  const pending = await getUnverifiedTotpFactor(supabase);
+  if (pending) {
+    await supabase.auth.mfa.unenroll({ factorId: pending.id });
+  }
+}
+
 export async function needsMfaVerification(supabase: SupabaseClient): Promise<boolean> {
   const factor = await getVerifiedTotpFactor(supabase);
   if (!factor) return false;

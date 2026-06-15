@@ -65,7 +65,7 @@ async function uploadViaHttp(
   const form = new FormData();
   form.append("folder", folder);
   form.append("filename", filename);
-  form.append("file", new Blob([buffer], { type: mimeType }), filename);
+  form.append("file", new Blob([new Uint8Array(buffer)], { type: mimeType }), filename);
 
   const res = await fetch(uploadUrl, {
     method: "POST",
