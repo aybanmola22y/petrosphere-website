@@ -1,20 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import Lottie from "lottie-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AdminMfaLoginStep } from "@/components/admin/AdminMfaLoginStep";
-
-/** Swap this file with any JSON export from LottieFiles (Animation → Download → Lottie JSON). */
-const LOGIN_LOTTIE_SRC = "/lottie/admin-login.json";
+import { AdminAuthShell } from "@/components/admin/AdminAuthLayout";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -31,115 +25,64 @@ function GoogleIcon({ className }: { className?: string }) {
         fill="#FBBC05"
         d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
       />
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
     </svg>
   );
 }
 
-/** Same markup for SSR, hydration, and fetch — avoids reduced-motion / client-only branches on first paint. */
-function LottieLoadingPlaceholder() {
+function MicrosoftIcon({ className }: { className?: string }) {
   return (
-    <div
-      className="flex min-h-[220px] flex-1 flex-col items-center justify-center px-6 py-8"
-      aria-busy="true"
-      aria-label="Loading animation"
-    >
-      <div className="h-56 w-full max-w-[280px] animate-pulse rounded-[28px] bg-white/8 ring-1 ring-white/12" />
-    </div>
+    <svg className={className} viewBox="0 0 23 23" aria-hidden>
+      <path fill="#f25022" d="M1 1h10v10H1z" />
+      <path fill="#00a4ef" d="M12 1h10v10H12z" />
+      <path fill="#7fba00" d="M1 12h10v10H1z" />
+      <path fill="#ffb900" d="M12 12h10v10H12z" />
+    </svg>
   );
 }
 
-function LoginHeroAnimation() {
-  const [mounted, setMounted] = useState(false);
-  const [animationData, setAnimationData] = useState<object | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    let cancelled = false;
-    fetch(LOGIN_LOTTIE_SRC)
-      .then((r) => {
-        if (!r.ok) throw new Error(String(r.status));
-        return r.json();
-      })
-      .then((data) => {
-        if (!cancelled) setAnimationData(data);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [mounted]);
-
-  if (!mounted || !animationData || loadFailed) {
-    return <LottieLoadingPlaceholder />;
-  }
-
+function FloatingField({
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  autoComplete,
+  required,
+  trailing,
+}: {
+  id: string;
+  label: string;
+  type: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  required?: boolean;
+  trailing?: React.ReactNode;
+}) {
   return (
-    <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center px-4 py-4 lg:px-8 lg:py-6">
-      <div className="w-full max-w-[300px] filter-[drop-shadow(0_28px_52px_rgba(0,0,0,0.42))]">
-        <Lottie animationData={animationData} loop className="h-auto w-full" aria-hidden />
+    <div className="relative rounded-2xl border border-transparent bg-[#f3f4f6] px-4 pb-3 pt-2.5 transition-[box-shadow,background-color] focus-within:bg-white focus-within:shadow-[0_0_0_1.5px_#00044a]">
+      <label htmlFor={id} className="block text-[12px] font-medium text-[#6b7280]">
+        {label}
+      </label>
+      <div className="relative mt-0.5 flex items-center">
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          required={required}
+          className={cn(
+            "w-full bg-transparent text-[15px] font-medium text-[#111827] outline-none placeholder:text-[#9ca3af]",
+            trailing && "pr-9",
+          )}
+        />
+        {trailing}
       </div>
-    </div>
-  );
-}
-
-const darkFieldClass =
-  "h-12 rounded-2xl border border-white/12 bg-[#171717] px-4 py-3 text-[15px] text-white shadow-none outline-none ring-0 transition-[border-color,box-shadow] placeholder:text-neutral-600 focus-visible:border-white/22 focus-visible:ring-2 focus-visible:ring-white/18";
-
-/** Hero column — gradient + logo + headline + Lottie (replace JSON in `/public/lottie/`). */
-function LoginHero({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "relative flex flex-col overflow-hidden rounded-b-[28px] p-8 text-white lg:rounded-br-[36px] lg:rounded-tr-[36px] lg:p-11",
-        className,
-      )}
-    >
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-b from-[#6d28d9] via-[#4c1d95] to-[#09090b]" />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_70%_-5%,rgba(167,139,250,0.45),transparent_55%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-size-[20px_20px] bg-[radial-gradient(circle,rgba(255,255,255,0.12)_1px,transparent_1px)] opacity-[0.22]"
-      />
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <Link
-          href="/"
-          className="inline-flex w-fit items-center rounded-lg outline-offset-4 ring-white/40 focus-visible:ring-2"
-          aria-label="Petrosphere — back to website"
-        >
-          <img src="/petrologo.png" alt="" className="h-10 w-auto object-contain lg:h-11" width={160} height={48} />
-        </Link>
-
-        <div className="mt-6 shrink-0 lg:mt-8">
-          <h1 className="admin-title max-w-[18ch] text-pretty text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-[2.15rem]">
-            Welcome back
-          </h1>
-          <p className="mt-2 max-w-sm text-[15px] leading-relaxed text-white/60">Use the secure sign-in panel to continue.</p>
-        </div>
-
-        <LoginHeroAnimation />
-
-      </div>
-    </div>
-  );
-}
-
-function FormDividerOr() {
-  return (
-    <div className="relative flex items-center gap-4 py-1">
-      <div className="h-px flex-1 bg-white/12" />
-      <span className="text-[13px] font-medium text-neutral-600">Or</span>
-      <div className="h-px flex-1 bg-white/12" />
     </div>
   );
 }
@@ -150,8 +93,12 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [step, setStep] = useState<"credentials" | "mfa">("credentials");
-  const [mfaChallenge, setMfaChallenge] = useState<{ factorId: string; challengeId: string } | null>(null);
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    factorId: string;
+    challengeId: string;
+  } | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -170,12 +117,13 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
         challengeId?: string;
       };
       if (!res.ok) {
-        const needsTurnstile = res.status === 403 && j.error?.includes("security verification");
+        const needsTurnstile =
+          res.status === 403 && j.error?.includes("security verification");
         toast({
           title: "Sign-in failed",
           description: needsTurnstile
             ? "Complete the security check on this page first, then try signing in again."
-            : j.error ?? "Invalid password",
+            : (j.error ?? "Invalid password"),
           variant: "destructive",
         });
         return;
@@ -193,147 +141,182 @@ export function AdminLoginForm({ authConfigured }: { authConfigured: boolean }) 
   }
 
   async function backFromMfa() {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      credentials: "same-origin",
+    }).catch(() => undefined);
     setStep("credentials");
     setMfaChallenge(null);
     setPassword("");
   }
 
-  return (
-    <div className="min-h-screen bg-black lg:bg-[#030303]">
-      <div className="flex min-h-screen flex-col lg:grid lg:min-h-screen lg:grid-cols-[minmax(302px,44%)_minmax(0,1fr)] lg:gap-0">
-        {/* Hero — stacked on mobile */}
-        <LoginHero className="min-h-[52vh] shrink-0 lg:min-h-screen lg:border-r lg:border-white/6" />
-
-        {/* Form panel */}
-        <div className="flex flex-1 flex-col bg-black px-5 pb-14 pt-8 sm:px-10 lg:justify-center lg:px-14 lg:py-16 xl:px-20">
-          <div className="mx-auto w-full max-w-[420px]">
-            {!authConfigured ? (
-              <div>
-                <h2 className="admin-title text-3xl font-bold tracking-tight text-white">Setup required</h2>
-                <p className="mt-2 text-[15px] leading-relaxed text-neutral-400">
-                  Set{" "}
-                  <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">
-                    NEXT_PUBLIC_SUPABASE_URL_WEBSITE
-                  </code>{" "}
-                  and{" "}
-                  <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">
-                    NEXT_PUBLIC_SUPABASE_ANON_KEY_WEBSITE
-                  </code>{" "}
-                  in <code className="rounded-lg bg-white/8 px-2 py-0.5 font-mono text-[13px] text-neutral-200">.env.local</code>, restart the dev
-                  server, then reload.
-                </p>
-                <Button
-                  variant="outline"
-                  asChild
-                  className="mt-10 h-12 w-full rounded-2xl border-white/15 bg-transparent font-semibold text-white hover:bg-white/6"
-                >
-                  <Link href="/">Return to website</Link>
-                </Button>
-              </div>
-            ) : step === "mfa" && mfaChallenge ? (
-              <AdminMfaLoginStep
-                factorId={mfaChallenge.factorId}
-                challengeId={mfaChallenge.challengeId}
-                onSuccess={() => {
-                  router.push("/admin");
-                  router.refresh();
-                }}
-                onBack={() => void backFromMfa()}
-              />
-            ) : (
-              <>
-                <div className="mb-10">
-                  <h2 className="admin-title text-3xl font-bold tracking-tight text-white sm:text-[2rem]">Sign in</h2>
-                  <p className="mt-2 text-[15px] leading-relaxed text-neutral-500">Enter your email and password to open the dashboard.</p>
-                </div>
-
-                <button
-                  type="button"
-                  disabled
-                  title="Administrator login uses email and password only."
-                  aria-label="Google sign-in is not available for administrator accounts"
-                  className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-white/14 bg-transparent text-[15px] font-semibold text-white/78 transition-colors disabled:cursor-not-allowed disabled:opacity-[0.68]"
-                >
-                  <GoogleIcon className="h-5 w-5 shrink-0 opacity-95" />
-                  Continue with Google
-                </button>
-
-                <div className="my-8">
-                  <FormDividerOr />
-                </div>
-
-                <form onSubmit={submit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-email" className="text-sm font-medium text-neutral-300">
-                      Email address
-                    </Label>
-                    <Input
-                      id="admin-email"
-                      type="email"
-                      autoComplete="username"
-                      placeholder="you@organization.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className={darkFieldClass}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-4">
-                      <Label htmlFor="admin-password" className="text-sm font-medium text-neutral-300">
-                        Password
-                      </Label>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="admin-password"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className={cn(darkFieldClass, "pr-12")}
-                      />
-                      <button
-                        type="button"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                        title={showPassword ? "Hide password" : "Show password"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-neutral-500 outline-offset-2 transition-colors hover:bg-white/8 hover:text-neutral-300 focus-visible:ring-2 focus-visible:ring-white/25"
-                        onClick={() => setShowPassword((v) => !v)}
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
-                      </button>
-                    </div>
-                    <p className="text-[13px] text-neutral-600">
-                      Use an account from Supabase Authentication → Users. Add new teammates there, then sign in here.
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className={cn(
-                      "flex h-[3.35rem] w-full items-center justify-center rounded-2xl bg-white text-[15px] font-semibold tracking-tight text-neutral-950 transition hover:bg-neutral-100 disabled:opacity-55",
-                      "shadow-[0_16px_40px_-20px_rgba(255,255,255,0.35)]",
-                    )}
-                  >
-                    {pending ? "Signing in…" : "Sign in"}
-                  </button>
-                </form>
-
-                <p className="mt-10 text-center text-[15px] text-neutral-500">
-                  <span className="text-neutral-500">Prefer the public site? </span>
-                  <Link href="/" className="font-semibold text-white underline-offset-4 hover:underline">
-                    Leave
-                  </Link>
-                </p>
-              </>
-            )}
-          </div>
+  if (!authConfigured) {
+    return (
+      <AdminAuthShell>
+        <div className="text-center">
+          <h1 className="text-[1.75rem] font-bold tracking-tight text-[#111827]">
+            Setup required
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-[#6b7280]">
+            Configure Supabase environment variables in{" "}
+            <code className="rounded bg-[#f3f4f6] px-1.5 py-0.5 font-mono text-[12px]">
+              .env.local
+            </code>{" "}
+            and restart the server.
+          </p>
+          <Link
+            href="/"
+            className="mt-8 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#00044a] text-[15px] font-semibold text-white"
+          >
+            Back to website
+          </Link>
         </div>
+      </AdminAuthShell>
+    );
+  }
+
+  if (step === "mfa" && mfaChallenge) {
+    return (
+      <AdminAuthShell>
+        <AdminMfaLoginStep
+          factorId={mfaChallenge.factorId}
+          challengeId={mfaChallenge.challengeId}
+          onSuccess={() => {
+            router.push("/admin");
+            router.refresh();
+          }}
+          onBack={() => void backFromMfa()}
+        />
+      </AdminAuthShell>
+    );
+  }
+
+  return (
+    <AdminAuthShell>
+      <div className="flex justify-center">
+        <Link
+          href="/"
+          className="outline-offset-4 focus-visible:ring-2 focus-visible:ring-primary/40"
+          aria-label="Petrosphere — back to website"
+        >
+          <img
+            src="/petrologo-light.png"
+            alt="Petrosphere"
+            className="h-[4.5rem] w-auto object-contain sm:h-20"
+            width={320}
+            height={80}
+          />
+        </Link>
       </div>
-    </div>
+
+      {/* Heading */}
+      <div className="mt-9 text-center">
+        <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-[#111827]">
+          Welcome Back
+        </h1>
+        <p className="mt-2 text-[15px] text-[#6b7280]">
+          Sign in to access the administrator dashboard
+        </p>
+      </div>
+
+      {/* Social */}
+      <div className="mt-8 space-y-3">
+        <button
+          type="button"
+          disabled
+          title="Administrator login uses email and password only"
+          className="flex h-[3.25rem] w-full items-center justify-center gap-3 rounded-2xl border border-[#e5e7eb] bg-white text-[15px] font-medium text-[#111827] opacity-70"
+        >
+          <GoogleIcon className="size-5" />
+          Continue with Google
+        </button>
+        <button
+          type="button"
+          disabled
+          title="Administrator login uses email and password only"
+          className="flex h-[3.25rem] w-full items-center justify-center gap-3 rounded-2xl border border-[#e5e7eb] bg-white text-[15px] font-medium text-[#111827] opacity-70"
+        >
+          <MicrosoftIcon className="size-5" />
+          Continue with Microsoft Account
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="my-7 flex items-center gap-4">
+        <div className="h-px flex-1 bg-[#e5e7eb]" />
+        <span className="text-sm text-[#9ca3af]">Or</span>
+        <div className="h-px flex-1 bg-[#e5e7eb]" />
+      </div>
+
+      {/* Form */}
+      <form onSubmit={submit} className="space-y-4">
+        <FloatingField
+          id="admin-email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          autoComplete="username"
+          required
+        />
+
+        <FloatingField
+          id="admin-password"
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+          required
+          trailing={
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[#9ca3af] hover:text-[#6b7280]"
+              onClick={() => setShowPassword((v) => !v)}
+            >
+              {showPassword ? (
+                <EyeOff className="size-5" aria-hidden />
+              ) : (
+                <Eye className="size-5" aria-hidden />
+              )}
+            </button>
+          }
+        />
+
+        <div className="flex items-center justify-between pt-1">
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#374151]">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="size-4 rounded border-[#d1d5db] text-[#00044a] accent-[#00044a]"
+            />
+            Remember me
+          </label>
+          <a
+            href="mailto:admissions@petrosphere.com?subject=Admin%20password%20help"
+            className="text-sm font-semibold text-[#111827] underline underline-offset-2"
+          >
+            Forgot Password?
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="mt-2 flex h-[3.25rem] w-full items-center justify-center rounded-2xl bg-[#00044a] text-[15px] font-semibold text-white transition hover:bg-[#00044a]/92 disabled:opacity-60"
+        >
+          {pending ? "Signing in…" : "Login"}
+        </button>
+      </form>
+
+      <p className="mt-8 text-center text-[15px] text-[#6b7280]">
+        Prefer the public site?{" "}
+        <Link href="/" className="font-semibold text-[#00044a]">
+          Leave
+        </Link>
+      </p>
+    </AdminAuthShell>
   );
 }

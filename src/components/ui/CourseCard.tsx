@@ -1,7 +1,10 @@
 import React from "react";
 import Link from "next/link";
-import { FiArrowUpRight, FiAward } from "react-icons/fi";
-import { Course } from "@/data/mockData";
+import { Icon } from "@iconify/react";
+import { FiArrowRight } from "react-icons/fi";
+
+import type { Course } from "@/data/mockData";
+import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
   course: Course;
@@ -11,37 +14,63 @@ export function CourseCard({ course }: CourseCardProps) {
   return (
     <Link
       href={`/courses/${course.slug}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-[0_18px_55px_-35px_rgba(15,23,42,0.18)] ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/15 hover:shadow-[0_26px_70px_-40px_rgba(15,23,42,0.26)]"
+      className={cn(
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl",
+        "border border-border/60 bg-[hsl(40_30%_97%)]",
+        "shadow-[0_16px_40px_-32px_rgba(0,4,74,0.22)]",
+        "transition-all duration-300 hover:-translate-y-1",
+        "hover:border-foreground/12 hover:shadow-[0_22px_50px_-30px_rgba(0,4,74,0.32)]",
+      )}
     >
       <span
         className="absolute inset-x-0 top-0 h-[3px] bg-linear-to-r from-accent/0 via-accent to-accent/0 opacity-90"
         aria-hidden
       />
 
-      <div className="flex h-full flex-col p-8">
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <span className="inline-flex w-fit items-center rounded-full bg-secondary/70 px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
-            {course.category}
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
-            <FiAward className="h-3 w-3" />
-            Certified
+      <div className="flex min-h-0 flex-1 flex-col px-6 py-6 sm:px-7 sm:py-7">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 line-clamp-2 min-h-[3.25rem] text-[1.125rem] font-semibold leading-snug tracking-tight text-[#00044a] transition-colors group-hover:text-[#00044a]/85 sm:text-[1.2rem]">
+            {course.title}
+          </h3>
+          <span
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-background/70 text-[#00044a]/70"
+            title="Certified"
+            aria-label="Certified"
+          >
+            <Icon icon="uil:award" className="size-4" aria-hidden />
           </span>
         </div>
 
-        <h3 className="mb-3 line-clamp-2 text-[19px] font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary md:text-xl">
-          {course.title}
-        </h3>
+        <p className="mt-3.5 line-clamp-3 min-h-[4.125rem] text-sm leading-[1.65] text-muted-foreground">
+          {course.summary}
+        </p>
 
-        <p className="mb-6 line-clamp-3 grow text-sm leading-relaxed text-muted-foreground">{course.summary}</p>
+        <div className="mt-auto pt-6">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <Icon
+                icon="uim:clock"
+                className="size-4 shrink-0 text-primary/80"
+                aria-hidden
+              />
+              <span className="truncate font-medium text-foreground/75">{course.duration}</span>
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <Icon
+                icon="uim:layer-group"
+                className="size-4 shrink-0 text-primary/80"
+                aria-hidden
+              />
+              <span>{course.level}</span>
+            </span>
+          </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-border/70 pt-6">
-          <span className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors group-hover:text-foreground group-hover:underline">
-            View program
-          </span>
-          <span className="grid h-10 w-10 place-items-center rounded-full border border-border bg-background/60 text-foreground transition-all group-hover:border-foreground group-hover:bg-foreground group-hover:text-background">
-            <FiArrowUpRight className="h-4 w-4" />
-          </span>
+          <div className="mt-5 flex items-center border-t border-[#00044a]/10 pt-5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-[#00044a]">
+              View program
+              <FiArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </div>
         </div>
       </div>
     </Link>

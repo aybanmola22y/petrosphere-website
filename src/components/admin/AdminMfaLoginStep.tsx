@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-const darkFieldClass =
-  "h-12 rounded-2xl border border-white/12 bg-[#171717] px-4 py-3 text-[15px] text-white shadow-none outline-none ring-0 transition-[border-color,box-shadow] placeholder:text-neutral-600 focus-visible:border-white/22 focus-visible:ring-2 focus-visible:ring-white/18";
 
 export function AdminMfaLoginStep({
   factorId,
@@ -24,6 +19,7 @@ export function AdminMfaLoginStep({
 }) {
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,69 +49,68 @@ export function AdminMfaLoginStep({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[420px]">
-      <div className="mb-10">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-          Step 2 · 2FA
-        </div>
-        <h2 className="admin-title text-3xl font-bold tracking-tight text-white sm:text-[2rem]">Authenticator code</h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-neutral-500">
-          Open <span className="text-neutral-300">Microsoft Authenticator</span> and enter the 6-digit code for Petrosphere
-          Admin.
+    <div>
+      <div className="flex justify-center">
+        <img
+          src="/petrologo-light.png"
+          alt="Petrosphere"
+          className="h-[4.5rem] w-auto object-contain sm:h-20"
+          width={320}
+          height={80}
+        />
+      </div>
+
+      <div className="mt-9">
+        <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-[#111827]">
+          Authenticator code
+        </h1>
+        <p className="mt-2 text-[15px] text-[#6b7280]">
+          Enter the 6-digit code from Microsoft Authenticator
         </p>
       </div>
 
-      <div className="mb-8 flex items-start gap-4 rounded-2xl border border-white/10 bg-white/4 p-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-200 ring-1 ring-violet-300/20">
-          <Smartphone className="h-5 w-5" aria-hidden />
-        </span>
-        <div className="text-left text-sm leading-relaxed text-neutral-400">
-          Codes refresh every 30 seconds. If you recently enabled 2FA, use the account you set up in the admin dashboard.
-        </div>
-      </div>
-
-      <form onSubmit={submit} className="space-y-8">
-        <div className="flex flex-col items-center gap-4">
-          <InputOTP
-            maxLength={6}
-            value={code}
-            onChange={setCode}
-            disabled={pending}
-            containerClassName="justify-center"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-              <InputOTPSlot index={1} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-              <InputOTPSlot index={2} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup>
-              <InputOTPSlot index={3} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-              <InputOTPSlot index={4} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-              <InputOTPSlot index={5} className={cn(darkFieldClass, "h-12 w-11 border-white/12 bg-[#171717] text-white")} />
-            </InputOTPGroup>
-          </InputOTP>
+      <form onSubmit={submit} className="mt-8 space-y-4">
+        <div className="relative rounded-2xl border border-transparent bg-[#f3f4f6] px-4 pb-3 pt-2.5 transition-[box-shadow,background-color] focus-within:bg-white focus-within:shadow-[0_0_0_1.5px_#00044a]">
+          <label htmlFor="mfa-code" className="block text-[12px] font-medium text-[#6b7280]">
+            Code
+          </label>
+          <div className="relative mt-0.5 flex items-center">
+            <input
+              id="mfa-code"
+              type={showCode ? "text" : "password"}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              disabled={pending}
+              autoComplete="one-time-code"
+              className="w-full bg-transparent pr-9 text-[15px] font-medium tracking-[0.2em] text-[#111827] outline-none"
+              placeholder="••••••"
+            />
+            <button
+              type="button"
+              aria-label={showCode ? "Hide code" : "Show code"}
+              className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[#9ca3af] hover:text-[#6b7280]"
+              onClick={() => setShowCode((v) => !v)}
+            >
+              {showCode ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={pending || code.length !== 6}
-          className={cn(
-            "flex h-[3.35rem] w-full items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold tracking-tight text-neutral-950 transition hover:bg-neutral-100 disabled:opacity-55",
-            "shadow-[0_16px_40px_-20px_rgba(255,255,255,0.35)]",
-          )}
+          className="mt-2 flex h-[3.25rem] w-full items-center justify-center gap-2 rounded-2xl bg-[#00044a] text-[15px] font-semibold text-white transition hover:bg-[#00044a]/92 disabled:opacity-60"
         >
           {pending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <Loader2 className="size-4 animate-spin" aria-hidden />
               Verifying…
             </>
           ) : (
-            <>
-              <ShieldCheck className="h-4 w-4" aria-hidden />
-              Verify & continue
-            </>
+            "Verify & continue"
           )}
         </button>
 
@@ -123,9 +118,12 @@ export function AdminMfaLoginStep({
           type="button"
           onClick={onBack}
           disabled={pending}
-          className="w-full text-center text-sm font-medium text-neutral-500 transition hover:text-white"
+          className={cn(
+            "w-full pt-2 text-center text-sm font-medium text-[#6b7280] hover:text-[#111827]",
+            pending && "opacity-50",
+          )}
         >
-          ← Back to password
+          Back to password
         </button>
       </form>
     </div>

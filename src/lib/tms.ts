@@ -156,22 +156,38 @@ function mapTmsSchedules(
     let year = new Date().getFullYear();
     let monthKey = "unknown";
     let startDate = new Date().toISOString(); // Default
+    let endDate = startDate;
 
     if (scheduleType === "regular" && item.schedule_ranges?.[0]) {
       const { start_date, end_date } = item.schedule_ranges[0];
       dateRange = formatDateRange(start_date, end_date);
-      const start = new Date(start_date);
-      startDate = start.toISOString();
-      year = start.getFullYear();
-      monthKey = `${year}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+      startDate = toCalendarDateIso(start_date);
+      endDate = toCalendarDateIso(end_date ?? start_date);
+      const [sy, sm] = startDate.slice(0, 10).split("-").map(Number);
+      if (sy && sm) {
+        year = sy;
+        monthKey = `${sy}-${String(sm).padStart(2, "0")}`;
+      }
     } else if (scheduleType === "staggered" && item.schedule_dates?.length > 0) {
       const dates = item.schedule_dates.map((d: any) => new Date(d.date)).sort((a: any, b: any) => a - b);
       const start = dates[0];
       const end = dates[dates.length - 1];
       dateRange = formatDateRange(start, end);
-      startDate = start.toISOString();
-      year = start.getFullYear();
-      monthKey = `${year}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+      const sortedDateValues = item.schedule_dates
+        .map((d: { date?: string }) => d.date)
+        .filter((v: string | undefined): v is string => typeof v === "string" && v.length > 0)
+        .sort();
+      startDate = toCalendarDateIso(sortedDateValues[0] ?? start);
+      endDate = toCalendarDateIso(sortedDateValues.at(-1) ?? end);
+      const startKey = startDate.slice(0, 10);
+      const [sy, sm] = startKey.split("-").map(Number);
+      if (sy && sm) {
+        year = sy;
+        monthKey = `${sy}-${String(sm).padStart(2, "0")}`;
+      } else {
+        year = start.getFullYear();
+        monthKey = `${year}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+      }
     }
 
     const idKey = course.id != null ? String(course.id) : "";
@@ -212,15 +228,12 @@ function mapTmsSchedules(
       year,
       monthKey,
       startDate,
+      endDate,
       location: item.branch ? formatBranch(item.branch) : "TBA",
       status: mapStatus(item.status),
       actionLabel: item.status === "planned" ? "Enroll" : "Closed",
-      price:
-        registrationFeeFromCourseRow(courseRow) ??
-        getPrice(
-          typeof titleStr === "string" ? titleStr : "",
-          typeof nameStr === "string" ? nameStr : "",
-        ),
+      // Fees are not reliably sourced from TMS yet — public UI shows contact CTA instead.
+      price: undefined,
       enrollmentUrl: `https://tms.petros-global.com/guest-training-registration?schedule_id=${item.id}`,
       },
     ];
@@ -462,6 +475,17 @@ function isSameCalendarDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+/** Store schedule bounds as YYYY-MM-DD so calendar spans are timezone-safe. */
+function toCalendarDateIso(input: string | Date): string {
+  if (typeof input === "string") {
+    const ymd = input.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  }
+  const d = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatDateRange(startStr: string | Date, endStr: string | Date): string {

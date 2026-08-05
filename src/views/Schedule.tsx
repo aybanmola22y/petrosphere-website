@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { Calendar, Filter, LayoutGrid, MapPin, Table2 } from "lucide-react";
+import { Calendar, CalendarDays, Filter, LayoutGrid, MapPin, Table2 } from "lucide-react";
 import { FiChevronRight } from "react-icons/fi";
 
 import {
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { ScheduleGridCard } from "@/components/ui/ScheduleGridCard";
+import { ScheduleMonthCalendar } from "@/components/ui/ScheduleMonthCalendar";
 import { cn } from "@/lib/utils";
 
 function getCurrentMonthKey(now = new Date()): string {
@@ -128,8 +129,8 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
   }, [months]);
 
   const [courseFilter, setCourseFilter] = useState<string>("all");
-  const [monthFilter, setMonthFilter] = useState<string>("all");
-  const [view, setView] = useState<"table" | "grid">("table");
+  const [monthFilter, setMonthFilter] = useState<string>(() => getCurrentMonthKey());
+  const [view, setView] = useState<"table" | "grid" | "calendar">("table");
 
   const filtered = useMemo(() => {
     return trainingSessions.filter((s) => {
@@ -139,6 +140,15 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
       return catOk && monthOk;
     });
   }, [courseFilter, monthFilter, trainingSessions]);
+
+  /** Calendar shows all course-filtered runs that may span across months. */
+  const calendarSessions = useMemo(() => {
+    return trainingSessions.filter(
+      (s) => courseFilter === "all" || s.categorySlug === courseFilter,
+    );
+  }, [courseFilter, trainingSessions]);
+
+  const calendarMonthKey = monthFilter === "all" ? getCurrentMonthKey() : monthFilter;
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) =>
@@ -230,10 +240,23 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
               <LayoutGrid className="h-4 w-4" />
               Grid
             </button>
+            <button
+              type="button"
+              onClick={() => setView("calendar")}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                view === "calendar"
+                  ? "bg-background text-foreground shadow-sm border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </button>
           </div>
         </div>
 
-        {!isLoading ? (
+        {!isLoading && view !== "calendar" ? (
           <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Showing {sorted.length}{" "}
             {sorted.length === 1 ? "training session" : "training sessions"}
@@ -250,6 +273,12 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
             <p className="text-destructive font-medium mb-2">Failed to load schedule</p>
             <p className="text-sm text-muted-foreground">Please check your connection or try again later.</p>
           </Card>
+        ) : view === "calendar" ? (
+          <ScheduleMonthCalendar
+            sessions={calendarSessions}
+            monthKey={calendarMonthKey}
+            onMonthChange={setMonthFilter}
+          />
         ) : sorted.length === 0 ? (
           <Card className="rounded-2xl border-dashed border-border p-16 text-center space-y-4">
             <p className="text-muted-foreground">
@@ -329,7 +358,7 @@ export default function Schedule({ initialSessions = [] }: ScheduleProps) {
                       <StatusCell status={session.status} />
                     </TableCell>
                     <TableCell className="align-top py-6 font-medium text-foreground">
-                      {session.price || "—"}
+                      {session.price || "Contact for rate"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-4 py-6 text-right align-top">
                       <ActionCell session={session} />

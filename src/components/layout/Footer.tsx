@@ -13,7 +13,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
-              Petrosphere Incorporated is a one-stop-shop training, review and consultancy company that caters the needs of companies across industries ranging from oil and gas, construction, mining, manufacturing, service, call center, and many others.
+              Petrosphere Incorporated is a one-stop-shop training, review and consultancy company that caters the needs of companies across industries ranging from construction, mining, manufacturing, service, call center, and many others.
             </p>
           </div>
 

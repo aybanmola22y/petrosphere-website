@@ -276,7 +276,7 @@ export default function Courses() {
                     {list.length} {list.length === 1 ? "program" : "programs"}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
                   {list.map((course, idx) => (
                     <motion.div
                       key={course.id}
@@ -292,7 +292,7 @@ export default function Courses() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {filteredCourses.map((course, idx) => (
               <motion.div
                 key={course.id}

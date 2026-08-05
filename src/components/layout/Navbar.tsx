@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { FiMenu, FiX, FiChevronDown, FiChevronRight } from "react-icons/fi";
+import { AnimatePresence, motion } from "framer-motion";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { cn } from "@/lib/utils";
 
 type Course = { name: string; href: string };
@@ -177,6 +178,59 @@ const NAV: NavItem[] = [
   { name: "eLearning Academy", href: "https://elearning.petrosphere.com.ph/" },
 ];
 
+function MobileMenuButton({
+  open,
+  onClick,
+}: {
+  open: boolean;
+  onClick: () => void;
+}) {
+  const barTransition = { duration: 0.42, ease: [0.4, 0, 0.2, 1] as const };
+
+  return (
+    <button
+      type="button"
+      aria-label={open ? "Close menu" : "Open menu"}
+      aria-expanded={open}
+      className="relative grid size-10 shrink-0 place-items-center rounded-md border border-white/35 text-white transition-colors duration-300 hover:border-white/55 lg:hidden"
+      onClick={onClick}
+    >
+      <span className="relative block h-5 w-6" aria-hidden>
+        <motion.span
+          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          initial={false}
+          animate={
+            open
+              ? { y: "-50%", rotate: 45 }
+              : { y: "calc(-50% - 6px)", rotate: 0 }
+          }
+          transition={barTransition}
+        />
+        <motion.span
+          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          initial={false}
+          animate={
+            open
+              ? { y: "-50%", opacity: 0, scaleX: 0 }
+              : { y: "-50%", opacity: 1, scaleX: 1 }
+          }
+          transition={barTransition}
+        />
+        <motion.span
+          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          initial={false}
+          animate={
+            open
+              ? { y: "-50%", rotate: -45 }
+              : { y: "calc(-50% + 6px)", rotate: 0 }
+          }
+          transition={barTransition}
+        />
+      </span>
+    </button>
+  );
+}
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -204,11 +258,14 @@ export function Navbar() {
 
   const handleEnter = (name: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    setOpenMenu(name);
-    if (name === "Courses") {
-      const firstWithGroups = NAV.find((n) => n.name === name)?.children?.find((c) => c.groups?.length);
+    // Only seed the default sub-panel when opening Courses fresh — not on brief re-enter.
+    if (openMenu !== name && name === "Courses") {
+      const firstWithGroups = NAV.find((n) => n.name === name)?.children?.find(
+        (c) => c.groups?.length,
+      );
       if (firstWithGroups) setOpenSub(firstWithGroups.name);
     }
+    setOpenMenu(name);
   };
 
   const cancelClose = () => {
@@ -220,7 +277,7 @@ export function Navbar() {
     closeTimer.current = setTimeout(() => {
       setOpenMenu(null);
       setOpenSub(null);
-    }, 250);
+    }, 400);
   };
 
   const handleMenuPointerLeave = (
@@ -271,6 +328,7 @@ export function Navbar() {
             const hasChildren = !!item.children?.length;
             const active = isActive(item.href);
             const activeSubLink = item.children?.find((c) => c.name === openSub && c.groups?.length);
+            const isMegaMenu = !!item.children?.some((c) => c.groups?.length);
             return (
               <div
                 key={item.name}
@@ -315,88 +373,101 @@ export function Navbar() {
                 )}
 
                 {hasChildren && openMenu === item.name && (
-                  <div className="absolute left-1/2 top-full z-[100] w-max -translate-x-1/2">
-                    <div className="h-2" aria-hidden />
-                    <div
-                      className="flex min-h-[22rem] items-stretch rounded-xl border border-border bg-background shadow-lg"
-                      onPointerMove={cancelClose}
-                    >
+                  <div
+                    className="absolute left-0 top-full z-[100] pt-2"
+                    onPointerEnter={cancelClose}
+                  >
+                    {isMegaMenu ? (
                       <div
-                        className="w-64 shrink-0 border-r border-border p-2"
-                        onPointerEnter={cancelClose}
+                        className="flex min-h-[22rem] w-[min(52rem,calc(100vw-2rem))] items-stretch overflow-hidden rounded-xl border border-border bg-background shadow-lg"
+                        onPointerMove={cancelClose}
                       >
-                        {item.children!.map((child) => {
-                          const hasGroups = !!child.groups?.length;
-                          const isOpen = openSub === child.name;
-                          return (
-                            <div
-                              key={child.name}
-                              onPointerEnter={() => handleSubEnter(child)}
-                            >
-                            <Link
-                              href={child.href}
-                              className={cn(
-                                "flex items-center justify-between gap-2 px-3 py-2 text-sm rounded-lg transition-colors",
-                                isOpen
-                                  ? "bg-secondary text-foreground"
-                                  : "text-foreground hover:bg-secondary/60"
-                              )}
-                            >
-                              <span>{child.name}</span>
-                              {hasGroups && (
-                                <FiChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                              )}
-                            </Link>
-                          </div>
-                          );
-                        })}
-                      </div>
-
-                      <div
-                        className={cn(
-                          "min-h-[22rem] shrink-0 p-6",
-                          activeSubLink?.groups
-                            ? activeSubLink.groups.length === 1
-                              ? "w-72"
-                              : "w-[min(640px,calc(100vw-2rem))] max-w-[640px]"
-                            : "hidden"
-                        )}
-                        onPointerEnter={() => activeSubLink && handleSubEnter(activeSubLink)}
-                      >
-                        {activeSubLink?.groups && (
-                          <div
-                            className={cn(
-                              "grid gap-x-8 gap-y-6",
-                              activeSubLink.groups.length === 1
-                                ? "grid-cols-1"
-                                : "grid-cols-2"
-                            )}
-                          >
-                            {activeSubLink.groups.map((group) => (
-                              <div key={group.name} className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="w-1 h-1 rounded-full bg-accent" />
-                              <h4 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-                                {group.name}
-                              </h4>
-                            </div>
-                            <div className="flex flex-col">
-                              {group.courses.map((course) => (
+                        <div
+                          className="w-64 shrink-0 border-r border-border p-2"
+                          onPointerEnter={cancelClose}
+                        >
+                          {item.children!.map((child) => {
+                            const hasGroups = !!child.groups?.length;
+                            const isOpen = openSub === child.name;
+                            return (
+                              <div
+                                key={child.name}
+                                className="block"
+                                onPointerEnter={() => handleSubEnter(child)}
+                              >
                                 <Link
-                                  key={course.name}
-                                  href={course.href}
-                                  className="px-2 py-1.5 text-sm text-foreground rounded-md hover:bg-secondary/60 hover:text-accent transition-colors"
+                                  href={child.href}
+                                  className={cn(
+                                    "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
+                                    isOpen
+                                      ? "bg-secondary text-foreground"
+                                      : "text-foreground hover:bg-secondary/60"
+                                  )}
                                 >
-                                  {course.name}
+                                  <span>{child.name}</span>
+                                  {hasGroups && (
+                                    <FiChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                  )}
                                 </Link>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div
+                          className="min-h-[22rem] min-w-0 flex-1 p-6"
+                          onPointerEnter={() => activeSubLink && handleSubEnter(activeSubLink)}
+                        >
+                          {activeSubLink?.groups ? (
+                            <div
+                              className={cn(
+                                "grid gap-x-8 gap-y-6",
+                                activeSubLink.groups.length === 1
+                                  ? "grid-cols-1"
+                                  : "grid-cols-2"
+                              )}
+                            >
+                              {activeSubLink.groups.map((group) => (
+                                <div key={group.name} className="flex flex-col gap-2">
+                                  <div className="mb-1 flex items-center gap-2">
+                                    <span className="h-1 w-1 rounded-full bg-accent" />
+                                    <h4 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
+                                      {group.name}
+                                    </h4>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    {group.courses.map((course) => (
+                                      <Link
+                                        key={course.name}
+                                        href={course.href}
+                                        className="rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary/60 hover:text-accent"
+                                      >
+                                        {course.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
                               ))}
                             </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        className="min-w-[14rem] rounded-xl border border-border bg-background p-2 shadow-lg"
+                        onPointerMove={cancelClose}
+                      >
+                        {item.children!.map((child) => (
+                          <Link
+                            key={child.name}
+                            href={child.href}
+                            className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -407,25 +478,25 @@ export function Navbar() {
         <div className="hidden lg:flex items-center shrink-0">
           <Link
             href="/schedule"
-            className="inline-flex items-center justify-center text-sm font-medium text-primary-foreground bg-primary rounded-lg px-5 py-2.5 hover:bg-primary/90 transition-all"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-9 py-3 text-[0.9375rem] font-medium text-primary-foreground transition-all hover:bg-primary/90"
           >
             Enroll
           </Link>
         </div>
 
-        {/* Mobile Toggle */}
-        <button
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          className="lg:hidden text-white p-2 -mr-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
-        </button>
+        <MobileMenuButton open={mobileMenuOpen} onClick={() => setMobileMenuOpen(!mobileMenuOpen)} />
       </div>
 
-      {/* Mobile Nav */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-[#00044a] border-b border-white/10 shadow-lg flex flex-col p-6 gap-2 max-h-[80vh] overflow-y-auto">
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            key="mobile-nav"
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.38, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute left-0 top-full flex max-h-[80vh] w-full flex-col gap-2 overflow-y-auto border-b border-white/10 bg-[#00044a] p-6 shadow-lg lg:hidden"
+          >
           <nav className="flex flex-col">
             {NAV.map((item) => {
               const hasChildren = !!item.children?.length;
@@ -533,13 +604,14 @@ export function Navbar() {
           <div className="pt-4">
             <Link
               href="/schedule"
-              className="block text-center text-sm font-medium text-primary-foreground bg-primary rounded-lg py-2.5"
+              className="block rounded-lg bg-primary py-3 text-center text-[0.9375rem] font-medium text-primary-foreground"
             >
               Enroll
             </Link>
           </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

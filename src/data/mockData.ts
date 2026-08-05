@@ -597,6 +597,8 @@ export interface TrainingSession {
   monthKey: string;
   /** ISO date string for sorting */
   startDate: string;
+  /** ISO end date of the run (same as startDate for single-day). Optional for older cached payloads. */
+  endDate?: string;
   location: string;
   status: "finished" | "cancelled" | "open" | "ongoing" | "closed";
   actionLabel: string;
