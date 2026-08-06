@@ -49,7 +49,7 @@ export function Footer() {
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground text-center md:text-left">
-            © {new Date().getFullYear()} Petrosphere Inc. All rights reserved.
+            © {new Date().getFullYear()} Petrosphere Incorporated. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end">
             <Link
@@ -58,10 +58,6 @@ export function Footer() {
             >
               Admin
             </Link>
-            <span className="text-xs text-muted-foreground">ISO 9001:2015 Certified</span>
-            <span className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Systems Operational
-            </span>
           </div>
         </div>
       </div>

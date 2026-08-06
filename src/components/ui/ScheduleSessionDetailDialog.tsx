@@ -26,55 +26,37 @@ function parseDay(input?: string) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function formatLongSchedule(session: TrainingSession) {
+function formatStripSchedule(session: TrainingSession) {
   const start = parseDay(session.startDate);
   const end = parseDay(session.endDate) ?? start;
   if (!start) return session.dateRange || "TBA";
-
-  const opts: Intl.DateTimeFormatOptions = {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  };
-  const startLabel = start.toLocaleDateString("en-US", opts);
-  if (!end || start.getTime() === end.getTime()) return startLabel;
-  return `${startLabel} – ${end.toLocaleDateString("en-US", opts)}`;
+  if (!end || start.getTime() === end.getTime()) {
+    return "One-day session";
+  }
+  const sameMonth =
+    start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  if (sameMonth) {
+    return `${start.toLocaleString("en-US", { month: "short" })} ${start.getDate()}–${end.getDate()}, ${end.getFullYear()}`;
+  }
+  return `${start.toLocaleString("en-US", { month: "short", day: "numeric" })} – ${end.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
 }
 
 function statusPresentation(status: TrainingSession["status"]) {
   switch (status) {
     case "open":
-      return { label: "Upcoming", className: "bg-emerald-500/15 text-emerald-800 ring-1 ring-emerald-600/20" };
+      return { label: "Upcoming", dot: "bg-emerald-500" };
     case "ongoing":
-      return { label: "Ongoing", className: "bg-amber-500/15 text-amber-900 ring-1 ring-amber-500/25" };
+      return { label: "Ongoing", dot: "bg-amber-500" };
     case "finished":
-      return { label: "Finished", className: "bg-slate-500/10 text-slate-600 ring-1 ring-slate-400/25" };
+      return { label: "Finished", dot: "bg-slate-400" };
     case "cancelled":
-      return { label: "Cancelled", className: "bg-destructive/10 text-destructive ring-1 ring-destructive/20" };
+      return { label: "Cancelled", dot: "bg-destructive" };
     default:
-      return { label: "Closed", className: "bg-slate-500/10 text-slate-600 ring-1 ring-slate-400/25" };
+      return { label: "Closed", dot: "bg-slate-400" };
   }
 }
 
-function shortCourseCode(title: string, slug: string) {
-  const fromSlug = slug
-    .split("--")[0]
-    ?.replace(/-/g, " ")
-    .trim()
-    .toUpperCase();
-  if (fromSlug && fromSlug.length <= 12) return fromSlug;
-
-  const initials = title
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 6)
-    .toUpperCase();
-  return initials || "COURSE";
-}
-
-function MetaTile({
+function InfoRow({
   icon,
   label,
   children,
@@ -84,13 +66,15 @@ function MetaTile({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-white/70 px-3.5 py-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-        <Icon icon={icon} className="size-3.5 text-[#00044a]/45" aria-hidden />
-        {label}
-      </div>
-      <div className="mt-1.5 text-sm font-semibold leading-snug text-[#00044a]">
-        {children || <span className="font-medium text-muted-foreground">—</span>}
+    <div className="flex gap-3.5 py-3.5">
+      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-[#00044a]/[0.06] text-[#00044a]/70">
+        <Icon icon={icon} className="size-4" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
+        <div className="mt-0.5 text-[15px] font-semibold leading-snug text-[#00044a]">
+          {children || <span className="font-medium text-muted-foreground">—</span>}
+        </div>
       </div>
     </div>
   );
@@ -112,121 +96,135 @@ export function ScheduleSessionDetailDialog({
   );
 
   const status = session ? statusPresentation(session.status) : null;
-  const code = session && course ? shortCourseCode(course.title, session.courseSlug) : "";
   const canEnroll = session?.status === "open" && session.actionLabel === "Enroll";
   const enrollHref = session ? sessionEnrollHref(session) : "#";
   const enrollExternal = isExternalHref(enrollHref);
-  const scheduleLabel = session ? formatLongSchedule(session) : "";
+  const stripSchedule = session ? formatStripSchedule(session) : "";
+  const start = session ? parseDay(session.startDate) : null;
 
   return (
     <Dialog open={open && !!session} onOpenChange={onOpenChange}>
       {session && course && status ? (
         <DialogContent
           className={cn(
-            "max-h-[90vh] w-[min(100vw-1.5rem,30rem)] gap-0 overflow-hidden rounded-3xl border-border/70 p-0 shadow-[0_28px_80px_-28px_rgba(0,4,74,0.45)]",
-            "bg-[hsl(40_30%_97%)] [&>button]:hidden",
+            "max-h-[min(90vh,40rem)] w-[calc(100vw-2rem)] max-w-[26rem] gap-0 overflow-x-hidden overflow-y-auto rounded-2xl border-border/80 p-0",
+            "bg-white shadow-[0_24px_64px_-24px_rgba(0,4,74,0.4)] [&>button]:hidden",
           )}
         >
-          {/* Header */}
-          <div className="relative overflow-hidden bg-[#00044a] px-6 pb-6 pt-5 text-white">
-            <div
-              className="pointer-events-none absolute inset-0 bg-linear-to-br from-accent/30 via-transparent to-transparent"
-              aria-hidden
-            />
-            <div className="pointer-events-none absolute -right-10 -top-12 size-40 rounded-full bg-accent/80" aria-hidden />
-            <div className="pointer-events-none absolute right-8 top-10 size-20 rounded-full bg-accent/35" aria-hidden />
+          <span
+            className="absolute inset-x-0 top-0 z-10 h-[3px] bg-linear-to-r from-accent/0 via-accent to-accent/0"
+            aria-hidden
+          />
 
-            <div className="relative z-10 flex items-start justify-between gap-3">
-              <span className="inline-flex rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm">
-                {status.label}
-              </span>
-              <DialogClose asChild>
-                <button
-                  type="button"
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
-                  aria-label="Close"
-                >
-                  <X className="size-4" />
-                </button>
-              </DialogClose>
-            </div>
+          {/* Top bar */}
+          <div className="flex items-center justify-between gap-3 px-5 pt-5">
+            <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[#00044a]/75">
+              <span className={cn("size-2 rounded-full", status.dot)} aria-hidden />
+              {status.label}
+            </span>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-label="Close"
+              >
+                <X className="size-4" />
+              </button>
+            </DialogClose>
+          </div>
 
-            <p className="relative z-10 mt-5 text-[11px] font-semibold tracking-[0.2em] uppercase text-accent">
-              {code}
-              {course.category ? (
-                <>
-                  <span className="mx-2 text-white/30" aria-hidden>
-                    ·
-                  </span>
-                  <span className="tracking-[0.16em] text-white/55">{course.category}</span>
-                </>
-              ) : null}
-            </p>
-            <DialogTitle className="relative z-10 mt-2 text-[1.35rem] font-semibold leading-snug tracking-tight text-white">
+          {/* Title block */}
+          <div className="px-5 pb-5 pt-4">
+            <DialogTitle className="text-[1.3rem] font-semibold leading-snug tracking-tight text-[#00044a]">
               {course.title}
             </DialogTitle>
           </div>
 
-          {/* Body */}
-          <div className="space-y-4 px-6 py-5">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <MetaTile icon="uil:location-point" label="Location">
-                {session.location}
-              </MetaTile>
-              <MetaTile icon="uim:clock" label="Duration">
-                {course.duration && course.duration !== "—" ? course.duration : "—"}
-              </MetaTile>
+          {/* Date strip — compact copy so ranges never clip */}
+          {start ? (
+            <div className="mx-5 flex min-w-0 items-center gap-3 rounded-xl bg-[#00044a] px-3.5 py-3.5 text-white sm:gap-4 sm:px-4">
+              <div className="flex shrink-0 items-end gap-2">
+                <span className="text-[1.75rem] font-semibold leading-none tabular-nums sm:text-[2rem]">
+                  {String(start.getDate()).padStart(2, "0")}
+                </span>
+                <div className="mb-0.5 leading-tight">
+                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/70">
+                    {start.toLocaleString("en-US", { month: "short" })}
+                  </p>
+                  <p className="text-[11px] text-white/50">{start.getFullYear()}</p>
+                </div>
+              </div>
+              <div className="h-9 w-px shrink-0 bg-white/15" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-white/45">
+                  Schedule
+                </p>
+                <p className="mt-0.5 text-sm font-medium leading-snug text-white/90 break-words">
+                  {stripSchedule}
+                </p>
+              </div>
             </div>
+          ) : null}
 
-            <MetaTile icon="uil:calendar-alt" label="Schedule">
-              {scheduleLabel}
-            </MetaTile>
-
-            <div className="rounded-xl border border-border/70 bg-white/70 px-4 py-3.5">
-              <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-                Registration fee
-              </p>
-              <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-[#00044a]">
-                {session.price || "Contact for rate"}
-              </p>
-            </div>
+          {/* Details */}
+          <div className="mx-5 mt-2 divide-y divide-border/80 border-y border-border/80">
+            <InfoRow icon="uil:location-point" label="Location">
+              {session.location}
+            </InfoRow>
+            <InfoRow icon="uim:clock" label="Duration">
+              {course.duration && course.duration !== "—" ? course.duration : "—"}
+            </InfoRow>
+            <InfoRow icon="uil:bill" label="Registration fee">
+              {session.price || "Contact for rate"}
+            </InfoRow>
           </div>
 
-          {/* Footer */}
-          <div className="space-y-3 border-t border-[#00044a]/10 px-6 py-5">
+          {/* Actions — inset so rounded corners are never clipped by the dialog edge */}
+          <div className="space-y-3 p-5">
             {canEnroll ? (
               <Button
                 asChild
-                className="h-11 w-full rounded-xl bg-[#00044a] text-[15px] font-semibold text-white hover:bg-[#00044a]/90"
+                className="h-11 w-full rounded-xl border-0 bg-[#00044a] text-[15px] font-semibold text-white hover:bg-[#00044a]/90"
               >
                 {enrollExternal ? (
-                  <a href={enrollHref} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={enrollHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl"
+                  >
                     Enroll Now
                   </a>
                 ) : (
-                  <Link href={enrollHref}>Enroll Now</Link>
+                  <Link href={enrollHref} className="rounded-xl">
+                    Enroll Now
+                  </Link>
                 )}
               </Button>
             ) : (
               <Button
                 asChild
-                className="h-11 w-full rounded-xl bg-[#00044a] text-[15px] font-semibold text-white hover:bg-[#00044a]/90"
+                className="h-11 w-full rounded-xl border-0 bg-[#00044a] text-[15px] font-semibold text-white hover:bg-[#00044a]/90"
               >
-                <Link href={`/courses/${session.courseSlug}`}>View program</Link>
+                <Link href={`/courses/${session.courseSlug}`} className="rounded-xl">
+                  View program
+                </Link>
               </Button>
             )}
 
-            <div className="flex items-center justify-between gap-3">
-              <Link
-                href={`/courses/${session.courseSlug}`}
-                className="text-xs font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
-              >
-                Full program details
-              </Link>
+            <div className="flex items-center justify-center gap-4 text-[12px]">
+              {canEnroll ? (
+                <Link
+                  href={`/courses/${session.courseSlug}`}
+                  className="font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
+                >
+                  Full program details
+                </Link>
+              ) : null}
               <DialogClose asChild>
                 <button
                   type="button"
-                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
+                  className="font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
                 >
                   Close
                 </button>

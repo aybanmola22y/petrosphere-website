@@ -155,45 +155,43 @@ export function ScheduleGridCard({ session }: { session: TrainingSession }) {
           ) : null}
         </div>
 
-        <div className="mt-auto space-y-3 pt-5">
-          <div className="flex min-h-11 items-end justify-between gap-3 border-t border-[#00044a]/10 pt-4">
-            <div className="min-w-0">
-              <p className="text-[9px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-                Registration fee
-              </p>
-              <p className="mt-1 truncate text-base font-semibold tabular-nums tracking-tight text-[#00044a]">
-                {session.price || "Contact for rate"}
-              </p>
-            </div>
-
-            {canEnroll ? (
-              <Button
-                asChild
-                size="sm"
-                className="h-9 shrink-0 rounded-lg gap-0.5 px-3 text-[13px] font-semibold shadow-sm"
-              >
-                {enrollIsExternal ? (
-                  <a href={enrollHref} target="_blank" rel="noopener noreferrer">
-                    Enroll
-                    <FiChevronRight className="h-3.5 w-3.5" />
-                  </a>
-                ) : (
-                  <Link href={enrollHref}>
-                    Enroll
-                    <FiChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                )}
-              </Button>
-            ) : (
-              <span className="shrink-0 self-center text-[10px] font-medium tracking-wider uppercase text-muted-foreground">
-                {session.actionLabel}
-              </span>
-            )}
+        <div className="mt-auto space-y-3.5 border-t border-[#00044a]/10 pt-4">
+          <div className="text-center">
+            <p className="text-[9px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
+              Registration fee
+            </p>
+            <p className="mt-1 text-base font-semibold tabular-nums tracking-tight text-[#00044a]">
+              {session.price || "Contact for rate"}
+            </p>
           </div>
+
+          {canEnroll ? (
+            <Button
+              asChild
+              size="sm"
+              className="h-10 w-full rounded-xl gap-1 bg-[#00044a] text-[13px] font-semibold text-white shadow-sm hover:bg-[#00044a]/90"
+            >
+              {enrollIsExternal ? (
+                <a href={enrollHref} target="_blank" rel="noopener noreferrer">
+                  Enroll
+                  <FiChevronRight className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                <Link href={enrollHref}>
+                  Enroll
+                  <FiChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </Button>
+          ) : (
+            <div className="flex h-10 w-full items-center justify-center rounded-xl border border-border bg-secondary/60 text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+              {session.actionLabel}
+            </div>
+          )}
 
           <Link
             href={programHref}
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
+            className="inline-flex w-full items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-[#00044a]"
           >
             View program
             <FiArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
