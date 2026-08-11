@@ -13,6 +13,7 @@ import { LogoMarquee } from "@/components/ui/LogoMarquee";
 import { LatestUpdatesSection } from "@/components/sections/LatestUpdatesSection";
 import { HomeHeroSection } from "@/components/sections/HomeHeroSection";
 import { HomeStatsSection } from "@/components/sections/HomeStatsSection";
+import { PlatformCapabilitiesSection } from "@/components/sections/PlatformCapabilitiesSection";
 import { StudentVideoTestimonialsSection } from "@/components/sections/StudentVideoTestimonialsSection";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
 import { pickFeaturedCourses } from "@/lib/featured-courses";
@@ -57,6 +58,13 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
             </div>
 
             <LogoMarquee logos={accreditationLogos} speed={40} />
+          </div>
+        </section>
+
+        {/* Platform capabilities (4 services) */}
+        <section className="bg-background py-14 md:py-24">
+          <div className="container mx-auto px-6">
+            <PlatformCapabilitiesSection />
           </div>
         </section>
       </div>

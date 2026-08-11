@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   BookOpenCheck,
@@ -63,11 +64,13 @@ const platformCapabilities: PlatformCapability[] = [
 ];
 
 function CapabilityCard({ item, idx }: { item: PlatformCapability; idx: number }) {
-  const Icon = item.icon;
+  const href =
+    item.title === "Training" ? "/courses" : item.title === "Review" ? "/review" : "/services";
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      /* Ensure the banner is always visible on the homepage (avoid opacity-0 if in-view doesn't trigger). */
+      initial={{ opacity: 1, y: 0 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{
@@ -75,33 +78,32 @@ function CapabilityCard({ item, idx }: { item: PlatformCapability; idx: number }
         delay: idx * 0.06,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="bg-card flex flex-col gap-4 p-5 md:p-6"
+      className="group relative h-[390px] overflow-hidden bg-card md:h-[460px]"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="relative shrink-0">
-          <div className="grid size-12 place-items-center rounded-xl border border-border bg-background p-2.5 text-foreground shadow-sm">
-            <Icon className="size-1.125rem" strokeWidth={1.5} aria-hidden />
-          </div>
-          <span className="absolute -bottom-0.5 -right-0.5 z-10 size-2.5 rounded-full bg-accent ring-2 ring-card" />
-        </div>
-        <span className="text-[10px] font-medium tracking-[0.18em] uppercase text-muted-foreground tabular-nums">
-          {item.index}
-        </span>
-      </div>
-
-      <div className="relative aspect-16/10 w-full overflow-hidden rounded-2xl border border-border bg-muted shadow-inner ring-1 ring-black/4">
+      <div className="absolute inset-0">
         <Image
           src={item.imageSrc}
           alt={item.imageAlt}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
         />
       </div>
 
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight text-foreground">{item.title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-[0.9375rem]">{item.description}</p>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent" />
+
+      <div className="relative z-10 flex h-full flex-col justify-between p-8">
+        <div>
+          <h3 className="text-[24px] font-semibold tracking-tight text-white">{item.title}</h3>
+          <p className="mt-2 line-clamp-3 text-[13px] leading-[1.6] text-white/90">{item.description}</p>
+        </div>
+
+        <Link
+          href={href}
+          className="w-fit rounded-md bg-[#00044a] px-7 py-3 text-[13px] font-semibold tracking-wider text-white transition-colors hover:bg-[#0a0a5d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        >
+          KNOW MORE
+        </Link>
       </div>
     </motion.div>
   );
@@ -109,20 +111,12 @@ function CapabilityCard({ item, idx }: { item: PlatformCapability; idx: number }
 
 export function PlatformCapabilitiesSection() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card md:rounded-3xl">
-      <div className="flex items-center justify-between border-b border-border px-5 py-3 text-[10px] font-medium tracking-[0.18em] uppercase text-muted-foreground md:px-8 md:py-3.5 md:text-[11px]">
-        <span className="flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-accent" />
-          Platform capabilities
-        </span>
-        <span className="tabular-nums">4 / 4</span>
-      </div>
-
-      <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 xl:grid-cols-4">
+    <section className="overflow-hidden rounded-3xl bg-card">
+      <div className="grid grid-cols-1 md:grid-cols-4 divide-y divide-white/10 md:divide-y-0 md:divide-x">
         {platformCapabilities.map((item, idx) => (
           <CapabilityCard key={item.index} item={item} idx={idx} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
