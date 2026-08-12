@@ -185,44 +185,55 @@ function MobileMenuButton({
   open: boolean;
   onClick: () => void;
 }) {
-  const barTransition = { duration: 0.42, ease: [0.4, 0, 0.2, 1] as const };
+  const barTransition = { duration: 0.36, ease: [0.22, 1, 0.36, 1] as const };
 
   return (
     <button
       type="button"
       aria-label={open ? "Close menu" : "Open menu"}
       aria-expanded={open}
-      className="relative grid size-10 shrink-0 place-items-center rounded-md border border-white/35 text-white transition-colors duration-300 hover:border-white/55 lg:hidden"
       onClick={onClick}
+      className={cn(
+        "relative grid size-12 shrink-0 place-items-center lg:hidden",
+        "rounded-2xl text-white",
+        "bg-white/10 backdrop-blur-md",
+        "ring-1 ring-inset ring-white/20",
+        "shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)]",
+        "transition-all duration-300",
+        "hover:bg-white/16 hover:ring-white/40",
+        "active:scale-[0.96]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80",
+        open && "bg-primary/20 ring-primary/55 hover:bg-primary/25 hover:ring-primary/70",
+      )}
     >
-      <span className="relative block h-5 w-6" aria-hidden>
+      <span className="relative block h-3.5 w-[18px]" aria-hidden>
         <motion.span
-          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          className="absolute left-1/2 top-0 block h-[1.5px] origin-center rounded-full bg-current"
           initial={false}
           animate={
             open
-              ? { y: "-50%", rotate: 45 }
-              : { y: "calc(-50% - 6px)", rotate: 0 }
+              ? { x: "-50%", y: 6, rotate: 45, width: 18 }
+              : { x: "-50%", y: 0, rotate: 0, width: 18 }
           }
           transition={barTransition}
         />
         <motion.span
-          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          className="absolute left-1/2 top-1/2 block h-[1.5px] origin-center rounded-full bg-current"
           initial={false}
           animate={
             open
-              ? { y: "-50%", opacity: 0, scaleX: 0 }
-              : { y: "-50%", opacity: 1, scaleX: 1 }
+              ? { x: "-50%", y: "-50%", opacity: 0, width: 10, scaleX: 0 }
+              : { x: "-50%", y: "-50%", opacity: 1, width: 11, scaleX: 1 }
           }
           transition={barTransition}
         />
         <motion.span
-          className="absolute left-0 top-1/2 block h-[2px] w-6 origin-center rounded-full bg-white"
+          className="absolute left-1/2 bottom-0 block h-[1.5px] origin-center rounded-full bg-current"
           initial={false}
           animate={
             open
-              ? { y: "-50%", rotate: -45 }
-              : { y: "calc(-50% + 6px)", rotate: 0 }
+              ? { x: "-50%", y: -6, rotate: -45, width: 18 }
+              : { x: "-50%", y: 0, rotate: 0, width: 14 }
           }
           transition={barTransition}
         />
@@ -491,124 +502,179 @@ export function Navbar() {
         {mobileMenuOpen && (
           <motion.div
             key="mobile-nav"
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.38, ease: [0.4, 0, 0.2, 1] }}
-            className="absolute left-0 top-full flex max-h-[80vh] w-full flex-col gap-2 overflow-y-auto border-b border-white/10 bg-[#00044a] p-6 shadow-lg lg:hidden"
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-0 top-full w-full overflow-hidden border-b border-white/10 bg-[#00044a]/98 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] backdrop-blur-xl lg:hidden"
           >
-          <nav className="flex flex-col">
-            {NAV.map((item) => {
-              const hasChildren = !!item.children?.length;
-              const expanded = mobileExpanded === item.name;
-              return (
-                <div key={item.name} className="border-b border-border last:border-b-0">
-                  <div className="flex items-center justify-between">
-                    {isExternalHref(item.href) ? (
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 py-3 text-base font-medium text-white"
-                      >
-                        {item.name}
-                      </a>
-                    ) : (
-                      <Link href={item.href} className="flex-1 py-3 text-base font-medium text-white">
-                        {item.name}
-                      </Link>
-                    )}
-                    {hasChildren && (
-                      <button
-                        type="button"
-                        aria-label={expanded ? `Collapse ${item.name}` : `Expand ${item.name}`}
-                        className="p-3 text-muted-foreground"
-                        onClick={() => {
-                          setMobileExpanded(expanded ? null : item.name);
-                          setMobileSubExpanded(null);
-                        }}
-                      >
-                        <FiChevronDown
-                          className={cn(
-                            "w-4 h-4 transition-transform",
-                            expanded ? "rotate-180" : ""
-                          )}
-                        />
-                      </button>
-                    )}
-                  </div>
-                  {hasChildren && expanded && (
-                    <div className="pb-3 pl-3 flex flex-col">
-                      {item.children!.map((child) => {
-                        const hasGroups = !!child.groups?.length;
-                        const subExpanded = mobileSubExpanded === child.name;
-                        return (
-                          <div key={child.name} className="flex flex-col">
-                            <div className="flex items-center justify-between">
-                              <Link
-                                href={child.href}
-                                className="flex-1 py-2 text-sm text-muted-foreground hover:text-foreground"
-                              >
-                                {child.name}
-                              </Link>
-                              {hasGroups && (
-                                <button
-                                  type="button"
-                                  aria-label={subExpanded ? `Collapse ${child.name}` : `Expand ${child.name}`}
-                                  className="p-2 text-muted-foreground"
-                                  onClick={() =>
-                                    setMobileSubExpanded(subExpanded ? null : child.name)
-                                  }
-                                >
-                                  <FiChevronDown
-                                    className={cn(
-                                      "w-3.5 h-3.5 transition-transform",
-                                      subExpanded ? "rotate-180" : ""
-                                    )}
-                                  />
-                                </button>
-                              )}
-                            </div>
-                            {hasGroups && subExpanded && (
-                              <div className="pl-3 pb-2 flex flex-col gap-3">
-                                {child.groups!.map((group) => (
-                                  <div key={group.name} className="flex flex-col">
-                                    <div className="flex items-center gap-2 pt-2 pb-1">
-                                      <span className="w-1 h-1 rounded-full bg-accent" />
-                                      <h4 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-                                        {group.name}
-                                      </h4>
-                                    </div>
-                                    {group.courses.map((course) => (
-                                      <Link
-                                        key={course.name}
-                                        href={course.href}
-                                        className="py-1.5 pl-3 text-sm text-foreground hover:text-accent"
-                                      >
-                                        {course.name}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
+            <div className="h-px bg-linear-to-r from-transparent via-primary/70 to-transparent" aria-hidden />
+
+            <div className="max-h-[78vh] overflow-y-auto px-5 pb-6 pt-5">
+              <p className="mb-4 px-1 text-[11px] font-semibold tracking-[0.22em] uppercase text-white/45">
+                Menu
+              </p>
+
+              <nav className="flex flex-col gap-1.5">
+                {NAV.map((item, idx) => {
+                  const hasChildren = !!item.children?.length;
+                  const expanded = mobileExpanded === item.name;
+                  const active = isActive(item.href);
+
+                  return (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                      className={cn(
+                        "overflow-hidden rounded-2xl",
+                        expanded ? "bg-white/10 ring-1 ring-inset ring-white/10" : "bg-transparent",
+                      )}
+                    >
+                      <div className="flex items-center gap-1">
+                        {isExternalHref(item.href) ? (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              "flex min-h-12 flex-1 items-center justify-between rounded-2xl px-4 text-[15px] font-medium transition-colors",
+                              active ? "text-white" : "text-white/88 hover:bg-white/8 hover:text-white",
                             )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-          <div className="pt-4">
-            <Link
-              href="/schedule"
-              className="block rounded-lg bg-primary py-3 text-center text-[0.9375rem] font-medium text-primary-foreground"
-            >
-              Enroll
-            </Link>
-          </div>
+                          >
+                            <span>{item.name}</span>
+                            <FiChevronRight className="h-4 w-4 text-white/35" aria-hidden />
+                          </a>
+                        ) : (
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              "flex min-h-12 flex-1 items-center rounded-2xl px-4 text-[15px] font-medium transition-colors",
+                              active ? "text-white" : "text-white/88 hover:bg-white/8 hover:text-white",
+                              hasChildren && expanded && "text-white",
+                            )}
+                          >
+                            {item.name}
+                          </Link>
+                        )}
+
+                        {hasChildren ? (
+                          <button
+                            type="button"
+                            aria-label={expanded ? `Collapse ${item.name}` : `Expand ${item.name}`}
+                            aria-expanded={expanded}
+                            className={cn(
+                              "mr-1.5 grid size-10 shrink-0 place-items-center rounded-xl text-white/70 transition-all",
+                              "hover:bg-white/10 hover:text-white",
+                              expanded && "bg-primary/20 text-primary",
+                            )}
+                            onClick={() => {
+                              setMobileExpanded(expanded ? null : item.name);
+                              setMobileSubExpanded(null);
+                            }}
+                          >
+                            <FiChevronDown
+                              className={cn(
+                                "h-4 w-4 transition-transform duration-300",
+                                expanded && "rotate-180",
+                              )}
+                            />
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <AnimatePresence initial={false}>
+                        {hasChildren && expanded ? (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mx-2 mb-2 rounded-xl bg-[#00044a]/55 px-2 py-2">
+                              {item.children!.map((child) => {
+                                const hasGroups = !!child.groups?.length;
+                                const subExpanded = mobileSubExpanded === child.name;
+
+                                return (
+                                  <div key={child.name} className="flex flex-col">
+                                    <div className="flex items-center gap-1">
+                                      <Link
+                                        href={child.href}
+                                        className="flex min-h-10 flex-1 items-center rounded-lg px-3 text-sm text-white/70 transition-colors hover:bg-white/8 hover:text-white"
+                                      >
+                                        {child.name}
+                                      </Link>
+                                      {hasGroups ? (
+                                        <button
+                                          type="button"
+                                          aria-label={
+                                            subExpanded ? `Collapse ${child.name}` : `Expand ${child.name}`
+                                          }
+                                          className={cn(
+                                            "grid size-9 shrink-0 place-items-center rounded-lg text-white/45 transition-colors hover:bg-white/8 hover:text-white",
+                                            subExpanded && "text-primary",
+                                          )}
+                                          onClick={() =>
+                                            setMobileSubExpanded(subExpanded ? null : child.name)
+                                          }
+                                        >
+                                          <FiChevronDown
+                                            className={cn(
+                                              "h-3.5 w-3.5 transition-transform duration-300",
+                                              subExpanded && "rotate-180",
+                                            )}
+                                          />
+                                        </button>
+                                      ) : null}
+                                    </div>
+
+                                    {hasGroups && subExpanded ? (
+                                      <div className="mb-2 ml-2 space-y-3 border-l border-white/10 py-2 pl-3">
+                                        {child.groups!.map((group) => (
+                                          <div key={group.name} className="flex flex-col">
+                                            <div className="mb-1 flex items-center gap-2 px-1">
+                                              <span className="size-1.5 rounded-full bg-primary" aria-hidden />
+                                              <h4 className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/45">
+                                                {group.name}
+                                              </h4>
+                                            </div>
+                                            {group.courses.map((course) => (
+                                              <Link
+                                                key={course.name}
+                                                href={course.href}
+                                                className="rounded-lg px-2 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/8 hover:text-primary"
+                                              >
+                                                {course.name}
+                                              </Link>
+                                            ))}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        ) : null}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-5 border-t border-white/10 pt-5">
+                <Link
+                  href="/schedule"
+                  className="flex min-h-12 items-center justify-center rounded-2xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-[0_12px_28px_-14px_hsl(42_72%_52%/0.9)] transition-transform active:scale-[0.98]"
+                >
+                  Enroll
+                </Link>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
