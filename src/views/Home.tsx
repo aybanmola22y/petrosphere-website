@@ -62,7 +62,7 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
         </section>
 
         {/* Platform capabilities (4 services) */}
-        <section className="bg-background py-14 md:py-24">
+        <section className="bg-background py-20 md:py-28">
           <div className="container mx-auto px-6">
             <PlatformCapabilitiesSection />
           </div>
