@@ -7,14 +7,11 @@ import L from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 
-const hqMarkerIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const hqMarkerIcon = L.divIcon({
+  className: "hq-marker",
+  html: '<span class="hq-marker-dot" aria-hidden="true"></span>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 /** Philippines-wide framing before flying to HQ (Puerto Princesa). */
@@ -83,8 +80,8 @@ export function AboutHeadquartersMap({ lat, lon }: { lat: number; lon: number })
           attributionControl
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
             maxZoom={19}
           />
           <Marker position={[lat, lon]} icon={hqMarkerIcon} />

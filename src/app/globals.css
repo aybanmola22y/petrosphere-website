@@ -247,3 +247,18 @@
   -webkit-backface-visibility: hidden;
   will-change: transform, opacity;
 }
+
+.leaflet-marker-icon.hq-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.hq-marker-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 7px;
+  border-radius: 9999px;
+  background: #00044a;
+  box-shadow: 0 0 0 4px rgba(0, 4, 74, 0.16);
+}
