@@ -100,7 +100,12 @@ function parseLatestNewsHtml(html: string): Parsed[] {
 
   const results: Parsed[] = [];
   for (const block of blocks.slice(1)) {
-    const img = block.match(/<img[^>]+src="([^"]+)"/i)?.[1] ?? "";
+    const imgTag = block.match(/<img\b[^>]*>/i)?.[0] ?? "";
+    const imgSrc =
+      imgTag.match(/\bdata-src="(https?:\/\/[^"]+)"/i)?.[1] ??
+      imgTag.match(/\bsrc="(https?:\/\/[^"]+)"/i)?.[1] ??
+      imgTag.match(/\bsrc="(data:image\/[^"]+)"/i)?.[1] ??
+      "";
     const href = block.match(/<h2 class="premium-blog-entry-title">[\s\S]*?<a[^>]+href="([^"]+)"/i)?.[1] ?? "";
     const titleRaw = block.match(/<h2 class="premium-blog-entry-title">[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i)?.[1] ?? "";
     const dateRaw = block.match(/class="premium-blog-post-time[\s\S]*?<span>([^<]+)<\/span>/i)?.[1] ?? "";
@@ -116,7 +121,7 @@ function parseLatestNewsHtml(html: string): Parsed[] {
       href,
       title,
       summary,
-      imageSrc: img,
+      imageSrc: imgSrc,
       dateText,
     });
   }
