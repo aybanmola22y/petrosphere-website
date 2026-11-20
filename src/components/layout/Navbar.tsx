@@ -5,6 +5,9 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
+
+import { HeaderPillNav } from "@/components/layout/HeaderPillNav";
+import { BranchedMenu } from "@/components/ui/BranchedMenu";
 import { cn } from "@/lib/utils";
 
 type Course = { name: string; href: string };
@@ -333,158 +336,169 @@ export function Navbar() {
           />
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1 overflow-visible">
-          {NAV.map((item) => {
-            const hasChildren = !!item.children?.length;
-            const active = isActive(item.href);
-            const activeSubLink = item.children?.find((c) => c.name === openSub && c.groups?.length);
-            const isMegaMenu = !!item.children?.some((c) => c.groups?.length);
+        <HeaderPillNav
+          items={NAV.map((item) => ({
+            name: item.name,
+            href: item.href,
+            hasChildren: !!item.children?.length,
+            open: openMenu === item.name,
+            active: isActive(item.href),
+            external: isExternalHref(item.href),
+          }))}
+          onItemEnter={handleEnter}
+          onItemLeave={handleMenuPointerLeave}
+          renderDropdown={(name) => {
+            const item = NAV.find((n) => n.name === name);
+            if (!item?.children?.length) return null;
+            const activeSubLink = item.children.find((c) => c.name === openSub && c.groups?.length);
+            const isMegaMenu = item.children.some((c) => c.groups?.length);
+            const branchedColumns = (() => {
+              const groups = activeSubLink?.groups;
+              if (!groups?.length) return [] as Group[][];
+              const mid = Math.ceil(groups.length / 2);
+              return [groups.slice(0, mid), groups.slice(mid)].filter((col) => col.length > 0);
+            })();
+
             return (
               <div
-                key={item.name}
-                className="relative"
-                onPointerEnter={() => hasChildren && handleEnter(item.name)}
-                onPointerLeave={(e) => handleMenuPointerLeave(e, hasChildren)}
+                className="absolute left-0 top-full z-[100] pt-2"
+                onPointerEnter={cancelClose}
               >
-                {isExternalHref(item.href) ? (
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      "inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors",
-                      active
-                        ? "text-white bg-white/15"
-                        : "text-white/80 hover:text-white hover:bg-white/10"
-                    )}
-                  >
-                    {item.name}
-                  </a>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "inline-flex items-center gap-1 text-sm font-medium px-3 py-2 rounded-lg transition-colors",
-                      active
-                        ? "text-white bg-white/15"
-                        : "text-white/80 hover:text-white hover:bg-white/10"
-                    )}
-                  >
-                    {item.name}
-                    {hasChildren && (
-                      <FiChevronDown
-                        className={cn(
-                          "w-3.5 h-3.5 transition-transform duration-200",
-                          openMenu === item.name ? "rotate-180" : ""
-                        )}
-                      />
-                    )}
-                  </Link>
-                )}
-
-                {hasChildren && openMenu === item.name && (
+                {isMegaMenu ? (
                   <div
-                    className="absolute left-0 top-full z-[100] pt-2"
-                    onPointerEnter={cancelClose}
+                    className="flex min-h-[26rem] w-[min(58rem,calc(100vw-2rem))] items-stretch overflow-hidden rounded-2xl border border-border bg-background shadow-[0_28px_60px_-28px_rgba(0,4,74,0.45)]"
+                    onPointerMove={cancelClose}
                   >
-                    {isMegaMenu ? (
+                    {/* Category rail — branched accent marker */}
+                    <div
+                      className="relative w-[15.5rem] shrink-0 border-r border-border bg-secondary/55 py-4 pl-4 pr-3"
+                      onPointerEnter={cancelClose}
+                    >
                       <div
-                        className="flex min-h-[22rem] w-[min(52rem,calc(100vw-2rem))] items-stretch overflow-hidden rounded-xl border border-border bg-background shadow-lg"
-                        onPointerMove={cancelClose}
-                      >
-                        <div
-                          className="w-64 shrink-0 border-r border-border p-2"
-                          onPointerEnter={cancelClose}
-                        >
-                          {item.children!.map((child) => {
-                            const hasGroups = !!child.groups?.length;
-                            const isOpen = openSub === child.name;
-                            return (
-                              <div
-                                key={child.name}
-                                className="block"
-                                onPointerEnter={() => handleSubEnter(child)}
-                              >
-                                <Link
-                                  href={child.href}
-                                  className={cn(
-                                    "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
-                                    isOpen
-                                      ? "bg-secondary text-foreground"
-                                      : "text-foreground hover:bg-secondary/60"
-                                  )}
-                                >
-                                  <span>{child.name}</span>
-                                  {hasGroups && (
-                                    <FiChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                                  )}
-                                </Link>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div
-                          className="min-h-[22rem] min-w-0 flex-1 p-6"
-                          onPointerEnter={() => activeSubLink && handleSubEnter(activeSubLink)}
-                        >
-                          {activeSubLink?.groups ? (
+                        className="pointer-events-none absolute bottom-4 left-4 top-4 w-0.5 rounded-[1px] bg-linear-to-b from-[#00044a]/25 via-[#00044a]/18 to-transparent"
+                        aria-hidden
+                      />
+                      <div className="relative flex flex-col gap-0.5 pl-3">
+                        {item.children.map((child) => {
+                          const hasGroups = !!child.groups?.length;
+                          const isOpen = openSub === child.name;
+                          return (
                             <div
-                              className={cn(
-                                "grid gap-x-8 gap-y-6",
-                                activeSubLink.groups.length === 1
-                                  ? "grid-cols-1"
-                                  : "grid-cols-2"
-                              )}
+                              key={child.name}
+                              className="relative"
+                              onPointerEnter={() => handleSubEnter(child)}
                             >
-                              {activeSubLink.groups.map((group) => (
-                                <div key={group.name} className="flex flex-col gap-2">
-                                  <div className="mb-1 flex items-center gap-2">
-                                    <span className="h-1 w-1 rounded-full bg-accent" />
-                                    <h4 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground">
-                                      {group.name}
-                                    </h4>
-                                  </div>
-                                  <div className="flex flex-col">
-                                    {group.courses.map((course) => (
-                                      <Link
-                                        key={course.name}
-                                        href={course.href}
-                                        className="rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-secondary/60 hover:text-accent"
-                                      >
-                                        {course.name}
-                                      </Link>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
+                              {isOpen ? (
+                                <span
+                                  className="absolute -left-3 top-1/2 z-[1] h-4 w-0.5 -translate-y-1/2 rounded-[1px] bg-[#00044a]"
+                                  aria-hidden
+                                />
+                              ) : null}
+                              <Link
+                                href={child.href}
+                                className={cn(
+                                  "flex items-center justify-between gap-2 rounded-lg px-2.5 py-2.5 text-[15px] font-medium transition-colors",
+                                  isOpen
+                                    ? "text-[#00044a]"
+                                    : "text-[#00044a]/55 hover:text-[#00044a]",
+                                )}
+                              >
+                                <span>{child.name}</span>
+                                {hasGroups ? (
+                                  <FiChevronRight
+                                    className={cn(
+                                      "h-3.5 w-3.5 shrink-0 transition-colors",
+                                      isOpen ? "text-[#00044a]/70" : "text-[#00044a]/30",
+                                    )}
+                                  />
+                                ) : null}
+                              </Link>
                             </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Programs — React Bits Branched Menu */}
+                    <div
+                      className="min-h-[26rem] min-w-0 flex-1 px-7 py-5"
+                      onPointerEnter={() => activeSubLink && handleSubEnter(activeSubLink)}
+                    >
+                      {branchedColumns.length > 0 ? (
+                        <div
+                          className={cn(
+                            "grid gap-x-12 gap-y-4",
+                            branchedColumns.length > 1 ? "md:grid-cols-2" : "grid-cols-1",
+                          )}
+                        >
+                          {branchedColumns.map((columnGroups, colIndex) => (
+                            <BranchedMenu
+                              key={`${activeSubLink?.name}-col-${colIndex}`}
+                              items={columnGroups.map((group) => ({
+                                label: group.name,
+                                children: group.courses.map((course) => ({
+                                  value: course.href,
+                                  label: course.name,
+                                  href: course.href,
+                                })),
+                              }))}
+                              defaultOpen={columnGroups.map((_, i) => i)}
+                              defaultActive={columnGroups[0]?.courses[0]?.href ?? ""}
+                              color="#00044a"
+                              accentColor="hsl(42 72% 45%)"
+                              lineColor="rgba(0, 4, 74, 0.22)"
+                              width={320}
+                              rowHeight={34}
+                              indent={36}
+                              trunk={12}
+                              radius={9}
+                              lineWidth={1.5}
+                              fontSize={14}
+                              drawDuration={380}
+                              foldDuration={280}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex h-full min-h-[22rem] flex-col justify-center gap-3">
+                          <p className="text-sm text-muted-foreground">
+                            Browse the full catalog for this category.
+                          </p>
+                          {openSub ? (
+                            <Link
+                              href={
+                                item.children.find((c) => c.name === openSub)?.href ??
+                                item.href
+                              }
+                              className="w-fit text-[15px] font-medium text-[#00044a] underline-offset-4 hover:underline"
+                            >
+                              View {openSub}
+                            </Link>
                           ) : null}
                         </div>
-                      </div>
-                    ) : (
-                      <div
-                        className="min-w-[14rem] rounded-xl border border-border bg-background p-2 shadow-lg"
-                        onPointerMove={cancelClose}
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="min-w-[14rem] rounded-xl border border-border bg-background p-2 shadow-lg"
+                    onPointerMove={cancelClose}
+                  >
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
                       >
-                        {item.children!.map((child) => (
-                          <Link
-                            key={child.name}
-                            href={child.href}
-                            className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary/60"
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                        {child.name}
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
             );
-          })}
-        </nav>
+          }}
+        />
 
         <div className="hidden lg:flex items-center shrink-0">
           <Link

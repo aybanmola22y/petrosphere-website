@@ -14,6 +14,16 @@ export function isTmsMarketingPlaceholder(text: string): boolean {
   if (lower === CATALOG_PLACEHOLDER.toLowerCase()) return true;
   if (lower === SCHEDULE_PLACEHOLDER.toLowerCase()) return true;
   if (lower === "training program") return true;
+  // Category-fallback boilerplate — replace with title-aware copy.
+  if (lower.includes("dole-relevant safety and health program designed for philippine workplaces")) {
+    return true;
+  }
+  if (lower.includes("focuses on clinical and pre-hospital skills for healthcare")) return true;
+  if (lower.includes("contributes toward continuing professional development for licensed")) {
+    return true;
+  }
+  if (lower.includes("nebosh-aligned occupational safety and health program")) return true;
+  if (lower.includes("sits within the dole (dole) curriculum family")) return true;
   return false;
 }
 
@@ -27,6 +37,155 @@ function codeClause(code: string | undefined): string {
   return ` This offering is listed in our training system under code ${c}.`;
 }
 
+function topicSummary(blob: string): string | undefined {
+  const online =
+    blob.includes("elearning") || blob.includes("e-learning") || blob.includes("e learning");
+
+  if (blob.includes("civil service") || (blob.includes("csc") && blob.includes("review"))) {
+    const track = blob.includes("non-professional") || blob.includes("sub-professional")
+      ? "non-professional"
+      : blob.includes("professional")
+        ? "professional"
+        : "civil service";
+    return `Structured Civil Service ${track} exam review—verbal, numerical, and clerical practice with timed drills and coaching.`;
+  }
+  if (blob.includes("confined space")) {
+    return `Permit-required confined space awareness: atmospheric hazards, gas testing, attendants, and safe entry procedures for industrial sites.`;
+  }
+  if (blob.includes("work at height") || blob.includes("working at height")) {
+    return `Fall-protection training covering hazard assessment, harness and anchorage use, and rescue awareness for elevated work.`;
+  }
+  if (blob.includes("fire watch") || blob.includes("fire warden")) {
+    return `Fire watch and hot-work standby: extinguisher selection, watch duties, alarms, and evacuation coordination.`;
+  }
+  if (blob.includes("food safety") || blob.includes("food hygiene") || blob.includes("haccp")) {
+    return `Food safety and hygiene covering contamination routes, personal hygiene, temperature control, and prerequisite programs.`;
+  }
+  if (
+    blob.includes("intravenous") ||
+    blob.includes("iv therapy") ||
+    blob.includes("iv training") ||
+    blob.includes("iv-therapy") ||
+    blob.includes("ivtt") ||
+    /\bivt\b/.test(blob)
+  ) {
+    return `PRC- and ANSAP-aligned intravenous therapy training for nurses—venipuncture, infusion devices, fluid balance, complications, and documentation.`;
+  }
+  if (blob.includes("rig medic")) {
+    return `Pre-hospital care competencies for offshore and remote-site medics, including BLS/ACLS foundations, trauma stabilization, and telemedicine workflows.`;
+  }
+  if (blob.includes("lock out") || blob.includes("lockout") || blob.includes("loto") || blob.includes("tag out")) {
+    return online
+      ? `Online Lock Out Tag Out program covering energy isolation, lock/tag application, verification, and release procedures for Philippine workplaces.`
+      : `Hands-on Lock Out Tag Out training: energy isolation, lock and tag application, verification of zero energy, and safe release of equipment.`;
+  }
+  if (blob.includes("cosh") || blob.includes("construction occupational")) {
+    return `DOLE-accredited construction safety program for Safety Officer 2 (Construction), covering site hazards, scaffolding, and construction OSH controls.`;
+  }
+  if (blob.includes("scaffold")) {
+    return `Scaffolding safety covering erection, inspection, load limits, fall protection, and safe use on construction and industrial sites.`;
+  }
+  if (
+    blob.includes("fire fighting") ||
+    blob.includes("firefighting") ||
+    blob.includes("fire fighter") ||
+    /\bbfft\b/.test(blob)
+  ) {
+    return `Hands-on fire fighting skills: fire chemistry, extinguisher selection, hose lines, and coordinated response for workplace fire emergencies.`;
+  }
+  if (
+    blob.includes("basic first aid") ||
+    /\bbfat\b/.test(blob) ||
+    (blob.includes("first aid") &&
+      !blob.includes("emergency first") &&
+      !blob.includes("occupational first") &&
+      !blob.includes("standard first") &&
+      !blob.includes("efat") &&
+      !blob.includes("ofat") &&
+      !blob.includes("sfat"))
+  ) {
+    return `Practical first aid for workplace responders—patient assessment, bleeding control, CPR basics, and emergency handover.`;
+  }
+  if (blob.includes("emergency first") || blob.includes("efat")) {
+    return `Essential emergency response and first aid for all workers.`;
+  }
+  if (blob.includes("occupational first") || blob.includes("ofat")) {
+    return `Mandatory occupational first aid for designated workplace responders.`;
+  }
+  if (blob.includes("standard first") || blob.includes("sfat")) {
+    return `Comprehensive standard first aid certification recognised by Red Cross.`;
+  }
+  if (blob.includes("chemical") || blob.includes("hazmat") || blob.includes("hzmt")) {
+    return `Chemical safety covering SDS interpretation, exposure controls, PPE selection, spill response, and safe storage/handling practices.`;
+  }
+  if (blob.includes("electrical safety") || blob.includes("electrical")) {
+    return online
+      ? `Online electrical safety program covering shock and arc hazards, safe work practices, PPE, and lockout awareness for non-electrician personnel.`
+      : `Electrical safety covering shock and arc-flash hazards, safe approach limits, PPE, and isolation practices for workplace electrical tasks.`;
+  }
+  if (blob.includes("hirac") || (blob.includes("hazard identification") && blob.includes("risk"))) {
+    return online
+      ? `Online HIRAC program: hazard identification, risk assessment matrices, and selecting practical control measures for day-to-day operations.`
+      : `Hazard Identification, Risk Assessment, and Control (HIRAC)—spot hazards, rate risk, and apply the hierarchy of controls on site.`;
+  }
+  if (blob.includes("industrial hygiene") || /\bih\b/.test(blob)) {
+    return `Industrial hygiene fundamentals: workplace exposure recognition, evaluation, and control for chemical, physical, and biological agents.`;
+  }
+  if (blob.includes("nebosh") || blob.includes("national examination board")) {
+    return `UK-awarded NEBOSH programme for health and safety professionals—risk management, workplace hazards, and internationally recognised OSH qualifications.`;
+  }
+  if (blob.includes("iosh")) {
+    return `IOSH Managing Safely with behavioral-based safety—practical risk management, incident causation, and coaching safer workplace behaviors.`;
+  }
+  if (
+    blob.includes("behavior based") ||
+    blob.includes("behaviour based") ||
+    blob.includes("behavioral based") ||
+    blob.includes("behavioural based") ||
+    /\bbbs\b/.test(blob)
+  ) {
+    return online
+      ? `Online Behavior Based Safety program: observation techniques, feedback conversations, and building habit-level safe behaviors at work.`
+      : `Influence at-risk behaviors through observation, feedback, and coaching.`;
+  }
+  if (blob.includes("mesh") || blob.includes("mandatory eight") || blob.includes("eight-hour")) {
+    return online
+      ? `Online Mandatory Eight-Hour Safety and Health (MESH) orientation covering worker rights, common hazards, and DOLE OSH basics.`
+      : `DOLE-mandated 8-hour safety and health orientation for all workers.`;
+  }
+  if (
+    blob.includes("train the trainer") ||
+    blob.includes("training of trainers") ||
+    blob.includes("training of trainer") ||
+    /\btot\b/.test(blob) ||
+    /\btott\b/.test(blob)
+  ) {
+    return `Facilitation skills for subject-matter experts—adult learning, session design, practice teaching, and learner assessment.`;
+  }
+  if (blob.includes("bosh") && (blob.includes("so2") || blob.includes("officer 2"))) {
+    return `DOLE-accredited 40-hour BOSH program for Safety Officer 2 designations.`;
+  }
+  if (blob.includes("bosh") && (blob.includes("so1") || blob.includes("officer 1"))) {
+    return `Foundational accreditation pathway for Safety Officer 1 designations.`;
+  }
+  if (blob.includes("loss control")) {
+    return `Reduce incident frequency and severity through systematic loss control.`;
+  }
+  if (blob.includes("safety program audit") || blob.includes("spat")) {
+    return `Audit your OSH program against DOLE and international benchmarks.`;
+  }
+  if (blob.includes("basic life support") || (/\bbls\b/.test(blob) && !blob.includes("acls"))) {
+    return `AHA-aligned basic life support for healthcare and lay providers—CPR, AED use, and choking response.`;
+  }
+  if (blob.includes("acls") || blob.includes("advanced cardiac")) {
+    return `Advanced cardiac arrest and peri-arrest management for clinicians, with team-based resuscitation protocols.`;
+  }
+  if (blob.includes("pals") || blob.includes("pediatric")) {
+    return `Systematic approach to seriously ill and injured pediatric patients for clinicians and emergency responders.`;
+  }
+  return undefined;
+}
+
 export function buildSyntheticSummary(
   title: string,
   categoryLabel: string,
@@ -37,31 +196,12 @@ export function buildSyntheticSummary(
   const t = title.trim() || "This program";
   const cc = codeClause(codeName);
   const blob = `${title} ${slug}`.toLowerCase();
-
-  if (blob.includes("civil service") || (blob.includes("csc") && blob.includes("review"))) {
-    const track = blob.includes("non-professional") || blob.includes("sub-professional")
-      ? "non-professional"
-      : blob.includes("professional")
-        ? "professional"
-        : "civil service";
-    return `Structured Civil Service ${track} exam review—verbal, numerical, and clerical practice with timed drills and coaching.${cc}`;
-  }
-  if (blob.includes("confined space")) {
-    return `Permit-required confined space awareness: atmospheric hazards, gas testing, attendants, and safe entry procedures for industrial sites.${cc}`;
-  }
-  if (blob.includes("work at height") || blob.includes("working at height")) {
-    return `Fall-protection training covering hazard assessment, harness and anchorage use, and rescue awareness for elevated work.${cc}`;
-  }
-  if (blob.includes("fire watch") || blob.includes("fire warden")) {
-    return `Fire watch and hot-work standby: extinguisher selection, watch duties, alarms, and evacuation coordination.${cc}`;
-  }
-  if (blob.includes("food safety") || blob.includes("food hygiene") || blob.includes("haccp")) {
-    return `Food safety and hygiene covering contamination routes, personal hygiene, temperature control, and prerequisite programs.${cc}`;
-  }
+  const topic = topicSummary(blob);
+  if (topic) return `${topic}${cc}`;
 
   switch (categorySlug) {
     case "dole":
-      return `${t} is a DOLE-relevant safety and health program designed for Philippine workplaces. Participants build practical competence in hazards, controls, and compliance expectations aligned with OSH regulations.${cc}`;
+      return `${t} builds practical OSH competence for Philippine workplaces—hazards, controls, and compliance expectations aligned with the topic of this program.${cc}`;
     case "ems":
       return `${t} focuses on clinical and pre-hospital skills for healthcare and allied responders. Sessions emphasize evidence-based protocols, teamwork, and safe patient care in time-critical situations.${cc}`;
     case "denr":
@@ -92,6 +232,11 @@ export function buildSyntheticOverview(
 ): string {
   const t = title.trim() || "This program";
   const cc = codeClause(codeName);
+  const blob = `${title}`.toLowerCase();
+
+  if (blob.includes("nebosh") || blob.includes("national examination board")) {
+    return `${summary} NEBOSH (National Examination Board in Occupational Safety and Health) is a UK-based awarding body. This programme prepares learners for internationally recognised health and safety qualifications used by employers worldwide. Review duration, level, and schedule when published; use Enroll or Corporate booking to confirm the next cohort.${cc}`.trim();
+  }
 
   return `${summary} On this page you can review duration, level, and schedule fields that sync from our training management system when available. ${t} sits within the ${categoryLabel} (${categorySlug}) curriculum family—ideal for supervisors, specialists, and practitioners who need consistent, audit-ready training records. For cohort dates, corporate delivery, or a detailed syllabus, use Enroll or Corporate booking and our admissions team will confirm the next available run.${cc}`.trim();
 }
@@ -160,6 +305,24 @@ export function syntheticPedagogyForOrphanTms(course: Course): {
         "Anyone requiring accredited food safety orientation",
       ],
       duration: "1–2 Days",
+    };
+  }
+
+  if (
+    blob.includes("intravenous") ||
+    blob.includes("iv therapy") ||
+    blob.includes("iv training") ||
+    blob.includes("iv-therapy") ||
+    blob.includes("ivtt")
+  ) {
+    return {
+      objectives: [
+        "Perform safe venipuncture and peripheral IV insertion using aseptic technique.",
+        "Select infusion devices, calculate fluid rates, and monitor for complications.",
+        "Document IV therapy per PRC/ANSAP expectations and escalate adverse reactions appropriately.",
+      ],
+      audience: ["Registered nurses", "Nurse specialists", "Clinical staff requiring IV competency"],
+      duration: "3 Days",
     };
   }
 

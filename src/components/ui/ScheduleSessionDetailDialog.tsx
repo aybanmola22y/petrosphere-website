@@ -27,6 +27,9 @@ function parseDay(input?: string) {
 }
 
 function formatStripSchedule(session: TrainingSession) {
+  if (session.sessionDates && session.sessionDates.length > 0) {
+    return session.dateRange || "Staggered schedule";
+  }
   const start = parseDay(session.startDate);
   const end = parseDay(session.endDate) ?? start;
   if (!start) return session.dateRange || "TBA";

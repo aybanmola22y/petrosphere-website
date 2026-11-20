@@ -35,9 +35,13 @@ const CHEMICAL_SAFETY_TRAINING_IMAGE = "/images/courses/chemical-safety-training
 const EMS_TRAINING_IMAGE = "/images/courses/emergency-medical-services-training.png";
 const MESH_TRAINING_IMAGE = "/images/courses/mesh-training.png";
 const FOOD_SAFETY_TRAINING_IMAGE = "/images/courses/food-safety-training.png";
-const LOTO_TRAINING_IMAGE = "/images/courses/loto-training.png";
+const LOTO_TRAINING_IMAGE = "/images/courses/loto-lockout-tagout.png";
+const LOTO_ELEARNING_TRAINING_IMAGE = "/images/courses/loto-elearning-training.jpg";
 const PCO_CATEGORY_A_TRAINING_IMAGE = "/images/courses/pco-category-a-training.png";
 const PCO_CATEGORY_B_TRAINING_IMAGE = "/images/courses/pco-category-b-training.png";
+const COSH_TRAINING_IMAGE = "/images/courses/cosh-training.jpg";
+const IV_TRAINING_IMAGE = "/images/courses/iv-training.png";
+const NEBOSH_TRAINING_IMAGE = "/images/courses/nebosh-training.png";
 
 function resolveImageSrc(id: string): string {
   if (id.startsWith("/") || /^https?:\/\//i.test(id)) return id;
@@ -123,9 +127,19 @@ const RULES: ImageRule[] = [
     ids: [EMS_TRAINING_IMAGE],
   },
   {
+    priority: 103,
+    topic: "medical",
+    match: (b) =>
+      b.includes("intravenous") ||
+      b.includes("iv therapy") ||
+      b.includes("iv training") ||
+      b.includes("iv-therapy"),
+    ids: [IV_TRAINING_IMAGE],
+  },
+  {
     priority: 102,
     topic: "medical",
-    match: (b) => b.includes("iv therapy") || b.includes("rig medic") || b.includes("emt"),
+    match: (b) => b.includes("rig medic") || b.includes("emt"),
     ids: ["photo-1584515933487-779824d29309", "photo-1530026405186-ed1f139313f8"],
   },
   {
@@ -152,7 +166,7 @@ const RULES: ImageRule[] = [
     priority: 98,
     topic: "construction",
     match: (b) => b.includes("cosh") || b.includes("construction occupational"),
-    ids: ["photo-1503387762-592deb58ef4e"],
+    ids: [COSH_TRAINING_IMAGE],
   },
   {
     priority: 97,
@@ -167,16 +181,32 @@ const RULES: ImageRule[] = [
     ids: ["photo-1504307651254-35680f356dfd"],
   },
   {
+    priority: 97,
+    topic: "industrial",
+    match: (b) =>
+      (b.includes("loto") ||
+        b.includes("lock out") ||
+        b.includes("lock-out") ||
+        b.includes("lockout") ||
+        b.includes("tag out") ||
+        b.includes("tag-out")) &&
+      (b.includes("elearning") || b.includes("e-learning") || b.includes("e learning")),
+    ids: [LOTO_ELEARNING_TRAINING_IMAGE],
+  },
+  {
     priority: 96,
     topic: "industrial",
     match: (b) =>
-      b.includes("lock out") ||
-      b.includes("lock-out") ||
-      b.includes("lockout") ||
-      b.includes("tag out") ||
-      b.includes("tag-out") ||
-      b.includes(" loto") ||
-      b.startsWith("loto"),
+      (b.includes("lock out") ||
+        b.includes("lock-out") ||
+        b.includes("lockout") ||
+        b.includes("tag out") ||
+        b.includes("tag-out") ||
+        b.includes(" loto") ||
+        b.startsWith("loto")) &&
+      !b.includes("elearning") &&
+      !b.includes("e-learning") &&
+      !b.includes("e learning"),
     ids: [LOTO_TRAINING_IMAGE],
   },
   {
@@ -246,6 +276,12 @@ const RULES: ImageRule[] = [
     topic: "industrial",
     match: (b) => b.includes("food safety") || b.includes("haccp") || b.includes("food hygiene"),
     ids: [FOOD_SAFETY_TRAINING_IMAGE],
+  },
+  {
+    priority: 83,
+    topic: "study",
+    match: (b) => b.includes("nebosh") || b.includes("national examination board"),
+    ids: [NEBOSH_TRAINING_IMAGE],
   },
   {
     priority: 82,
@@ -510,11 +546,23 @@ function isUsableSrc(src: string): boolean {
   return true;
 }
 
+/** Curated local photos always beat catalog/Unsplash covers. */
+function localCourseOverride(course: Course): string | undefined {
+  const matched = matchRule(course);
+  if (!matched) return undefined;
+  const localId = matched.ids.find((id) => id.startsWith("/images/courses/"));
+  return localId ? resolveImageSrc(localId) : undefined;
+}
+
 /** Prefer rule-specific photos, then same-topic pool — never unrelated stock shots. */
 function pickForCourse(used: Set<string>, course: Course): string | undefined {
   const topic = courseTopic(course);
   const matched = matchRule(course);
   const start = hashKey(visualKey(course));
+
+  // Shared local assets (e.g. Lock Out Tag Out + LOTO eLearning) may repeat.
+  const local = localCourseOverride(course);
+  if (local) return local;
 
   if (matched) {
     for (let i = 0; i < matched.ids.length; i++) {
@@ -545,6 +593,13 @@ export function assignCourseVisuals(courses: Course[]): Map<string, string> {
   const sorted = [...courses].sort((a, b) => visualKey(a).localeCompare(visualKey(b)));
 
   for (const course of sorted) {
+    // Both "Lock Out Tag Out" and "LOTO eLearning" share the same curated photo.
+    const local = localCourseOverride(course);
+    if (local) {
+      out.set(course.id, local);
+      continue;
+    }
+
     const uploaded = course.imageSrc?.trim();
     if (uploaded && isUsableSrc(uploaded) && !used.has(uploaded)) {
       out.set(course.id, uploaded);
@@ -565,6 +620,10 @@ export function assignCourseVisuals(courses: Course[]): Map<string, string> {
 export function courseCardVisual(course: Course, assignedSrc?: string): CourseVisual {
   if (assignedSrc?.trim()) {
     return { src: assignedSrc.trim(), alt: course.title };
+  }
+  const local = localCourseOverride(course);
+  if (local) {
+    return { src: local, alt: course.title };
   }
   const uploaded = course.imageSrc?.trim();
   if (uploaded && isUsableSrc(uploaded)) {

@@ -645,7 +645,8 @@ export default function About() {
           </div>
         </section>
 
-        <HistoricalRecordSection />
+        {/* Temporarily hidden — restore when timeline content is ready */}
+        {/* <HistoricalRecordSection /> */}
 
         <ContactSection />
       </div>

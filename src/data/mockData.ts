@@ -601,6 +601,11 @@ export interface TrainingSession {
   startDate: string;
   /** ISO end date of the run (same as startDate for single-day). Optional for older cached payloads. */
   endDate?: string;
+  /**
+   * Discrete training days for staggered schedules (YYYY-MM-DD).
+   * When set, the calendar marks only these days — not a continuous bar from first to last.
+   */
+  sessionDates?: string[];
   location: string;
   status: "finished" | "cancelled" | "open" | "ongoing" | "closed";
   actionLabel: string;

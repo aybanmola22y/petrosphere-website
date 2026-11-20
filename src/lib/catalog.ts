@@ -82,10 +82,14 @@ export function mapCourseRowToCourse(
   const slug = disambiguateCatalogCourseSlug(baseSlug, rowId, collisionBases);
 
   const categorySlugRaw = rowStr(row, "category_slug", "categorySlug", "category");
+  const inferredCategory = inferCatalogCategorySlug(title, codeName, slug);
+  // Prefer title/code inference when TMS stores a coarse/wrong category (e.g. IV as DOLE).
   const categorySlug =
-    categorySlugRaw && !categorySlugRaw.includes(" ")
-      ? categorySlugRaw.toLowerCase()
-      : inferCatalogCategorySlug(title, codeName, slug);
+    inferredCategory !== "dole"
+      ? inferredCategory
+      : categorySlugRaw && !categorySlugRaw.includes(" ")
+        ? categorySlugRaw.toLowerCase()
+        : inferredCategory;
 
   const programGroup =
     rowStr(row, "program_group", "programGroup", "program_group_name") ?? undefined;
@@ -139,7 +143,19 @@ function isGenericCategoryDump(text: string): boolean {
   return (
     t.includes("dole-relevant safety and health program designed for philippine workplaces") ||
     t.includes("focuses on clinical and pre-hospital skills for healthcare") ||
-    t.includes("contributes toward continuing professional development for licensed")
+    t.includes("contributes toward continuing professional development for licensed") ||
+    t.includes("interpret applicable osh rules and site-specific safety requirements") ||
+    t.includes("frontline workers") && t.includes("safety officers")
+  );
+}
+
+function isGenericDolePedagogy(course: Course): boolean {
+  const obj = course.objectives.join(" ").toLowerCase();
+  const aud = course.audience.join(" ").toLowerCase();
+  return (
+    obj.includes("interpret applicable osh rules") ||
+    obj.includes("scenarios aligned with dole expectations") ||
+    (aud.includes("frontline workers") && aud.includes("safety officers"))
   );
 }
 
@@ -162,14 +178,18 @@ function findMockSeedForCourse(course: Course): Course | undefined {
 export function expandTmsCourseForUi(course: Course): Course {
   let out: Course = { ...course };
   const seed = findMockSeedForCourse(out);
+  const titleBlob = `${out.title} ${out.slug}`.toLowerCase();
 
   if (seed) {
     if (isTmsMarketingPlaceholder(out.summary) || isGenericCategoryDump(out.summary))
       out = { ...out, summary: seed.summary };
     if (isTmsMarketingPlaceholder(out.overview) || isGenericCategoryDump(out.overview))
       out = { ...out, overview: seed.overview };
-    if (usesDefaultObjectives(out.objectives)) out = { ...out, objectives: seed.objectives };
-    if (usesDefaultAudience(out.audience)) out = { ...out, audience: seed.audience };
+    if (usesDefaultObjectives(out.objectives) || isGenericDolePedagogy(out)) {
+      out = { ...out, objectives: seed.objectives, audience: seed.audience };
+    } else if (usesDefaultAudience(out.audience)) {
+      out = { ...out, audience: seed.audience };
+    }
     if (out.duration === "—" && seed.duration && seed.duration !== "—")
       out = { ...out, duration: seed.duration };
     if (out.level === "All Levels" && seed.level && seed.level !== "All Levels")
@@ -183,6 +203,31 @@ export function expandTmsCourseForUi(course: Course): Course {
     ) {
       out = { ...out, schedule: seed.schedule };
     }
+    // Don't leave EMS/medical programs sitting under a wrong DOLE category dump.
+    if (seed.categorySlug && seed.categorySlug !== out.categorySlug) {
+      out = {
+        ...out,
+        categorySlug: seed.categorySlug,
+        category: seed.category || categoryLabelForSlug(seed.categorySlug),
+      };
+    }
+  }
+
+  // NEBOSH is a UK awarding body — never leave it under DOLE.
+  if (titleBlob.includes("nebosh") || titleBlob.includes("national examination board")) {
+    out = {
+      ...out,
+      categorySlug: "cpd",
+      category: categoryLabelForSlug("cpd"),
+      summary:
+        isTmsMarketingPlaceholder(out.summary) ||
+        isGenericCategoryDump(out.summary) ||
+        out.summary.toLowerCase().includes("dole") ||
+        out.summary.toLowerCase().includes("nebosh-aligned")
+          ? ""
+          : out.summary,
+      overview: "",
+    };
   }
 
   out = enrichCourseCopyFromTms(out);

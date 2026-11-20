@@ -113,22 +113,38 @@ function parseEndFromDateRange(dateRange: string, year: number): Date | null {
 }
 
 function buildEvents(sessions: TrainingSession[]): CalendarEvent[] {
-  return sessions
-    .map((session) => {
-      const start =
-        parseCalendarDay(session.startDate) ??
-        parseCalendarDay(session.dateRange.split(/\s*[—–]\s*|\s+-\s+/)[0] ?? "");
-      if (!start) return null;
+  const events: CalendarEvent[] = [];
 
-      const end =
-        parseCalendarDay(session.endDate) ??
-        parseEndFromDateRange(session.dateRange, session.year || start.getFullYear()) ??
-        start;
+  for (const session of sessions) {
+    const discrete =
+      session.sessionDates
+        ?.map((d) => parseCalendarDay(d))
+        .filter((d): d is Date => d != null) ?? [];
 
-      return { session, start, end: end < start ? start : end };
-    })
-    .filter((e): e is CalendarEvent => e != null)
-    .sort((a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime());
+    if (discrete.length > 0) {
+      // Staggered: one marker per training day (not a continuous first→last bar).
+      for (const day of discrete) {
+        events.push({ session, start: day, end: day });
+      }
+      continue;
+    }
+
+    const start =
+      parseCalendarDay(session.startDate) ??
+      parseCalendarDay(session.dateRange.split(/\s*[—–]\s*|\s+-\s+/)[0] ?? "");
+    if (!start) continue;
+
+    const end =
+      parseCalendarDay(session.endDate) ??
+      parseEndFromDateRange(session.dateRange, session.year || start.getFullYear()) ??
+      start;
+
+    events.push({ session, start, end: end < start ? start : end });
+  }
+
+  return events.sort(
+    (a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime(),
+  );
 }
 
 type WeekPlacement = {
@@ -206,7 +222,12 @@ export function ScheduleMonthCalendar({
   }, [year, monthIndex]);
 
   const overlappingCount = useMemo(() => {
-    return events.filter((e) => e.start <= monthEnd && e.end >= monthStart).length;
+    const ids = new Set(
+      events
+        .filter((e) => e.start <= monthEnd && e.end >= monthStart)
+        .map((e) => e.session.id),
+    );
+    return ids.size;
   }, [events, monthStart.getTime(), monthEnd.getTime()]);
 
   const [selected, setSelected] = useState<TrainingSession | null>(null);
@@ -345,7 +366,7 @@ export function ScheduleMonthCalendar({
                       return (
                         <button
                           type="button"
-                          key={`${p.event.session.id}-${weekStart.toISOString()}`}
+                          key={`${p.event.session.id}-${p.event.start.toISOString()}-${weekStart.toISOString()}`}
                           title={`${label} — ${statusLegendLabel(p.event.session.status)}`}
                           onClick={() => openSession(p.event.session)}
                           className={cn(

@@ -117,6 +117,7 @@ function dedupeTrainingSessionsForDisplay(sessions: TrainingSession[]): Training
       s.courseSlug,
       s.startDate,
       s.dateRange,
+      (s.sessionDates ?? []).join(","),
       s.location,
       s.status,
       s.formatNote,
@@ -157,6 +158,7 @@ function mapTmsSchedules(
     let monthKey = "unknown";
     let startDate = new Date().toISOString(); // Default
     let endDate = startDate;
+    let sessionDates: string[] | undefined;
 
     if (scheduleType === "regular" && item.schedule_ranges?.[0]) {
       const { start_date, end_date } = item.schedule_ranges[0];
@@ -169,24 +171,23 @@ function mapTmsSchedules(
         monthKey = `${sy}-${String(sm).padStart(2, "0")}`;
       }
     } else if (scheduleType === "staggered" && item.schedule_dates?.length > 0) {
-      const dates = item.schedule_dates.map((d: any) => new Date(d.date)).sort((a: any, b: any) => a - b);
-      const start = dates[0];
-      const end = dates[dates.length - 1];
-      dateRange = formatDateRange(start, end);
-      const sortedDateValues = item.schedule_dates
-        .map((d: { date?: string }) => d.date)
-        .filter((v: string | undefined): v is string => typeof v === "string" && v.length > 0)
-        .sort();
-      startDate = toCalendarDateIso(sortedDateValues[0] ?? start);
-      endDate = toCalendarDateIso(sortedDateValues.at(-1) ?? end);
-      const startKey = startDate.slice(0, 10);
-      const [sy, sm] = startKey.split("-").map(Number);
+      sessionDates = [
+        ...new Set(
+          item.schedule_dates
+            .map((d: { date?: string }) => d.date)
+            .filter((v: string | undefined): v is string => typeof v === "string" && v.length > 0)
+            .map((v: string) => toCalendarDateIso(v)),
+        ),
+      ].sort();
+      const start = sessionDates[0] ?? toCalendarDateIso(new Date());
+      const end = sessionDates.at(-1) ?? start;
+      dateRange = formatStaggeredDateList(sessionDates);
+      startDate = start;
+      endDate = end;
+      const [sy, sm] = start.split("-").map(Number);
       if (sy && sm) {
         year = sy;
         monthKey = `${sy}-${String(sm).padStart(2, "0")}`;
-      } else {
-        year = start.getFullYear();
-        monthKey = `${year}-${String(start.getMonth() + 1).padStart(2, "0")}`;
       }
     }
 
@@ -229,6 +230,7 @@ function mapTmsSchedules(
       monthKey,
       startDate,
       endDate,
+      sessionDates: sessionDates?.length ? sessionDates : undefined,
       location: item.branch ? formatBranch(item.branch) : "TBA",
       status: mapStatus(item.status),
       actionLabel: item.status === "planned" ? "Enroll" : "Closed",
@@ -422,9 +424,17 @@ function getPrice(title: string, slug: string): string | undefined {
 function getMockSlug(title: string, slug: string): string {
   const t = title.toLowerCase();
   const s = slug.toLowerCase();
+  const blob = `${t} ${s}`;
 
   // Safety & Health
-  if (t.includes("mandatory eight-hour") || t.includes("8-hour") || s === "mesh") return "mesh";
+  if (
+    t.includes("mandatory eight-hour") ||
+    t.includes("8-hour") ||
+    s === "mesh" ||
+    blob.includes("mesh")
+  ) {
+    return "mesh";
+  }
   if (
     s.includes("boshso2") ||
     s.includes("bosh002") ||
@@ -442,23 +452,49 @@ function getMockSlug(title: string, slug: string): string {
     return "bosh-so1";
   }
   if (s.includes("cosh") || t.includes("construction occupational")) return "cosh";
-  if (s.includes("tott") || t.includes("train the trainer")) {
+  if (
+    s.includes("tott") ||
+    s === "tot" ||
+    t.includes("train the trainer") ||
+    t.includes("training of trainers") ||
+    t.includes("training of trainer")
+  ) {
     if (t.includes("24") || t.includes("24-hour")) return "ttt-24";
     if (t.includes("8") || t.includes("8-hour")) return "ttt-8";
     return "ttt-2";
   }
   if (s.includes("lcm") || t.includes("loss control")) return "loss-control";
   if (s.includes("spat") || t.includes("safety program audit")) return "safety-audit";
-  if (s.includes("bbst") || t.includes("behavioral based")) return "bbs";
-  
+  if (
+    s.includes("bbst") ||
+    t.includes("behavioral based") ||
+    t.includes("behaviour based") ||
+    t.includes("behavior based") ||
+    t.includes("behavioural based") ||
+    (/\bbbs\b/.test(blob) && !blob.includes("iosh"))
+  ) {
+    return "bbs";
+  }
+
   // First Aid & EMS (titles often use "Emergency First Aid" with a space, not "first-aid")
   if (s.includes("efat") || t.includes("emergency first-aid") || t.includes("emergency first aid")) return "efat";
   if (s.includes("ofat") || t.includes("occupational first aid")) return "ofat";
   if (s.includes("sfat") || t.includes("standard first aid")) return "sfat";
-  if (s.includes("blst") || t.includes("basic life support")) return "bls-ashi";
-  if (s.includes("acls") || t.includes("advanced cardiac")) return "acls-ashi";
-  if (s.includes("pals") || t.includes("pediatric advanced")) return "pals-ashi";
-  if (t.includes("iv-therapy") || t.includes("ivtt")) return "iv-therapy";
+  // BFAT stays on its own TMS slug — do not collapse onto OFAT.
+  if (s.includes("blst") || t.includes("basic life support")) return "bls";
+  if (s.includes("acls") || t.includes("advanced cardiac")) return "acls";
+  if (s.includes("pals") || t.includes("pediatric advanced")) return "pals";
+  if (
+    t.includes("iv-therapy") ||
+    t.includes("ivtt") ||
+    t.includes("iv therapy") ||
+    t.includes("iv training") ||
+    t.includes("intravenous") ||
+    s === "ivt" ||
+    /\bivt\b/.test(s)
+  ) {
+    return "iv-therapy";
+  }
 
   // ISO & Professional
   if (t.includes("lead implementer") || t.includes("pecb")) return "lead-implementer";
@@ -501,6 +537,40 @@ function formatDateRange(startStr: string | Date, endStr: string | Date): string
 
   const endPart = end.toLocaleDateString("en-US", options);
   return `${startPart} — ${endPart}`;
+}
+
+/** e.g. ["2026-11-22","2026-11-29","2026-12-06","2026-12-08"] → "Nov 22, 29 · Dec 6, 8, 2026" */
+function formatStaggeredDateList(isoDates: string[]): string {
+  if (isoDates.length === 0) return "TBA";
+  if (isoDates.length === 1) return formatDateRange(isoDates[0]!, isoDates[0]!);
+
+  const parsed = isoDates
+    .map((iso) => {
+      const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return null;
+      return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]), iso };
+    })
+    .filter((v): v is { y: number; m: number; d: number; iso: string } => v != null);
+
+  if (!parsed.length) return isoDates.join(", ");
+
+  const byMonth = new Map<string, number[]>();
+  for (const p of parsed) {
+    const key = `${p.y}-${p.m}`;
+    const days = byMonth.get(key) ?? [];
+    days.push(p.d);
+    byMonth.set(key, days);
+  }
+
+  const monthParts: string[] = [];
+  for (const [key, days] of byMonth) {
+    const [y, m] = key.split("-").map(Number);
+    const monthName = new Date(y!, m! - 1, 1).toLocaleString("en-US", { month: "short" });
+    monthParts.push(`${monthName} ${days.join(", ")}`);
+  }
+
+  const year = parsed[parsed.length - 1]!.y;
+  return `${monthParts.join(" · ")}, ${year}`;
 }
 
 function formatBranch(branch: string): string {
@@ -549,6 +619,8 @@ export function inferCatalogCategorySlug(title: string, courseCode: string, cour
       "civil-service",
       "csc exam",
       "csc-review",
+      "nebosh",
+      "national examination board",
     )
   )
     return "cpd";
@@ -640,7 +712,10 @@ export function inferCatalogCategorySlug(title: string, courseCode: string, cour
       "-bls",
       "blst",
       "iv therapy",
+      "iv training",
+      "iv-therapy",
       "ivtt",
+      "intravenous",
       "rig medic",
       "rig-medic",
       "healthcare worker",

@@ -50,7 +50,8 @@ export function getCachedPetrosphereNews(limit: number) {
 export function getCachedPublicCatalog(): Promise<Course[]> {
   return unstable_cache(
     async () => resolveCatalogList(await fetchCatalogCourses()),
-    ["public-catalog"],
+    // Bump key when catalog enrichment rules change so stale DOLE dumps are not served.
+    ["public-catalog", "enrich-v6"],
     { revalidate: CACHE_REVALIDATE_SECONDS.tms, tags: [CACHE_TAGS.tmsCourses] },
   )();
 }
