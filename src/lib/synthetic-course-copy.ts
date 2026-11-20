@@ -31,11 +31,33 @@ export function buildSyntheticSummary(
   title: string,
   categoryLabel: string,
   categorySlug: string,
-  _slug: string,
+  slug: string,
   codeName?: string,
 ): string {
   const t = title.trim() || "This program";
   const cc = codeClause(codeName);
+  const blob = `${title} ${slug}`.toLowerCase();
+
+  if (blob.includes("civil service") || (blob.includes("csc") && blob.includes("review"))) {
+    const track = blob.includes("non-professional") || blob.includes("sub-professional")
+      ? "non-professional"
+      : blob.includes("professional")
+        ? "professional"
+        : "civil service";
+    return `Structured Civil Service ${track} exam review—verbal, numerical, and clerical practice with timed drills and coaching.${cc}`;
+  }
+  if (blob.includes("confined space")) {
+    return `Permit-required confined space awareness: atmospheric hazards, gas testing, attendants, and safe entry procedures for industrial sites.${cc}`;
+  }
+  if (blob.includes("work at height") || blob.includes("working at height")) {
+    return `Fall-protection training covering hazard assessment, harness and anchorage use, and rescue awareness for elevated work.${cc}`;
+  }
+  if (blob.includes("fire watch") || blob.includes("fire warden")) {
+    return `Fire watch and hot-work standby: extinguisher selection, watch duties, alarms, and evacuation coordination.${cc}`;
+  }
+  if (blob.includes("food safety") || blob.includes("food hygiene") || blob.includes("haccp")) {
+    return `Food safety and hygiene covering contamination routes, personal hygiene, temperature control, and prerequisite programs.${cc}`;
+  }
 
   switch (categorySlug) {
     case "dole":

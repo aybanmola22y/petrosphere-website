@@ -8,7 +8,8 @@
     "build": "next build",
     "postbuild": "npx tsx scripts/generate-sitemap.ts",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "import:wp-news": "npx tsx scripts/import-wp-news-to-cms.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

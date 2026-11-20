@@ -14,6 +14,7 @@ import {
 import {
   fetchPetrosphereNewsArticleBySlug,
   fetchPetrosphereNewsArticleByUrl,
+  isPetrosphereWpNewsFetchEnabled,
 } from "@/lib/petrosphere-latest-news";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,11 @@ export function generateStaticParams() {
 
 async function hydrateFromExternal(item: Awaited<ReturnType<typeof getNewsArticleBySlugAsync>>) {
   if (!item) return null;
-  if (item.externalHref && (!item.body?.length || item.body.length <= 1)) {
+  if (
+    isPetrosphereWpNewsFetchEnabled() &&
+    item.externalHref &&
+    (!item.body?.length || item.body.length <= 1)
+  ) {
     try {
       return await fetchPetrosphereNewsArticleByUrl(item.externalHref);
     } catch {
@@ -45,8 +50,10 @@ async function resolveArticle(slug: string) {
   const fromSite = await hydrateFromExternal(await getNewsArticleBySlugAsync(slug));
   if (fromSite) return fromSite;
 
-  const fetched = await fetchPetrosphereNewsArticleBySlug(slug);
-  if (fetched) return fetched;
+  if (isPetrosphereWpNewsFetchEnabled()) {
+    const fetched = await fetchPetrosphereNewsArticleBySlug(slug);
+    if (fetched) return fetched;
+  }
 
   const pool = await getCompanyNewsMergedAsync(100).catch(() => getCompanyNewsForSite());
   const hit = pool.find((item) => newsSlugsMatch(item.slug, normalized));

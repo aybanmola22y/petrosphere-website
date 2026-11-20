@@ -12,6 +12,8 @@ export interface Course {
   objectives: string[];
   audience: string[];
   overview: string;
+  /** TMS / WP cover when present — preferred over slug fallbacks. */
+  imageSrc?: string;
 }
 
 type CourseSeed = Omit<Course, "id" | "category" | "categorySlug">;

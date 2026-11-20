@@ -98,11 +98,11 @@ export function mapCourseRowToCourse(
   const audience = rowStringArray(row, "audience", "target_audience", "who_should_attend") ?? DEFAULT_AUDIENCE;
 
   const id = rowStr(row, "id") ?? codeName ?? slug;
+  const coverRaw = rowStr(row, "cover_image", "coverImage", "image_src", "imageSrc", "image_url");
+  const imageSrc =
+    coverRaw && (/^https?:\/\//i.test(coverRaw) || coverRaw.startsWith("/")) ? coverRaw : undefined;
 
-  const hadDedicatedOverview =
-    rawOverviewTrim.length > 0 && !isTmsMarketingPlaceholder(rawOverviewTrim);
-
-  const base: Course = {
+  return {
     id,
     title,
     slug,
@@ -116,12 +116,8 @@ export function mapCourseRowToCourse(
     objectives,
     audience,
     overview,
+    imageSrc,
   };
-
-  return enrichCourseCopyFromTms(base, {
-    codeHint: codeName || undefined,
-    hadDedicatedOverview: hadDedicatedOverview,
-  });
 }
 
 function usesDefaultObjectives(objectives: string[]): boolean {
@@ -138,11 +134,22 @@ function usesDefaultAudience(audience: string[]): boolean {
   );
 }
 
+function isGenericCategoryDump(text: string): boolean {
+  const t = text.toLowerCase();
+  return (
+    t.includes("dole-relevant safety and health program designed for philippine workplaces") ||
+    t.includes("focuses on clinical and pre-hospital skills for healthcare") ||
+    t.includes("contributes toward continuing professional development for licensed")
+  );
+}
+
 function findMockSeedForCourse(course: Course): Course | undefined {
   const slugRoot = course.slug.split("--")[0] ?? course.slug;
+  const mapped = courseSlugFromTms(course.title, slugRoot);
   return mockCourses.find((m) => {
     if (m.slug === course.slug) return true;
     if (m.slug === slugRoot) return true;
+    if (m.slug === mapped) return true;
     if (course.slug.startsWith(`${m.slug}--`)) return true;
     return false;
   });
@@ -157,8 +164,10 @@ export function expandTmsCourseForUi(course: Course): Course {
   const seed = findMockSeedForCourse(out);
 
   if (seed) {
-    if (isTmsMarketingPlaceholder(out.summary)) out = { ...out, summary: seed.summary };
-    if (isTmsMarketingPlaceholder(out.overview)) out = { ...out, overview: seed.overview };
+    if (isTmsMarketingPlaceholder(out.summary) || isGenericCategoryDump(out.summary))
+      out = { ...out, summary: seed.summary };
+    if (isTmsMarketingPlaceholder(out.overview) || isGenericCategoryDump(out.overview))
+      out = { ...out, overview: seed.overview };
     if (usesDefaultObjectives(out.objectives)) out = { ...out, objectives: seed.objectives };
     if (usesDefaultAudience(out.audience)) out = { ...out, audience: seed.audience };
     if (out.duration === "—" && seed.duration && seed.duration !== "—")

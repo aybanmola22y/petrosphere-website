@@ -9,7 +9,11 @@ import { stats as defaultStats, studentVideoTestimonials as defaultVideoTestimon
 
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 import { getLocalContentPath } from "./site-content-path";
-import { fetchPetrosphereLatestNews, fetchPetrosphereNewsArticleByUrl } from "@/lib/petrosphere-latest-news";
+import {
+  fetchPetrosphereLatestNews,
+  fetchPetrosphereNewsArticleByUrl,
+  isPetrosphereWpNewsFetchEnabled,
+} from "@/lib/petrosphere-latest-news";
 import {
   assertSiteContentWritable,
   getSiteContentStorage,
@@ -234,7 +238,9 @@ export async function getCompanyNewsMergedAsync(limit = 6): Promise<CompanyNewsI
   const stored = await readStoredForPublic();
   const { authored, overrides, hiddenSlugs } = splitStoredNews(stored);
 
-  const fetched = await getCachedPetrosphereNews(limit);
+  const fetched = isPetrosphereWpNewsFetchEnabled()
+    ? await getCachedPetrosphereNews(limit).catch(() => [])
+    : [];
   const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
   return removeDummySeedNews(merged).slice(0, limit);
 }
@@ -270,7 +276,9 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
   };
 
-  const fetched = dedupeNewsByCanonicalSlug(await getCachedPetrosphereNews(limit).catch(() => []));
+  const fetched = isPetrosphereWpNewsFetchEnabled()
+    ? dedupeNewsByCanonicalSlug(await getCachedPetrosphereNews(limit).catch(() => []))
+    : [];
 
   let hydrated: CompanyNewsItem[] = fetched;
   if (hydrateBodies && fetched.length) {
@@ -328,18 +336,20 @@ export async function getNewsArticleBySlugAsync(slug: string): Promise<CompanyNe
   const localOverride = overrides.find((n) => newsSlugsMatch(n.slug, normalized));
   if (localOverride) return localOverride;
 
-  const fetched = await getCachedPetrosphereNews(100).catch(() => []);
-  const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
-  const fromMerged = merged.find((item) => newsSlugsMatch(item.slug, normalized));
-  if (fromMerged) {
-    if (fromMerged.externalHref && (!fromMerged.body || fromMerged.body.length <= 1)) {
-      try {
-        return await fetchPetrosphereNewsArticleByUrl(fromMerged.externalHref);
-      } catch {
-        return fromMerged;
+  if (isPetrosphereWpNewsFetchEnabled()) {
+    const fetched = await getCachedPetrosphereNews(100).catch(() => []);
+    const merged = mergeNewsFromParts(fetched, authored, overrides, hiddenSlugs);
+    const fromMerged = merged.find((item) => newsSlugsMatch(item.slug, normalized));
+    if (fromMerged) {
+      if (fromMerged.externalHref && (!fromMerged.body || fromMerged.body.length <= 1)) {
+        try {
+          return await fetchPetrosphereNewsArticleByUrl(fromMerged.externalHref);
+        } catch {
+          return fromMerged;
+        }
       }
+      return fromMerged;
     }
-    return fromMerged;
   }
 
   return getCompanyNewsForSite().find((item) => newsSlugsMatch(item.slug, normalized));

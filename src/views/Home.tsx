@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
@@ -16,6 +16,7 @@ import { HomeStatsSection } from "@/components/sections/HomeStatsSection";
 import { PlatformCapabilitiesSection } from "@/components/sections/PlatformCapabilitiesSection";
 import { StudentVideoTestimonialsSection } from "@/components/sections/StudentVideoTestimonialsSection";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
+import { assignCourseVisuals } from "@/lib/course-card-image";
 import { pickFeaturedCourses } from "@/lib/featured-courses";
 
 export type HomeProps = {
@@ -27,6 +28,7 @@ export type HomeProps = {
 export default function Home({ companyNews, videoTestimonials, stats }: HomeProps) {
   const { catalogCourses: courses } = useCatalogCoursesList();
   const featuredCourses = pickFeaturedCourses(courses);
+  const imageById = useMemo(() => assignCourseVisuals(courses), [courses]);
 
   const accreditationLogos = [
     { src: "/logos/accreditations/dole.svg", alt: "DOLE" },
@@ -90,7 +92,7 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
 
           <div className="mt-14 grid grid-cols-1 gap-6 md:mt-16 md:grid-cols-2 lg:grid-cols-3">
             {featuredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} imageSrc={imageById.get(course.id)} />
             ))}
           </div>
         </div>

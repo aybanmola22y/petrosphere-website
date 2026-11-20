@@ -534,7 +534,24 @@ export function inferCatalogCategorySlug(title: string, courseCode: string, cour
   const has = (...subs: string[]) => subs.some((s) => raw.includes(s));
 
   if (has("maritime", "stcw", "seafarer", "basic maritime")) return "maritime";
-  if (has("ielts", "oet", "nclex", "cgfns", "prometric", "cpd refresher", "cpd-accredited", "professional licensure", "csc review")) return "cpd";
+  if (
+    has(
+      "ielts",
+      "oet",
+      "nclex",
+      "cgfns",
+      "prometric",
+      "cpd refresher",
+      "cpd-accredited",
+      "professional licensure",
+      "csc review",
+      "civil service",
+      "civil-service",
+      "csc exam",
+      "csc-review",
+    )
+  )
+    return "cpd";
   if (
     has(
       "osh consultancy",

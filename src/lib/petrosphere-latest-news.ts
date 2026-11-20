@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { CompanyNewsItem, CompanyNewsCategory, NewsBodyBlock } from "@/data/companyNews";
 import { stripEmbeddedRelatedPosts } from "@/data/companyNews";
 import { canonicalNewsSlug, newsSlugsMatch, normalizeNewsRouteSlug } from "@/lib/news-slug";
@@ -10,6 +8,13 @@ const REQUEST_HEADERS = {
   "user-agent": "petrosphere-web/1.0 (+https://example.invalid)",
   accept: "text/html,application/xhtml+xml",
 } as const;
+
+/** When false, public pages use CMS/local news only (no live scrape of the old WP site). */
+export function isPetrosphereWpNewsFetchEnabled(): boolean {
+  const raw = process.env.PETROSPHERE_WP_NEWS_FETCH?.trim().toLowerCase();
+  if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+  return true;
+}
 
 function decodeHtmlEntities(input: string): string {
   return (

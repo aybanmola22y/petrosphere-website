@@ -10,6 +10,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
 import { Input } from "@/components/ui/input";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
+import { assignCourseVisuals } from "@/lib/course-card-image";
 import {
   canonicalGroupLabelsForCategory,
   resolveCurriculumProgramGroup,
@@ -17,6 +18,7 @@ import {
 
 export default function Courses() {
   const { catalogCourses: courses, isLoading } = useCatalogCoursesList();
+  const imageById = useMemo(() => assignCourseVisuals(courses), [courses]);
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const searchParams = useSearchParams() ?? new URLSearchParams();
@@ -284,7 +286,7 @@ export default function Courses() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, delay: idx * 0.05 }}
                     >
-                      <CourseCard course={course} />
+                      <CourseCard course={course} imageSrc={imageById.get(course.id)} />
                     </motion.div>
                   ))}
                 </div>
@@ -300,7 +302,7 @@ export default function Courses() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: idx * 0.05 }}
               >
-                <CourseCard course={course} />
+                <CourseCard course={course} imageSrc={imageById.get(course.id)} />
               </motion.div>
             ))}
           </div>

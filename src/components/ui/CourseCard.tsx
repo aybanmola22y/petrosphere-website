@@ -1,17 +1,21 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { FiArrowRight, FiChevronRight } from "react-icons/fi";
 
 import type { Course } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
+import { courseCardVisual } from "@/lib/course-card-image";
 import { contactEnrollHref } from "@/lib/enrollment";
 import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
   course: Course;
+  /** Unique src from {@link assignCourseVisuals} so catalog grids never repeat photos. */
+  imageSrc?: string;
 }
 
 /** Avoid "Title. Title focuses on…" opening repetition in summaries. */
@@ -25,10 +29,11 @@ function cleanSummary(title: string, summary: string) {
     .replace(/^[a-z]/, (c) => c.toUpperCase());
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, imageSrc }: CourseCardProps) {
   const summary = cleanSummary(course.title, course.summary);
   const programHref = `/courses/${course.slug}`;
   const enrollHref = contactEnrollHref(course.slug);
+  const visual = imageSrc ? courseCardVisual(course, imageSrc) : null;
 
   return (
     <article
@@ -41,9 +46,22 @@ export function CourseCard({ course }: CourseCardProps) {
       )}
     >
       <span
-        className="absolute inset-x-0 top-0 h-[3px] bg-linear-to-r from-[#00044a]/0 via-[#00044a]/35 to-[#00044a]/0"
+        className="absolute inset-x-0 top-0 z-10 h-[3px] bg-linear-to-r from-[#00044a]/0 via-[#00044a]/35 to-[#00044a]/0"
         aria-hidden
       />
+
+      {visual ? (
+        <div className="relative aspect-[16/10] bg-[#00044a]">
+          <Image
+            src={visual.src}
+            alt={visual.alt}
+            fill
+            quality={88}
+            className="h-full w-full object-cover object-center"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col px-6 py-6 sm:px-7 sm:py-7">
         <h3 className="line-clamp-2 min-h-[3.25rem] text-[1.125rem] font-semibold leading-snug tracking-tight text-[#00044a] sm:text-[1.2rem]">
@@ -55,7 +73,7 @@ export function CourseCard({ course }: CourseCardProps) {
           </Link>
         </h3>
 
-        <div className="mt-4 border-t border-[#00044a]/10 pt-4">
+        <div className="mt-5 border-t border-[#00044a]/10 pt-5">
           <p className="line-clamp-3 min-h-[4.125rem] text-sm leading-[1.65] text-muted-foreground">
             {summary || course.summary}
           </p>
