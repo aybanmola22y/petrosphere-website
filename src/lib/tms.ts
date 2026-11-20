@@ -171,14 +171,11 @@ function mapTmsSchedules(
         monthKey = `${sy}-${String(sm).padStart(2, "0")}`;
       }
     } else if (scheduleType === "staggered" && item.schedule_dates?.length > 0) {
-      sessionDates = [
-        ...new Set(
-          item.schedule_dates
-            .map((d: { date?: string }) => d.date)
-            .filter((v: string | undefined): v is string => typeof v === "string" && v.length > 0)
-            .map((v: string) => toCalendarDateIso(v)),
-        ),
-      ].sort();
+      const staggeredDates: string[] = item.schedule_dates
+        .map((d: { date?: string }) => d.date)
+        .filter((v: string | undefined): v is string => typeof v === "string" && v.length > 0)
+        .map((v: string) => toCalendarDateIso(v));
+      sessionDates = [...new Set<string>(staggeredDates)].sort();
       const start = sessionDates[0] ?? toCalendarDateIso(new Date());
       const end = sessionDates.at(-1) ?? start;
       dateRange = formatStaggeredDateList(sessionDates);
