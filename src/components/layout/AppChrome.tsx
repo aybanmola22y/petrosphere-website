@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
+import { RouteWarmup } from "@/components/layout/RouteWarmup";
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -16,6 +18,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
+      <RouteWarmup />
       <Suspense fallback={<header className="fixed top-0 z-50 h-16 w-full bg-background/80" />}>
         <Navbar />
       </Suspense>

@@ -59,7 +59,7 @@ const dole: { group: string; courses: CourseSeed[] }[] = [
         title: "BOSH SO1 — Basic Occupational Safety & Health (Safety Officer 1)",
         slug: "bosh-so1",
         summary: "Foundational accreditation pathway for Safety Officer 1 designations.",
-        duration: "2 Days",
+        duration: "1 Day",
         level: "Beginner",
         schedule: "Monthly",
         objectives: objectivesSafety,

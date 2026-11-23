@@ -9,7 +9,7 @@ export async function GET() {
   const sessions = await getCachedTmsSchedules();
   return NextResponse.json(sessions, {
     headers: {
-      "Cache-Control": `public, s-maxage=${CACHE_REVALIDATE_SECONDS.tms}, stale-while-revalidate=600`,
+      "Cache-Control": `public, max-age=60, s-maxage=${CACHE_REVALIDATE_SECONDS.tms}, stale-while-revalidate=600`,
     },
   });
 }

@@ -1,7 +1,11 @@
 /** Client-safe fetch helpers for cached public API routes. */
 
 async function fetchPublicJson<T>(path: string): Promise<T> {
-  const res = await fetch(path, { credentials: "same-origin" });
+  const res = await fetch(path, {
+    credentials: "same-origin",
+    // Prefer browser HTTP cache (API routes send max-age / SWR headers).
+    cache: "force-cache",
+  });
   if (!res.ok) {
     throw new Error(`Request failed: ${res.status} ${path}`);
   }

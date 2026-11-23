@@ -195,8 +195,12 @@ export function expandTmsCourseForUi(course: Course): Course {
     }
     if (out.duration === "—" && seed.duration && seed.duration !== "—")
       out = { ...out, duration: seed.duration };
-    // BOSH SO2 & COSH are 4-day programs (override stale TMS “5 Days”).
-    if (seed.duration && (seed.slug === "bosh-so2" || seed.slug === "cosh")) {
+    // Canonical durations (override stale TMS values).
+    // BOSH SO1 = 1 day; BOSH SO2 & COSH = 4 days.
+    if (
+      seed.duration &&
+      (seed.slug === "bosh-so1" || seed.slug === "bosh-so2" || seed.slug === "cosh")
+    ) {
       out = { ...out, duration: seed.duration };
     }
     if (out.level === "All Levels" && seed.level && seed.level !== "All Levels")

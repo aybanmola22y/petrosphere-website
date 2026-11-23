@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
+import type { Course } from "@/data/mockData";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import type { SiteStat } from "@/types/site-content";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -23,10 +24,17 @@ export type HomeProps = {
   companyNews: CompanyNewsItem[];
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
+  /** Server-fetched catalog snapshot — keeps SSR and hydration titles aligned. */
+  initialCatalog?: Course[];
 };
 
-export default function Home({ companyNews, videoTestimonials, stats }: HomeProps) {
-  const { catalogCourses: courses } = useCatalogCoursesList();
+export default function Home({
+  companyNews,
+  videoTestimonials,
+  stats,
+  initialCatalog,
+}: HomeProps) {
+  const { catalogCourses: courses } = useCatalogCoursesList(initialCatalog);
   const featuredCourses = pickFeaturedCourses(courses);
   const imageById = useMemo(() => assignCourseVisuals(courses), [courses]);
 

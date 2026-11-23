@@ -2,13 +2,22 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 import { HeaderPillNav } from "@/components/layout/HeaderPillNav";
 import { BranchedMenu } from "@/components/ui/BranchedMenu";
 import { cn } from "@/lib/utils";
+
+function prefetchInternal(router: ReturnType<typeof useRouter>, href: string) {
+  if (!href || isExternalHref(href) || href.startsWith("#")) return;
+  try {
+    router.prefetch(href);
+  } catch {
+    /* ignore */
+  }
+}
 
 type Course = { name: string; href: string };
 type Group = { name: string; courses: Course[] };
@@ -209,6 +218,7 @@ export function Navbar() {
   const [openSub, setOpenSub] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams() ?? new URLSearchParams();
 
   useEffect(() => {
@@ -227,11 +237,19 @@ export function Navbar() {
 
   const handleEnter = (name: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
+    const item = NAV.find((n) => n.name === name);
+    if (item) {
+      prefetchInternal(router, item.href);
+      item.children?.forEach((child) => {
+        prefetchInternal(router, child.href);
+        child.groups?.forEach((group) => {
+          group.courses.forEach((course) => prefetchInternal(router, course.href));
+        });
+      });
+    }
     // Only seed the default sub-panel when opening Courses fresh — not on brief re-enter.
     if (openMenu !== name && name === "Courses") {
-      const firstWithGroups = NAV.find((n) => n.name === name)?.children?.find(
-        (c) => c.groups?.length,
-      );
+      const firstWithGroups = item?.children?.find((c) => c.groups?.length);
       if (firstWithGroups) setOpenSub(firstWithGroups.name);
     }
     setOpenMenu(name);
@@ -455,12 +473,21 @@ export function Navbar() {
           }}
         />
 
-        <div className="hidden lg:flex items-center shrink-0">
+        <div className="hidden shrink-0 items-center lg:flex">
           <Link
             href="/schedule"
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-9 py-3 text-[0.9375rem] font-medium text-primary-foreground transition-all hover:bg-primary/90"
+            className="nav-enroll-cta"
+            onPointerEnter={() => prefetchInternal(router, "/schedule")}
+            onFocus={() => prefetchInternal(router, "/schedule")}
           >
-            Enroll
+            <span className="nav-enroll-cta__surface" aria-hidden />
+            <span className="nav-enroll-cta__sheen" aria-hidden />
+            <span className="nav-enroll-cta__label">
+              Enroll
+              <span className="nav-enroll-cta__icon" aria-hidden>
+                <FiChevronRight className="h-3.5 w-3.5" />
+              </span>
+            </span>
           </Link>
         </div>
 
@@ -636,11 +663,15 @@ export function Navbar() {
               </nav>
 
               <div className="mt-5 border-t border-white/10 pt-5">
-                <Link
-                  href="/schedule"
-                  className="flex min-h-12 items-center justify-center rounded-2xl bg-primary px-5 text-[15px] font-semibold text-primary-foreground shadow-[0_12px_28px_-14px_hsl(42_72%_52%/0.9)] transition-transform active:scale-[0.98]"
-                >
-                  Enroll
+                <Link href="/schedule" className="nav-enroll-cta nav-enroll-cta--mobile">
+                  <span className="nav-enroll-cta__surface" aria-hidden />
+                  <span className="nav-enroll-cta__sheen" aria-hidden />
+                  <span className="nav-enroll-cta__label">
+                    Enroll
+                    <span className="nav-enroll-cta__icon" aria-hidden>
+                      <FiChevronRight className="h-3.5 w-3.5" />
+                    </span>
+                  </span>
                 </Link>
               </div>
             </div>

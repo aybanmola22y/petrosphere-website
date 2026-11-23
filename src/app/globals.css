@@ -334,3 +334,192 @@
   background: #00044a;
   box-shadow: 0 0 0 4px rgba(0, 4, 74, 0.16);
 }
+
+/* Shared metallic gold tokens (header Enroll + pill nav) */
+:root {
+  --nav-gold-hi: #f6d56b;
+  --nav-gold: #e4b84a;
+  --nav-gold-mid: #c9921f;
+  --nav-gold-lo: #a87614;
+  --nav-gold-ink: #1a1408;
+  --nav-gold-fill: linear-gradient(
+    165deg,
+    var(--nav-gold-hi) 0%,
+    var(--nav-gold) 38%,
+    var(--nav-gold-mid) 72%,
+    var(--nav-gold-lo) 100%
+  );
+  --nav-gold-shadow: 0 0 0 1px rgba(255, 236, 170, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(90, 55, 0, 0.28) inset,
+    0 10px 22px -14px rgba(201, 146, 31, 0.95);
+  --nav-gold-shadow-hover: 0 0 0 1px rgba(255, 242, 190, 0.42),
+    0 1px 0 rgba(255, 255, 255, 0.42) inset,
+    0 -1px 0 rgba(90, 55, 0, 0.22) inset,
+    0 14px 28px -14px rgba(201, 146, 31, 1);
+}
+
+/* Header Enroll CTA — metallic gold, compact, premium */
+.nav-enroll-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 0.55rem;
+  color: var(--nav-gold-ink);
+  text-decoration: none;
+  transform: translateZ(0);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 220ms ease;
+  box-shadow: var(--nav-gold-shadow);
+}
+
+.nav-enroll-cta__surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--nav-gold-fill);
+}
+
+.nav-enroll-cta__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.42) 48%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-enroll-cta__label {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 2.15rem;
+  padding: 0 0.35rem 0 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nav-enroll-cta__icon {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 0.35rem;
+  background: rgba(0, 4, 74, 0.14);
+  color: #00044a;
+  transition:
+    background 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-enroll-cta:hover {
+  filter: brightness(1.04) saturate(1.05);
+  box-shadow: var(--nav-gold-shadow-hover);
+}
+
+.nav-enroll-cta:hover .nav-enroll-cta__sheen {
+  transform: translateX(130%);
+}
+
+.nav-enroll-cta:hover .nav-enroll-cta__icon {
+  background: rgba(0, 4, 74, 0.2);
+  transform: translateX(1px);
+}
+
+.nav-enroll-cta:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.nav-enroll-cta--mobile {
+  width: 100%;
+  justify-content: center;
+}
+
+.nav-enroll-cta--mobile .nav-enroll-cta__label {
+  height: 2.75rem;
+  padding-inline: 1rem;
+  font-size: 0.75rem;
+}
+
+/* Header pill nav — sliding metallic gold indicator */
+.header-pill-slot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.72);
+  transition:
+    color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.header-pill-slot:active {
+  transform: scale(0.97);
+}
+
+.header-pill-indicator {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: var(--nav-gold-fill);
+  box-shadow: var(--nav-gold-shadow);
+  pointer-events: none;
+}
+
+.header-pill-indicator__sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.42) 48%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  animation: header-pill-sheen 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes header-pill-sheen {
+  to {
+    transform: translateX(130%);
+  }
+}
+
+.header-pill-slot.is-lit:hover .header-pill-indicator {
+  box-shadow: var(--nav-gold-shadow-hover);
+  filter: brightness(1.03) saturate(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-enroll-cta,
+  .nav-enroll-cta__sheen,
+  .nav-enroll-cta__icon,
+  .header-pill-slot {
+    transition: none;
+  }
+
+  .nav-enroll-cta:hover .nav-enroll-cta__sheen,
+  .header-pill-indicator__sheen {
+    animation: none;
+    transform: none;
+  }
+
+  .header-pill-slot:active {
+    transform: none;
+  }
+}
