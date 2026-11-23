@@ -244,7 +244,7 @@ const headerStats = [
   { icon: <FiUsers className="w-4 h-4" />, value: "120+", label: "Active engagements" },
   { icon: <FiTrendingUp className="w-4 h-4" />, value: "98%", label: "Audit pass rate" },
   { icon: <FiClock className="w-4 h-4" />, value: "15 yrs", label: "Field experience" },
-  { icon: <FiShield className="w-4 h-4" />, value: "Zero", label: "Recordable incidents (2025)" },
+  { icon: <FiShield className="w-4 h-4" />, value: "Zero", label: "Recordable incidents" },
 ];
 
 export default function Services() {
@@ -263,20 +263,20 @@ export default function Services() {
             <div
               key={s.label}
               className={[
-                "p-6 flex items-start gap-4 bg-background/60",
+                "flex min-w-0 flex-col gap-3 bg-background/60 p-4 sm:flex-row sm:items-start sm:gap-4 sm:p-5 lg:p-6",
                 i !== 0 ? "lg:border-l border-border" : "",
                 i % 2 !== 0 ? "border-l border-border lg:border-l" : "",
                 i >= 2 ? "border-t lg:border-t-0 border-border" : "",
               ].join(" ")}
             >
-              <div className="w-9 h-9 rounded-lg bg-primary/5 text-primary flex items-center justify-center shrink-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
                 {s.icon}
               </div>
-              <div className="min-w-0">
-                <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums leading-none">
+              <div className="min-w-0 flex-1">
+                <div className="break-words text-xl font-semibold leading-tight tracking-tight text-foreground tabular-nums sm:text-2xl">
                   {s.value}
                 </div>
-                <div className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground mt-2">
+                <div className="mt-2 break-words pb-0.5 text-[10px] font-medium uppercase leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-[11px] sm:tracking-[0.12em]">
                   {s.label}
                 </div>
               </div>
@@ -285,83 +285,87 @@ export default function Services() {
         </div>
 
         {/* Capability rows */}
-        <div className="mt-20 rounded-3xl border border-border bg-card overflow-hidden divide-y divide-border">
+        <div className="mt-20 space-y-6 md:space-y-8">
           {capabilities.map((cap, idx) => (
             <motion.article
               key={cap.index}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 p-8 lg:p-14 group"
+              transition={{ duration: 0.6, delay: Math.min(idx * 0.06, 0.3), ease: [0.22, 1, 0.36, 1] }}
+              className="group overflow-hidden rounded-3xl border border-border bg-card"
             >
-              {/* Left rail: index + icon mark */}
-              <div className="lg:col-span-3 flex lg:flex-col gap-6 items-start">
-                <div className="flex items-baseline gap-4">
+              <div className="grid grid-cols-1 gap-0 lg:grid-cols-12 lg:items-stretch">
+                {/* Left rail: index + icon */}
+                <div className="flex items-center gap-5 border-b border-border px-6 py-6 sm:px-8 lg:col-span-2 lg:flex-col lg:items-start lg:justify-between lg:border-b-0 lg:border-r lg:px-8 lg:py-10">
                   <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground tabular-nums">
                     {cap.index} / {capabilityTotalDisplay}
                   </span>
+                  <div className="relative">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-background text-foreground shadow-sm">
+                      {cap.icon}
+                    </div>
+                    <span className="absolute -bottom-1 -right-1 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-card" />
+                  </div>
                 </div>
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl border border-border bg-background flex items-center justify-center text-foreground shadow-sm">
-                    {cap.icon}
+
+                {/* Middle: copy + meta */}
+                <div className="flex flex-col justify-center px-6 py-8 sm:px-8 lg:col-span-6 lg:px-10 lg:py-10">
+                  <h3 className="text-2xl font-semibold tracking-tight text-foreground leading-tight md:text-3xl">
+                    {cap.title}
+                  </h3>
+                  <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+                    {cap.description}
+                  </p>
+
+                  <dl className="mt-8 grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border bg-secondary/25 sm:grid-cols-3">
+                    {(
+                      [
+                        ["Engagement", cap.engagement],
+                        ["Duration", cap.duration],
+                        ["Team", cap.team],
+                      ] as const
+                    ).map(([label, value], metaIdx) => (
+                      <div
+                        key={label}
+                        className={[
+                          "min-w-0 px-5 py-4",
+                          metaIdx > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : "",
+                        ].join(" ")}
+                      >
+                        <dt className="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">
+                          {label}
+                        </dt>
+                        <dd className="mt-2 text-sm font-medium leading-snug text-foreground break-words">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <div className="mt-6">
+                    <Link
+                      href="/about#contact"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                    >
+                      Discuss this service
+                      <FiArrowUpRight className="h-4 w-4" />
+                    </Link>
                   </div>
-                  <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-accent ring-4 ring-card" />
                 </div>
-              </div>
 
-              {/* Middle: title + description + meta */}
-              <div className="lg:col-span-5 flex flex-col">
-                <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-tight">
-                  {cap.title}
-                </h3>
-                <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-                  {cap.description}
-                </p>
-
-                <dl className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border">
-                  <div>
-                    <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-                      Engagement
-                    </dt>
-                    <dd className="mt-1.5 text-sm font-medium text-foreground">
-                      {cap.engagement}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-                      Duration
-                    </dt>
-                    <dd className="mt-1.5 text-sm font-medium text-foreground">
-                      {cap.duration}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
-                      Team
-                    </dt>
-                    <dd className="mt-1.5 text-sm font-medium text-foreground">
-                      {cap.team}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              {/* Right: visual preview panel */}
-              <div className="lg:col-span-4">
-                <div className="rounded-2xl bg-secondary/50 border border-border p-6 lg:p-7 h-full flex flex-col">
-                  <div className="relative aspect-4/3 w-full flex-1 min-h-[200px] overflow-hidden rounded-xl border border-border bg-muted">
-                    <img
-                      src={cap.previewImage.src}
-                      alt={cap.previewImage.alt}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                      loading="lazy"
-                      onError={(e) => {
-                        const img = e.currentTarget;
-                        if (img.src !== FALLBACK_PREVIEW_IMAGE) img.src = FALLBACK_PREVIEW_IMAGE;
-                      }}
-                    />
-                  </div>
+                {/* Right: image — full-bleed in its column, no nested padding card */}
+                <div className="relative min-h-[220px] border-t border-border lg:col-span-4 lg:min-h-full lg:border-t-0 lg:border-l">
+                  <img
+                    src={cap.previewImage.src}
+                    alt={cap.previewImage.alt}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    loading="lazy"
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      if (img.src !== FALLBACK_PREVIEW_IMAGE) img.src = FALLBACK_PREVIEW_IMAGE;
+                    }}
+                  />
                 </div>
               </div>
             </motion.article>

@@ -22,6 +22,7 @@ import {
 import { resolveCourseBySlug } from "@/lib/catalog";
 import { buildCourseDetailSections } from "@/lib/course-detail-sections";
 import { courseDetailVisual } from "@/lib/course-card-image";
+import { normalizeCourseTitle } from "@/lib/course-title";
 import { useTmsSchedules } from "@/hooks/use-tms-schedules";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
 import { cn } from "@/lib/utils";
@@ -186,7 +187,7 @@ export default function CourseDetail({ slug }: { slug: string }) {
               </Link>
               <FiChevronRight className="size-3 opacity-50" aria-hidden />
               <span className="max-w-[16rem] truncate text-white/75 sm:max-w-md">
-                {course.title}
+                {normalizeCourseTitle(course.title)}
               </span>
             </motion.nav>
 
@@ -197,7 +198,7 @@ export default function CourseDetail({ slug }: { slug: string }) {
               className="max-w-3xl"
             >
               <h1 className="text-[2.15rem] font-bold leading-[1.08] tracking-tight text-white sm:text-5xl md:text-[3.25rem]">
-                {course.title}
+                {normalizeCourseTitle(course.title)}
               </h1>
 
               <p className="mt-5 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg">
@@ -278,7 +279,7 @@ export default function CourseDetail({ slug }: { slug: string }) {
                           alt={courseVisual.alt}
                           fill
                           quality={92}
-                          className="object-cover object-center"
+                          className="object-cover object-top"
                           sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 70vw, 1100px"
                           priority
                         />

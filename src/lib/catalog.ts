@@ -11,6 +11,9 @@ import {
   isTmsMarketingPlaceholder,
   syntheticPedagogyForOrphanTms,
 } from "@/lib/synthetic-course-copy";
+import { normalizeCourseTitle } from "@/lib/course-title";
+
+export { normalizeCourseTitle } from "@/lib/course-title";
 
 /** DOLE first-aid programs: keep seed titles ("EFAT — …") so cards match nav branding. */
 const FIRST_AID_CANONICAL_SLUGS = new Set(["efat", "ofat", "sfat"]);
@@ -66,7 +69,7 @@ export function mapCourseRowToCourse(
   collisionBases: Set<string>,
 ): Course {
   const codeName = rowStr(row, "name", "code", "course_code") ?? "";
-  const title = rowStr(row, "title", "name") ?? "Training program";
+  const title = normalizeCourseTitle(rowStr(row, "title", "name") ?? "Training program");
   const rawSummary = rowStr(row, "summary", "short_description", "description", "subtitle");
   const rawOverview = rowStr(row, "overview", "body", "long_description", "details");
   const rawSummaryTrim = rawSummary?.trim() ?? "";
@@ -176,7 +179,7 @@ function findMockSeedForCourse(course: Course): Course | undefined {
  * when Supabase omits marketing fields.
  */
 export function expandTmsCourseForUi(course: Course): Course {
-  let out: Course = { ...course };
+  let out: Course = { ...course, title: normalizeCourseTitle(course.title) };
   const seed = findMockSeedForCourse(out);
   const titleBlob = `${out.title} ${out.slug}`.toLowerCase();
 
@@ -192,6 +195,10 @@ export function expandTmsCourseForUi(course: Course): Course {
     }
     if (out.duration === "—" && seed.duration && seed.duration !== "—")
       out = { ...out, duration: seed.duration };
+    // BOSH SO2 & COSH are 4-day programs (override stale TMS “5 Days”).
+    if (seed.duration && (seed.slug === "bosh-so2" || seed.slug === "cosh")) {
+      out = { ...out, duration: seed.duration };
+    }
     if (out.level === "All Levels" && seed.level && seed.level !== "All Levels")
       out = { ...out, level: seed.level };
     if (!out.programGroup?.trim() && seed.programGroup?.trim())

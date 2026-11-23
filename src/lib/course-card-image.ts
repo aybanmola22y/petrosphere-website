@@ -40,6 +40,8 @@ function upgradeUnsplashSrc(src: string): string {
 
 const FIRE_FIGHTING_TRAINING_IMAGE = "/images/courses/basic-fire-fighting-training.png";
 const BASIC_FIRST_AID_TRAINING_IMAGE = "/images/courses/basic-first-aid-training.png";
+const OFAT_TRAINING_IMAGE = "/images/courses/ofat-training.jpg";
+const SFAT_TRAINING_IMAGE = "/images/courses/sfat-training.jpg";
 const ACLS_TRAINING_IMAGE = "/images/courses/acls-training.png";
 const BLS_TRAINING_IMAGE = "/images/courses/bls-training.png";
 const CIVIL_SERVICE_TRAINING_IMAGE = "/images/courses/civil-service-training.png";
@@ -48,14 +50,24 @@ const BOSH_SO2_TRAINING_IMAGE = "/images/courses/bosh-so2-training.png";
 const CHEMICAL_SAFETY_TRAINING_IMAGE = "/images/courses/chemical-safety-training.png";
 const EMS_TRAINING_IMAGE = "/images/courses/emergency-medical-services-training.png";
 const MESH_TRAINING_IMAGE = "/images/courses/mesh-training.png";
+const MESH_ELEARNING_TRAINING_IMAGE = "/images/courses/mesh-elearning-training.jpg";
+const TRAINING_OF_TRAINERS_IMAGE = "/images/courses/training-of-trainers.jpg";
 const FOOD_SAFETY_TRAINING_IMAGE = "/images/courses/food-safety-training.png";
-const LOTO_TRAINING_IMAGE = "/images/courses/loto-lockout-tagout.png";
+const LOTO_TRAINING_IMAGE = "/images/courses/loto-training-v2.jpg";
 const LOTO_ELEARNING_TRAINING_IMAGE = "/images/courses/loto-elearning-training.jpg";
 const PCO_CATEGORY_A_TRAINING_IMAGE = "/images/courses/pco-category-a-training.png";
 const PCO_CATEGORY_B_TRAINING_IMAGE = "/images/courses/pco-category-b-training.png";
+const PCO_MANAGING_HEAD_TRAINING_IMAGE =
+  "/images/courses/pco-managing-head-training.jpg";
 const COSH_TRAINING_IMAGE = "/images/courses/cosh-training.jpg";
 const IV_TRAINING_IMAGE = "/images/courses/iv-training.png";
 const NEBOSH_TRAINING_IMAGE = "/images/courses/nebosh-training.png";
+const SAFETY_PROGRAM_AUDIT_TRAINING_IMAGE = "/images/courses/safety-program-audit-training.jpg";
+const HIRAC_TRAINING_IMAGE = "/images/courses/hirac-training.jpg";
+const LOSS_CONTROL_MANAGEMENT_TRAINING_IMAGE =
+  "/images/courses/loss-control-management-training.jpg";
+const WORKING_AT_HEIGHTS_TRAINING_IMAGE = "/images/courses/working-at-heights-training-v2.jpg";
+const SCAFFOLDING_TRAINING_IMAGE = "/images/courses/scaffolding-training-v2.jpg";
 
 function resolveImageSrc(id: string): string {
   if (id.startsWith("/") || /^https?:\/\//i.test(id)) return id;
@@ -77,13 +89,13 @@ const RULES: ImageRule[] = [
     priority: 109,
     topic: "medical",
     match: (b) => b.includes("ofat") || b.includes("occupational first aid"),
-    ids: ["photo-1582750433449-648ed127bb54"],
+    ids: [OFAT_TRAINING_IMAGE],
   },
   {
     priority: 108,
     topic: "medical",
     match: (b) => b.includes("sfat") || b.includes("standard first aid"),
-    ids: ["photo-1631815588090-d4bfec5b1ccb"],
+    ids: [SFAT_TRAINING_IMAGE],
   },
   {
     priority: 107,
@@ -183,6 +195,15 @@ const RULES: ImageRule[] = [
     ids: [COSH_TRAINING_IMAGE],
   },
   {
+    priority: 98,
+    topic: "construction",
+    match: (b) =>
+      (b.includes("scaffold") || b.includes("scaffolding")) &&
+      !b.includes("working at height") &&
+      !b.includes("work at height"),
+    ids: [SCAFFOLDING_TRAINING_IMAGE],
+  },
+  {
     priority: 97,
     topic: "construction",
     match: (b) =>
@@ -192,7 +213,7 @@ const RULES: ImageRule[] = [
       b.includes(" lirt") ||
       b.startsWith("lirt") ||
       (b.includes("height") && (b.includes("fall") || b.includes("scaffold"))),
-    ids: ["photo-1504307651254-35680f356dfd"],
+    ids: [WORKING_AT_HEIGHTS_TRAINING_IMAGE],
   },
   {
     priority: 97,
@@ -257,6 +278,18 @@ const RULES: ImageRule[] = [
     ids: ["photo-1558618666-fcd25c85cd64", "photo-1489515217757-5fd1be406fef"],
   },
   {
+    priority: 93,
+    topic: "classroom",
+    match: (b) =>
+      (b.includes("mesh") ||
+        b.includes("mandatory eight") ||
+        b.includes("mandatory eight-hour") ||
+        (b.includes("8-hour") && b.includes("mandatory"))) &&
+      (b.includes("elearning") || b.includes("e-learning") || b.includes("e learning")) &&
+      !b.includes("height"),
+    ids: [MESH_ELEARNING_TRAINING_IMAGE],
+  },
+  {
     priority: 92,
     topic: "classroom",
     match: (b) =>
@@ -264,26 +297,47 @@ const RULES: ImageRule[] = [
         b.includes("mandatory eight") ||
         b.includes("mandatory eight-hour") ||
         (b.includes("8-hour") && b.includes("mandatory"))) &&
+      !b.includes("elearning") &&
+      !b.includes("e-learning") &&
+      !b.includes("e learning") &&
       !b.includes("height"),
     ids: [MESH_TRAINING_IMAGE],
   },
   {
     priority: 91,
     topic: "classroom",
-    match: (b) => b.includes("train the trainer") || b.includes("ttt"),
-    ids: ["photo-1521737604893-d14cc237f11d"],
+    match: (b) =>
+      b.includes("train the trainer") ||
+      b.includes("training of trainer") ||
+      b.includes("training of trainers") ||
+      /\bttt(?:-|\b)/.test(b) ||
+      /\btotts?\b/.test(b) ||
+      /\btot\b/.test(b),
+    ids: [TRAINING_OF_TRAINERS_IMAGE],
   },
   {
     priority: 90,
     topic: "industrial",
     match: (b) => b.includes("loss control") || b.includes(" lcm"),
-    ids: ["photo-1473341304170-971dccb5ac1e"],
+    ids: [LOSS_CONTROL_MANAGEMENT_TRAINING_IMAGE],
+  },
+  {
+    priority: 89,
+    topic: "industrial",
+    match: (b) =>
+      b.includes("hirac") ||
+      (b.includes("hazard identification") && b.includes("risk")) ||
+      b.includes("hazard identification, risk assessment"),
+    ids: [HIRAC_TRAINING_IMAGE],
   },
   {
     priority: 88,
     topic: "documents",
-    match: (b) => b.includes("safety audit") || b.includes("spat"),
-    ids: ["photo-1454165804606-c3d57bc86b40"],
+    match: (b) =>
+      b.includes("safety program audit") ||
+      b.includes("safety audit") ||
+      b.includes("spat"),
+    ids: [SAFETY_PROGRAM_AUDIT_TRAINING_IMAGE],
   },
   {
     priority: 87,
@@ -327,6 +381,15 @@ const RULES: ImageRule[] = [
     ids: ["photo-1450101499163-c8848c66ca85"],
   },
   {
+    priority: 81,
+    topic: "environment",
+    match: (b) =>
+      b.includes("managing head") ||
+      b.includes("managing heads") ||
+      (b.includes("mhet") && !b.includes("category")),
+    ids: [PCO_MANAGING_HEAD_TRAINING_IMAGE],
+  },
+  {
     priority: 80,
     topic: "environment",
     match: (b) => b.includes("pco-a") || (b.includes("pco") && b.includes("category a")),
@@ -342,7 +405,9 @@ const RULES: ImageRule[] = [
     priority: 78,
     topic: "environment",
     match: (b) =>
-      (b.includes("pco") || b.includes("pollution control") || b.includes("managing head")) &&
+      (b.includes("pco") || b.includes("pollution control")) &&
+      !b.includes("managing head") &&
+      !b.includes("managing heads") &&
       !b.includes("pco-a") &&
       !b.includes("pco-b") &&
       !b.includes("category a") &&
@@ -383,7 +448,7 @@ const TOPIC_POOL: Record<Topic, string[]> = {
     "photo-1523580494863-6f3031224c94",
     "photo-1522071820081-009f0129c71c",
     "photo-1521737604893-d14cc237f11d",
-    "photo-1540555700478-4be289fbecef",
+    "photo-1517245386807-bb43f82c33c4",
   ],
   construction: [
     "photo-1504307651254-35680f356dfd",

@@ -9,6 +9,7 @@ import { FiArrowRight, FiChevronRight } from "react-icons/fi";
 import type { Course } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { courseCardVisual } from "@/lib/course-card-image";
+import { normalizeCourseTitle } from "@/lib/course-title";
 import { contactEnrollHref } from "@/lib/enrollment";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,8 @@ function cleanSummary(title: string, summary: string) {
 }
 
 export function CourseCard({ course, imageSrc }: CourseCardProps) {
-  const summary = cleanSummary(course.title, course.summary);
+  const title = normalizeCourseTitle(course.title);
+  const summary = cleanSummary(title, course.summary);
   const programHref = `/courses/${course.slug}`;
   const enrollHref = contactEnrollHref(course.slug);
   const visual = imageSrc ? courseCardVisual(course, imageSrc) : null;
@@ -51,13 +53,13 @@ export function CourseCard({ course, imageSrc }: CourseCardProps) {
       />
 
       {visual ? (
-        <div className="relative aspect-[16/10] bg-[#00044a]">
+        <div className="relative aspect-[4/3] overflow-hidden bg-[#00044a]">
           <Image
             src={visual.src}
             alt={visual.alt}
             fill
             quality={88}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-cover object-top"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </div>
@@ -69,7 +71,7 @@ export function CourseCard({ course, imageSrc }: CourseCardProps) {
             href={programHref}
             className="transition-colors hover:text-[#00044a]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00044a]/25"
           >
-            {course.title}
+            {title}
           </Link>
         </h3>
 
