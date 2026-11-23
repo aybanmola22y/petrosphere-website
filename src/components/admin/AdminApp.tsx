@@ -36,6 +36,7 @@ import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import type { SiteContentSnapshot } from "@/types/site-content";
 import { SITE_CONTENT_LOCAL_FILENAME } from "@/constants/site-content-file";
 import {
+  captureVideoPosterFrame,
   testimonialHasUploadedVideo,
   testimonialVideoLabel,
 } from "@/lib/video-testimonial-media";
@@ -313,16 +314,23 @@ export function AdminApp({
         const j = (await res.json().catch(() => ({}))) as {
           error?: string;
           details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
+          issues?: Array<{ path?: string; message?: string }>;
         };
+        const issueMsgs = (j.issues ?? [])
+          .map((i) => [i.path, i.message].filter(Boolean).join(": "))
+          .filter(Boolean)
+          .slice(0, 3);
         const fieldMsgs = j.details?.fieldErrors
           ? Object.entries(j.details.fieldErrors)
               .flatMap(([k, v]) => (v ?? []).map((m) => `${k}: ${m}`))
               .slice(0, 3)
           : [];
         const description =
-          fieldMsgs.length > 0
-            ? fieldMsgs.join(" · ")
-            : j.details?.formErrors?.[0] ?? j.error ?? `HTTP ${res.status}`;
+          issueMsgs.length > 0
+            ? issueMsgs.join(" · ")
+            : fieldMsgs.length > 0
+              ? fieldMsgs.join(" · ")
+              : j.details?.formErrors?.[0] ?? j.error ?? `HTTP ${res.status}`;
         toast({
           title: "Save failed",
           description,
@@ -460,6 +468,31 @@ export function AdminApp({
     } finally {
       setUploadingTestimonialVideo(false);
     }
+  }
+
+  /** Upload video, then auto-capture + upload a poster still when poster is empty. */
+  async function applyUploadedTestimonialVideo(index: number, file: File) {
+    const url = await uploadTestimonialVideo(file);
+    if (!url) return;
+
+    const current = data.videoTestimonials[index];
+    const patch: Partial<StudentVideoTestimonial> = {
+      videoSrc: url,
+      youtubeVideoId: "",
+    };
+
+    if (!current?.posterSrc?.trim()) {
+      const posterBlob = await captureVideoPosterFrame(file);
+      if (posterBlob) {
+        const posterFile = new File([posterBlob], `poster-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+        const posterUrl = await uploadNewsImage(posterFile);
+        if (posterUrl) patch.posterSrc = posterUrl;
+      }
+    }
+
+    updateVideo(index, patch);
   }
 
   return (
@@ -1085,13 +1118,7 @@ export function AdminApp({
                                           const f = e.target.files?.[0];
                                           e.currentTarget.value = "";
                                           if (!f) return;
-                                          const url = await uploadTestimonialVideo(f);
-                                          if (url) {
-                                            updateVideo(selectedVideoIndex, {
-                                              videoSrc: url,
-                                              youtubeVideoId: "",
-                                            });
-                                          }
+                                          await applyUploadedTestimonialVideo(selectedVideoIndex, f);
                                         }}
                                       />
                                       <span
@@ -1137,13 +1164,7 @@ export function AdminApp({
                                           const f = e.target.files?.[0];
                                           e.currentTarget.value = "";
                                           if (!f) return;
-                                          const url = await uploadTestimonialVideo(f);
-                                          if (url) {
-                                            updateVideo(selectedVideoIndex, {
-                                              videoSrc: url,
-                                              youtubeVideoId: "",
-                                            });
-                                          }
+                                          await applyUploadedTestimonialVideo(selectedVideoIndex, f);
                                         }}
                                       />
                                       <span
@@ -1159,8 +1180,16 @@ export function AdminApp({
                                 </div>
                               )}
                             </Field>
-                            <Field label="Poster image URL" className="sm:col-span-2">
-                              <Input value={selectedVideo.posterSrc} onChange={(e) => updateVideo(selectedVideoIndex, { posterSrc: e.target.value })} />
+                            <Field
+                              label="Poster image URL"
+                              className="sm:col-span-2"
+                              hint="Optional for uploaded videos. Recommended for YouTube so the card has a thumbnail."
+                            >
+                              <Input
+                                value={selectedVideo.posterSrc}
+                                onChange={(e) => updateVideo(selectedVideoIndex, { posterSrc: e.target.value })}
+                                placeholder="https://… or leave blank for uploaded videos"
+                              />
                             </Field>
                             <Field label="Short summary / quote" className="sm:col-span-2">
                               <Textarea rows={4} value={selectedVideo.summary} onChange={(e) => updateVideo(selectedVideoIndex, { summary: e.target.value })} />

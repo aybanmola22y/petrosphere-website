@@ -87,25 +87,6 @@ const NAV: NavItem[] = [
         ],
       },
       {
-        name: "DENR Courses",
-        href: "/courses?category=denr",
-        groups: [
-          {
-            name: "Managing Heads",
-            courses: [
-              { name: "Managing Heads", href: "/courses?category=denr&program=managing-heads" },
-            ],
-          },
-          {
-            name: "PCO Program",
-            courses: [
-              { name: "PCO — Category A", href: "/courses?category=denr&program=pco-a" },
-              { name: "PCO — Category B", href: "/courses?category=denr&program=pco-b" },
-            ],
-          },
-        ],
-      },
-      {
         name: "TESDA Courses",
         href: "/courses?category=tesda",
         groups: [
@@ -121,18 +102,6 @@ const NAV: NavItem[] = [
         ],
       },
       {
-        name: "IADC Course",
-        href: "/courses?category=iadc",
-        groups: [
-          {
-            name: "IADC Programs",
-            courses: [
-              { name: "IADC RigPass", href: "/courses?category=iadc&program=rigpass" },
-            ],
-          },
-        ],
-      },
-      {
         name: "PECB Courses",
         href: "/courses?category=pecb",
         groups: [
@@ -142,20 +111,6 @@ const NAV: NavItem[] = [
               { name: "PECB ISO 9001", href: "/courses?category=pecb&program=iso-9001" },
               { name: "PECB ISO 14001", href: "/courses?category=pecb&program=iso-14001" },
               { name: "PECB ISO 45001", href: "/courses?category=pecb&program=iso-45001" },
-            ],
-          },
-        ],
-      },
-      { name: "Maritime Courses", href: "/courses?category=maritime" },
-      {
-        name: "Consultancy",
-        href: "/services",
-        groups: [
-          {
-            name: "Advisory Services",
-            courses: [
-              { name: "OSH Consultancy", href: "/services?program=osh-consultancy" },
-              { name: "Environmental Impact Assessment", href: "/services?program=eia" },
             ],
           },
         ],

@@ -44,7 +44,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Skip upload routes so large multipart bodies are not truncated at the
+  // default 10MB middleware clone limit (see middlewareClientMaxBodySize).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|xml|txt)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/admin/upload-video|api/admin/upload-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|xml|txt)$).*)",
   ],
 };

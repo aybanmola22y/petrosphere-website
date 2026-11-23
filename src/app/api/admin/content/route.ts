@@ -49,7 +49,17 @@ export async function POST(req: Request) {
 
   const parsed = siteContentSavePayloadSchema.safeParse(sanitizeSavePayload(raw));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 422 });
+    const flattened = parsed.error.flatten();
+    const issuePaths = parsed.error.issues.slice(0, 12).map((issue) => ({
+      path: issue.path.join("."),
+      message: issue.message,
+      code: issue.code,
+    }));
+    console.error("[admin/content] validation failed", JSON.stringify({ flattened, issuePaths }, null, 2));
+    return NextResponse.json(
+      { error: "Validation failed", details: flattened, issues: issuePaths },
+      { status: 422 },
+    );
   }
 
   try {

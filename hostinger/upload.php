@@ -3,7 +3,8 @@
  * Petrosphere CMS media uploader — deploy to Hostinger public_html.
  *
  * Suggested path: public_html/_cms/upload.php
- * Public URLs:    https://YOUR-DOMAIN/uploads/news/...  and  .../videos/...
+ * Public URLs:    https://YOUR-DOMAIN/news/...  and  .../videos/...
+ * (Uses existing public_html/news and public_html/videos folders.)
  *
  * Set $UPLOAD_SECRET below (must match HOSTINGER_UPLOAD_SECRET in Vercel).
  */
@@ -12,7 +13,7 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-$UPLOAD_SECRET = 'REPLACE_WITH_A_LONG_RANDOM_SECRET';
+$UPLOAD_SECRET = '@Petrospherelangsakalam2026!';
 
 $allowedFolders = ['news', 'videos'];
 $allowedImageTypes = [
@@ -76,7 +77,7 @@ if (!preg_match('/^[a-z0-9-]+\.[a-z0-9]+$/i', $requestedName)) {
 }
 
 $docRoot = rtrim((string)($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-$targetDir = $docRoot . '/uploads/' . $folder;
+$targetDir = $docRoot . '/' . $folder;
 if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
     respond(500, ['ok' => false, 'error' => 'Could not create upload directory']);
 }
@@ -88,6 +89,6 @@ if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
 
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$publicUrl = $scheme . '://' . $host . '/uploads/' . $folder . '/' . $requestedName;
+$publicUrl = $scheme . '://' . $host . '/' . $folder . '/' . $requestedName;
 
 respond(200, ['ok' => true, 'url' => $publicUrl]);

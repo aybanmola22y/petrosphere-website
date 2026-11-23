@@ -24,6 +24,20 @@ type ImageRule = {
 const unsplash = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
 
+function upgradeUnsplashSrc(src: string): string {
+  try {
+    const url = new URL(src);
+    if (url.hostname !== "images.unsplash.com") return src;
+    url.searchParams.set("auto", "format");
+    url.searchParams.set("fit", "crop");
+    url.searchParams.set("w", "3840");
+    url.searchParams.set("q", "90");
+    return url.toString();
+  } catch {
+    return src;
+  }
+}
+
 const FIRE_FIGHTING_TRAINING_IMAGE = "/images/courses/basic-fire-fighting-training.png";
 const BASIC_FIRST_AID_TRAINING_IMAGE = "/images/courses/basic-first-aid-training.png";
 const ACLS_TRAINING_IMAGE = "/images/courses/acls-training.png";
@@ -240,7 +254,7 @@ const RULES: ImageRule[] = [
       b.includes("fire safety") ||
       b.includes("hot work") ||
       b.includes("hot-work"),
-    ids: ["photo-1558618666-fcd25c85cd64", "photo-1571019614242-c5c5dee9f50b"],
+    ids: ["photo-1558618666-fcd25c85cd64", "photo-1489515217757-5fd1be406fef"],
   },
   {
     priority: 92,
@@ -379,7 +393,6 @@ const TOPIC_POOL: Record<Topic, string[]> = {
     "photo-1558591710-4b4a1ae0f04d",
   ],
   industrial: [
-    "photo-1571019614242-c5c5dee9f50b",
     "photo-1558618666-fcd25c85cd64",
     "photo-1544197150-94e23c7e8b69",
     "photo-1581092160562-40aa08e78837",
@@ -392,6 +405,7 @@ const TOPIC_POOL: Record<Topic, string[]> = {
     "photo-1473341304170-971dccb5ac1e",
     "photo-1586528116311-ad8dd3c8310d",
     "photo-1553877522-43269d4ea984",
+    "photo-1489515217757-5fd1be406fef",
   ],
   medical: [
     "photo-1576091160399-112ba8d25d1d",
@@ -634,4 +648,16 @@ export function courseCardVisual(course: Course, assignedSrc?: string): CourseVi
     return { src: resolveImageSrc(TOPIC_POOL[courseTopic(course)][0]), alt: course.title };
   }
   return { src: fallback, alt: course.title };
+}
+
+/**
+ * Same course-matched visual as the card (local override / rule / catalog).
+ * Only Unsplash URLs are upgraded to 4K — never swap in an unrelated topic photo.
+ */
+export function courseDetailVisual(course: Course, assignedSrc?: string): CourseVisual {
+  const card = courseCardVisual(course, assignedSrc);
+  if (card.src.includes("images.unsplash.com")) {
+    return { src: upgradeUnsplashSrc(card.src), alt: card.alt };
+  }
+  return card;
 }

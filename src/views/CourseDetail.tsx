@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/enrollment";
 import { resolveCourseBySlug } from "@/lib/catalog";
 import { buildCourseDetailSections } from "@/lib/course-detail-sections";
+import { courseDetailVisual } from "@/lib/course-card-image";
 import { useTmsSchedules } from "@/hooks/use-tms-schedules";
 import { useCatalogCoursesList } from "@/hooks/use-catalog-courses";
 import { cn } from "@/lib/utils";
@@ -142,6 +144,8 @@ export default function CourseDetail({ slug }: { slug: string }) {
     { icon: FiCalendar, label: "Schedule", value: course.schedule },
     { icon: FiMapPin, label: "Format", value: "In-Person / Remote" },
   ];
+
+  const courseVisual = courseDetailVisual(course);
 
   return (
     <div className="min-h-screen bg-background">
@@ -266,6 +270,20 @@ export default function CourseDetail({ slug }: { slug: string }) {
                         {course.overview}
                       </p>
                     </div>
+
+                    <figure className="overflow-hidden rounded-2xl border border-border/80 bg-muted">
+                      <div className="relative aspect-[16/10] w-full sm:aspect-[2/1]">
+                        <Image
+                          src={courseVisual.src}
+                          alt={courseVisual.alt}
+                          fill
+                          quality={92}
+                          className="object-cover object-center"
+                          sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 70vw, 1100px"
+                          priority
+                        />
+                      </div>
+                    </figure>
 
                     {whyParagraphs.length > 0 && (
                       <blockquote className="relative border-l-2 border-primary pl-6 md:pl-8">

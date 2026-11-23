@@ -9,7 +9,7 @@ export function Footer() {
           <div className="md:col-span-4 lg:col-span-5">
             <Link href="/" className="inline-block mb-6">
               <span className="font-bold text-2xl tracking-tight text-foreground">
-                Petrosphere
+                About Us
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
@@ -20,7 +20,7 @@ export function Footer() {
           <div className="md:col-span-8 lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div className="flex flex-col gap-4">
               <h4 className="font-semibold text-sm text-foreground">Platform</h4>
-              <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Curriculum</Link>
+              <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Courses</Link>
               <Link href="/schedule" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Schedule</Link>
               <Link href="/services" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Consulting</Link>
             </div>

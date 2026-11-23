@@ -85,7 +85,11 @@ const videoSchema = z
       .refine((s) => !s?.trim() || isSafeAssetHref(s), {
         message: "Video URL must be http(s) or a site path",
       }),
-    posterSrc: safeAssetHref,
+    posterSrc: z
+      .string()
+      .refine((s) => !s.trim() || isSafeAssetHref(s), {
+        message: "Poster URL must be http(s) or a site path",
+      }),
   })
   .refine((v) => Boolean(v.videoSrc?.trim()) || Boolean(v.youtubeVideoId?.trim()), {
     message: "Each testimonial needs a YouTube video ID or an uploaded video file.",

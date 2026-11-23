@@ -7,17 +7,19 @@ Store **files on Hostinger**, keep **post text in Supabase** (small rows only �
 | What | Where |
 |------|--------|
 | Titles, summaries, body, dates | Supabase Postgres (`news_*`, `video_testimonials`) |
-| Image/video **files** | Hostinger `public_html/uploads/news/` and `.../videos/` |
-| Stored in Supabase | Public **URL** to the Hostinger file |
+| Image/video **files** | Hostinger `public_html/news/` and `public_html/videos/` |
+| Stored in Supabase | Site-relative **`/media/news|videos/...`** URL (Next proxies from Hostinger) |
 
-## Step 1 — Create folders on Hostinger
+> **Note:** `petrosphere.com.ph` DNS points at **Vercel**. Uploads use the Hostinger server IP + vhost (`HOSTINGER_UPLOAD_ORIGIN` / `HOSTINGER_UPLOAD_HOST_HEADER`) so files still land in File Manager.
+
+## Step 1 — Folders on Hostinger
 
 1. Log in to **hPanel → Files → File Manager**.
 2. Open `public_html`.
-3. Create:
-   - `uploads/news/`
-   - `uploads/videos/`
-4. Set permissions to **755** (folders) so PHP can write inside them.
+3. Use the existing folders (or create if missing):
+   - `news/`
+   - `videos/`
+4. Set permissions to **755** so PHP can write inside them.
 
 ## Step 2 — Deploy the PHP uploader (recommended)
 
@@ -40,12 +42,14 @@ Public endpoint example:
 Add to **`.env.local`** (local) and **Vercel → Project → Settings → Environment Variables** (production):
 
 ```env
-# http = POST to PHP on Hostinger (recommended)
+# supabase = CMS Supabase Storage (recommended while the site domain is on Vercel)
+# http = POST to PHP on Hostinger (needs a Hostinger-hosted media subdomain)
 # ftp = upload via FTP/SFTP (alternative)
-# local = save under public/uploads/ (dev only)
-HOSTINGER_MEDIA_MODE=http
+# local = save under public/news and public/videos (dev only)
+HOSTINGER_MEDIA_MODE=supabase
+SUPABASE_MEDIA_BUCKET=site-media
 
-# Public URL where /uploads/... is served (no trailing slash)
+# Public URL where /news and /videos are served (no trailing slash)
 HOSTINGER_MEDIA_BASE_URL=https://petrosphere.com.ph
 
 # Must match upload.php on Hostinger
@@ -61,7 +65,7 @@ HOSTINGER_MEDIA_BASE_URL=https://petrosphere.com.ph
 HOSTINGER_FTP_HOST=ftp.petrosphere.com.ph
 HOSTINGER_FTP_USER=your-ftp-user
 HOSTINGER_FTP_PASSWORD=your-ftp-password
-HOSTINGER_FTP_REMOTE_DIR=/public_html/uploads
+HOSTINGER_FTP_REMOTE_DIR=/public_html
 HOSTINGER_FTP_SECURE=true
 ```
 
@@ -80,15 +84,15 @@ After env vars are set, redeploy so `/api/admin/upload-image` and `/api/admin/up
 ## Step 6 — Verify
 
 1. Open **Admin → Posts**, upload a cover image.
-2. Confirm the image URL starts with `https://petrosphere.com.ph/uploads/news/...` (or your base URL).
+2. Confirm the image URL starts with `https://petrosphere.com.ph/news/...` (or your base URL).
 3. Open the URL in a new tab — the file should load from Hostinger.
 4. Save the post — Supabase stores only that URL string.
 
-Repeat for **Admin → Videos** → upload video → URL under `/uploads/videos/`.
+Repeat for **Admin → Videos** → upload video → URL under `/videos/`.
 
 ## Local development
 
-Keep `HOSTINGER_MEDIA_MODE=local` (or omit it) to write files to `public/uploads/` without calling Hostinger.
+Keep `HOSTINGER_MEDIA_MODE=local` (or omit it) to write files to `public/news/` and `public/videos/` without calling Hostinger.
 
 ## Security notes
 
@@ -102,6 +106,6 @@ Keep `HOSTINGER_MEDIA_MODE=local` (or omit it) to write files to `public/uploads
 | Issue | Fix |
 |-------|-----|
 | 401 Unauthorized | `HOSTINGER_UPLOAD_SECRET` must match `$UPLOAD_SECRET` in `upload.php` |
-| 500 Could not create directory | Create `uploads/news` and `uploads/videos` manually; check permissions |
+| 500 Could not create directory | Ensure `public_html/news` and `public_html/videos` exist; check permissions |
 | Image broken on site | Check `HOSTINGER_MEDIA_BASE_URL` and `images.remotePatterns` |
 | Upload works locally but not on Vercel | Set env vars on Vercel and redeploy |

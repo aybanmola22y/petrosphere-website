@@ -35,7 +35,13 @@ export async function POST(req: Request) {
   try {
     form = await req.formData();
   } catch {
-    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "Could not read the upload (often the file is over 10MB and was truncated). Compress the video or retry after the server limit was raised to 50MB.",
+      },
+      { status: 400 },
+    );
   }
 
   const file = form.get("file");
@@ -72,6 +78,7 @@ export async function POST(req: Request) {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Upload failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const status = /\(413\)|too large|Payload Too Large/i.test(msg) ? 413 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }

@@ -1,21 +1,58 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
-import { testimonialHasUploadedVideo } from "@/lib/video-testimonial-media";
+import {
+  captureVideoPosterFrame,
+  testimonialHasUploadedVideo,
+} from "@/lib/video-testimonial-media";
 
 function embedSrc(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0&modestbranding=1`;
 }
 
+function usePosterSrc(item: StudentVideoTestimonial): string | null {
+  const explicit = item.posterSrc?.trim() || "";
+  const uploaded = testimonialHasUploadedVideo(item);
+  const [captured, setCaptured] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (explicit || !uploaded || !item.videoSrc) {
+      setCaptured(null);
+      return;
+    }
+
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    void (async () => {
+      const blob = await captureVideoPosterFrame(item.videoSrc!);
+      if (cancelled || !blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setCaptured(objectUrl);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [explicit, uploaded, item.videoSrc]);
+
+  if (explicit) return explicit;
+  return captured;
+}
+
 function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }) {
   const [playing, setPlaying] = useState(false);
   const uploaded = testimonialHasUploadedVideo(item);
+  const poster = usePosterSrc(item);
+  /** Designed posters already include quote/name — don't crop or darken them. */
+  const designedPoster = Boolean(item.posterSrc?.trim());
 
   return (
     <motion.article
@@ -27,56 +64,85 @@ function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }
     >
       <span className="mx-6 mt-6 h-px bg-linear-to-r from-primary/60 via-primary/20 to-transparent md:mx-8 md:mt-8" aria-hidden />
 
-      <motion.div className="relative mx-6 mt-6 aspect-video overflow-hidden rounded-xl bg-muted md:mx-8 md:mt-7">
+      <motion.div
+        className={
+          designedPoster
+            ? "relative mx-6 mt-6 overflow-hidden rounded-xl bg-[#ececec] md:mx-8 md:mt-7"
+            : "relative mx-6 mt-6 aspect-video overflow-hidden rounded-xl bg-muted md:mx-8 md:mt-7"
+        }
+      >
         {playing ? (
-          uploaded ? (
-            <video
-              src={item.videoSrc}
-              controls
-              autoPlay
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-              poster={item.posterSrc || undefined}
-            />
-          ) : (
-            <iframe
-              title={`Video testimonial — ${item.studentName}`}
-              src={embedSrc(item.youtubeVideoId)}
-              className="absolute inset-0 h-full w-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
-          )
+          <div className={designedPoster ? "relative aspect-video w-full bg-black" : "absolute inset-0"}>
+            {uploaded ? (
+              <video
+                src={item.videoSrc}
+                controls
+                autoPlay
+                playsInline
+                className="absolute inset-0 h-full w-full object-contain"
+                poster={poster || undefined}
+              />
+            ) : (
+              <iframe
+                title={`Video testimonial — ${item.studentName}`}
+                src={embedSrc(item.youtubeVideoId)}
+                className="absolute inset-0 h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            )}
+          </div>
         ) : (
           <button
             type="button"
             onClick={() => setPlaying(true)}
-            className="group relative h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className={
+              designedPoster
+                ? "group relative block w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                : "group relative h-full w-full cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            }
             aria-label={`Play video testimonial from ${item.studentName}`}
           >
-            {uploaded ? (
-              <video
-                src={item.videoSrc}
-                muted
-                playsInline
-                preload="metadata"
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                poster={item.posterSrc || undefined}
-              />
+            {poster ? (
+              poster.startsWith("blob:") || designedPoster ? (
+                // eslint-disable-next-line @next/next/no-img-element -- blob URLs + full designed posters without crop
+                <img
+                  src={poster}
+                  alt=""
+                  className={
+                    designedPoster
+                      ? "block h-auto w-full transition-transform duration-500 group-hover:scale-[1.01]"
+                      : "absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  }
+                />
+              ) : (
+                <Image
+                  src={poster}
+                  alt=""
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                />
+              )
             ) : (
-              <Image
-                src={item.posterSrc}
-                alt=""
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-              />
+              <span className="absolute inset-0 animate-pulse bg-muted" aria-hidden />
             )}
-            <span className="absolute inset-0 bg-linear-to-t from-foreground/55 via-foreground/25 to-foreground/15" aria-hidden />
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_40px_-10px_hsl(42_72%_38%/0.75)] ring-4 ring-background/90 transition-transform duration-200 group-hover:scale-105 md:h-18 md:w-18">
-                <Play className="ml-1 h-7 w-7 fill-current md:h-8 md:w-8" aria-hidden />
+            {!designedPoster ? (
+              <span
+                className="absolute inset-0 bg-linear-to-t from-foreground/55 via-foreground/25 to-foreground/15"
+                aria-hidden
+              />
+            ) : null}
+            <span
+              className={
+                designedPoster
+                  ? "pointer-events-none absolute inset-y-0 left-0 z-10 flex w-[42%] items-center justify-center"
+                  : "absolute inset-0 flex items-center justify-center"
+              }
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_40px_-10px_hsl(42_72%_38%/0.75)] ring-4 ring-background/90 transition-transform duration-200 group-hover:scale-105 md:h-16 md:w-16">
+                <Play className="ml-0.5 h-6 w-6 fill-current md:h-7 md:w-7" aria-hidden />
               </span>
             </span>
           </button>

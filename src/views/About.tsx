@@ -12,6 +12,11 @@ import {
   FiActivity,
   FiAward,
   FiArrowUpRight,
+  FiMapPin,
+  FiClock,
+  FiPhone,
+  FiMail,
+  FiExternalLink,
 } from "react-icons/fi";
 import {
   BuildingLibraryIcon,
@@ -279,26 +284,45 @@ function HistoricalRecordSection() {
   );
 }
 
+function getManilaOfficeStatus(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  const mins = hour * 60 + minute;
+  const weekdayOpen = !["Sat", "Sun"].includes(weekday);
+  const open = weekdayOpen && mins >= 9 * 60 && mins < 17 * 60;
+
+  return {
+    open,
+    clock: new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(now),
+  };
+}
+
 function ContactSection() {
-  const [manilaClock, setManilaClock] = useState<string | null>(null);
+  const [officeStatus, setOfficeStatus] = useState<{ open: boolean; clock: string } | null>(null);
 
   useEffect(() => {
-    const tick = () =>
-      setManilaClock(
-        new Intl.DateTimeFormat("en-US", {
-          timeZone: "Asia/Manila",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }).format(new Date()),
-      );
+    const tick = () => setOfficeStatus(getManilaOfficeStatus());
     tick();
     const id = window.setInterval(tick, 30_000);
     return () => window.clearInterval(id);
   }, []);
 
   return (
-    <section id="contact" className="scroll-mt-28 border-t border-[#00044a]/10 pt-16 md:pt-24">
+    <section id="contact" className="scroll-mt-28 border-t border-border pt-16 md:pt-24">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -306,7 +330,9 @@ function ContactSection() {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="max-w-3xl"
       >
-        <p className="text-sm font-medium text-primary">Contact</p>
+        <p className="text-xs font-medium tracking-[0.18em] uppercase text-muted-foreground">
+          Contact
+        </p>
         <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#00044a] sm:text-4xl">
           Get in touch.
         </h2>
@@ -315,102 +341,186 @@ function ContactSection() {
         </p>
       </motion.div>
 
-      <div className="mt-12 grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-16">
-        <dl className="divide-y divide-[#00044a]/10 lg:col-span-5">
-          <div className="pb-7">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Office
-            </dt>
-            <dd className="mt-3 text-lg font-semibold tracking-tight text-[#00044a]">
-              Petrosphere Incorporated
-            </dd>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Puerto Princesa, Palawan, Philippines
-            </p>
-            <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-medium text-[#00044a]">
-              <a
-                href={HQ_GOOGLE_DIRECTIONS}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline-offset-4 hover:text-primary hover:underline"
-              >
-                Directions
-              </a>
-              <a
-                href={HQ_GOOGLE_LISTING}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline-offset-4 hover:text-primary hover:underline"
-              >
-                Google listing
-              </a>
-            </p>
-          </div>
+      <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:items-stretch lg:gap-10">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="relative flex flex-col overflow-hidden rounded-3xl border border-border bg-secondary/40 shadow-[0_24px_60px_-40px_rgba(0,4,74,0.35)] lg:col-span-5"
+        >
+          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/80 to-primary/30" aria-hidden />
 
-          <div className="py-7">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Hours
-            </dt>
-            <dd className="mt-3 text-lg font-semibold tracking-tight text-[#00044a]">
-              Monday–Friday, 9:00 AM – 5:00 PM
-            </dd>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Philippine time (UTC+8)
-              {manilaClock ? ` · ${manilaClock}` : ""}
-            </p>
-          </div>
+          <div className="border-b border-border bg-background/70 px-6 py-6 sm:px-8">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  Reach us
+                </p>
+                <p className="mt-2 text-lg font-semibold tracking-tight text-[#00044a]">
+                  Puerto Princesa headquarters
+                </p>
+              </div>
 
-          <div className="py-7">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Phone
-            </dt>
-            <dd className="mt-3">
+              {officeStatus ? (
+                <div
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold",
+                    officeStatus.open
+                      ? "bg-emerald-500/10 text-emerald-800"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-2 rounded-full",
+                      officeStatus.open ? "bg-emerald-500" : "bg-muted-foreground/50",
+                    )}
+                    aria-hidden
+                  />
+                  {officeStatus.open ? "Open now" : "Closed now"}
+                  <span className="font-medium text-muted-foreground">{officeStatus.clock}</span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
               <a
                 href="tel:+639758533144"
-                className="text-2xl font-semibold tabular-nums tracking-tight text-[#00044a] transition-colors hover:text-primary"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#00044a] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#00044a]/90"
               >
-                +63 975 853 3144
+                <FiPhone className="h-4 w-4" aria-hidden />
+                Call
               </a>
-            </dd>
-            <p className="mt-1 text-sm text-muted-foreground">General &amp; admissions</p>
+              <a
+                href="mailto:info@petrosphere.com.ph"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-[#00044a] transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <FiMail className="h-4 w-4" aria-hidden />
+                Email
+              </a>
+            </div>
           </div>
 
-          <div className="pt-7">
-            <dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Email
-            </dt>
-            <dd className="mt-3 space-y-4">
-              <div>
-                <a
-                  href="mailto:info@petrosphere.com.ph"
-                  className="break-all text-lg font-semibold tracking-tight text-[#00044a] transition-colors hover:text-primary"
-                >
-                  info@petrosphere.com.ph
-                </a>
-                <p className="mt-1 text-sm text-muted-foreground">General &amp; sales</p>
+          <dl className="flex flex-1 flex-col divide-y divide-border">
+            <div className="flex gap-4 px-6 py-6 sm:px-8">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(224,168,58,0.18)]">
+                <FiMapPin className="h-4 w-4" aria-hidden />
               </div>
-              <div>
-                <a
-                  href="mailto:sales@petrosphere.com.ph"
-                  className="break-all text-lg font-semibold tracking-tight text-[#00044a] transition-colors hover:text-primary"
-                >
-                  sales@petrosphere.com.ph
-                </a>
-                <p className="mt-1 text-sm text-muted-foreground">Training intake</p>
+              <div className="min-w-0">
+                <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  Office
+                </dt>
+                <dd className="mt-1.5 text-base font-semibold tracking-tight text-[#00044a]">
+                  Petrosphere Incorporated
+                </dd>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Puerto Princesa, Palawan, Philippines
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a
+                    href={HQ_GOOGLE_DIRECTIONS}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-[#00044a] shadow-sm transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    Directions
+                    <FiArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+                  </a>
+                  <a
+                    href={HQ_GOOGLE_LISTING}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3.5 py-1.5 text-xs font-semibold text-[#00044a] shadow-sm transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    Google listing
+                    <FiExternalLink className="h-3.5 w-3.5" aria-hidden />
+                  </a>
+                </div>
               </div>
-            </dd>
-          </div>
-        </dl>
+            </div>
+
+            <div className="flex gap-4 px-6 py-6 sm:px-8">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(224,168,58,0.18)]">
+                <FiClock className="h-4 w-4" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  Hours
+                </dt>
+                <dd className="mt-1.5 text-base font-semibold tracking-tight text-[#00044a]">
+                  Monday to Friday
+                </dd>
+                <p className="mt-1 text-sm font-medium text-[#00044a]/80">9:00 AM to 5:00 PM</p>
+                <p className="mt-1 text-sm text-muted-foreground">Philippine time (UTC+8)</p>
+              </div>
+            </div>
+
+            <div className="bg-background/40 px-6 py-6 sm:px-8">
+              <div className="flex gap-4">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#00044a] text-primary">
+                  <FiPhone className="h-4 w-4" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                    Phone
+                  </dt>
+                  <dd className="mt-2">
+                    <a
+                      href="tel:+639758533144"
+                      className="block text-2xl font-bold tabular-nums tracking-tight text-[#00044a] transition-colors hover:text-primary"
+                    >
+                      +63 975 853 3144
+                    </a>
+                  </dd>
+                  <p className="mt-1 text-sm text-muted-foreground">General &amp; admissions</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 px-6 py-6 sm:px-8">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(224,168,58,0.18)]">
+                <FiMail className="h-4 w-4" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1">
+                <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  Email
+                </dt>
+                <dd className="mt-3 space-y-2.5">
+                  <a
+                    href="mailto:info@petrosphere.com.ph"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3.5 shadow-sm transition-all hover:border-primary/40 hover:shadow-[0_10px_24px_-18px_rgba(0,4,74,0.45)]"
+                  >
+                    <span className="block break-all text-sm font-semibold tracking-tight text-[#00044a] group-hover:text-primary">
+                      info@petrosphere.com.ph
+                    </span>
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <FiArrowUpRight className="h-4 w-4" aria-hidden />
+                    </span>
+                  </a>
+                  <a
+                    href="mailto:sales@petrosphere.com.ph"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3.5 shadow-sm transition-all hover:border-primary/40 hover:shadow-[0_10px_24px_-18px_rgba(0,4,74,0.45)]"
+                  >
+                    <span className="block break-all text-sm font-semibold tracking-tight text-[#00044a] group-hover:text-primary">
+                      sales@petrosphere.com.ph
+                    </span>
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <FiArrowUpRight className="h-4 w-4" aria-hidden />
+                    </span>
+                  </a>
+                </dd>
+              </div>
+            </div>
+          </dl>
+        </motion.div>
 
         <figure className="lg:col-span-7">
-          <div className="overflow-hidden rounded-2xl border border-border/80 bg-muted">
-            <div className="relative aspect-[4/3] min-h-[260px] sm:min-h-[340px] lg:aspect-auto lg:h-[28rem]">
+          <div className="h-full overflow-hidden rounded-3xl border border-border bg-muted shadow-[0_24px_60px_-40px_rgba(0,4,74,0.28)]">
+            <div className="relative aspect-[4/3] min-h-[260px] sm:min-h-[340px] lg:aspect-auto lg:h-full lg:min-h-[28rem]">
               <AboutHeadquartersMap lat={HQ_LAT} lon={HQ_LON} />
             </div>
           </div>
-          <figcaption className="mt-3 text-sm text-muted-foreground">
-            Registered office · Puerto Princesa, Palawan
-          </figcaption>
         </figure>
       </div>
     </section>
@@ -421,117 +531,138 @@ export default function About() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-32">
       <div className="container mx-auto px-6">
-        {/* Intro — editorial, less template-like */}
+        {/* Intro — same visual language as Mission / Contact below */}
         <section className="mb-24 md:mb-32">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-3xl"
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-10 max-w-3xl md:mb-12"
           >
-            <p className="text-sm font-medium text-primary">About us</p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#00044a] sm:text-4xl md:text-[2.65rem] md:leading-[1.15]">
+            <p className="text-xs font-medium tracking-[0.18em] uppercase text-muted-foreground">
+              About us
+            </p>
+            <h1 className="mt-4 text-[clamp(2.4rem,4.8vw,3.75rem)] font-bold leading-[1.08] tracking-tight text-[#00044a]">
               Setting the global standard for industrial competence.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
               Petrosphere Incorporated is a training, review, and consultancy company based in
               Puerto Princesa. We help teams in construction, mining, manufacturing, healthcare,
-              and service industries work safer — and stay competent.
+              and service industries work safer and stay competent.
             </p>
           </motion.div>
 
-          <motion.figure
-            initial={{ opacity: 0, y: 16 }}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-10 overflow-hidden rounded-2xl border border-border/80 bg-muted"
+            transition={{ duration: 0.6, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden rounded-3xl border border-border bg-secondary/40"
           >
-            <img
-              src={aboutImg}
-              alt="Petrosphere Incorporated organization group photo"
-              className="aspect-[16/10] w-full object-cover object-[center_40%] sm:aspect-[21/9]"
-            />
-          </motion.figure>
-
-          <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
-            <div className="space-y-5 text-base leading-[1.75] text-muted-foreground lg:col-span-7 sm:text-[1.05rem]">
-              <p>
-                The company was registered with the Securities and Exchange Commission on July 1,
-                2013. We began with oil and gas training, then became an accredited Safety Training
-                Organization in 2017 under the Occupational Safety and Health Center (OSHC), a
-                Department of Labor and Employment (DOLE) agency.
-              </p>
-              <p>
-                Petrosphere is also accredited by the Professional Regulation Commission (PRC) as a
-                Continuing Professional Development Provider, the International Association of
-                Drilling Contractors (IADC) in the United States, and the Professional Evaluation
-                and Certification Board (PECB) in Canada. Approvals with IOSH UK and TESDA are
-                still in progress.
-              </p>
+            <div className="relative aspect-[16/10] sm:aspect-[2/1] lg:aspect-[21/9]">
+              <Image
+                src={aboutImg}
+                alt="Petrosphere Incorporated organization group photo"
+                fill
+                priority
+                quality={88}
+                className="about-intro-photo object-cover object-[center_38%]"
+                sizes="(max-width: 1280px) 100vw, 1200px"
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent"
+                aria-hidden
+              />
             </div>
 
-            <blockquote className="border-l-2 border-primary pl-5 lg:col-span-5 lg:pl-6">
-              <p className="text-xl font-semibold leading-snug tracking-tight text-[#00044a] sm:text-[1.35rem]">
-                Every worker returns home safely — while operating at peak efficiency.
-              </p>
-              <footer className="mt-4 text-sm text-muted-foreground">
-                Founding principle · still the measure for every program we run.
-              </footer>
-            </blockquote>
-          </div>
-
-          <dl className="mt-12 overflow-hidden rounded-2xl border border-border/80 bg-white">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  label: "Incorporated",
-                  value: "July 1, 2013",
-                  note: "SEC registered corporation",
-                  icon: <BuildingLibraryIcon className="h-5 w-5" />,
-                },
-                {
-                  label: "Headquarters",
-                  value: "Puerto Princesa",
-                  note: "Palawan, Philippines",
-                  icon: <BuildingOffice2Icon className="h-5 w-5" />,
-                },
-                {
-                  label: "DOLE–OSHC STO",
-                  value: "Since 2017",
-                  note: "Safety Training Organization",
-                  icon: <CheckBadgeIcon className="h-5 w-5" />,
-                },
-                {
-                  label: "Also accredited by",
-                  value: "PRC, IADC, PECB",
-                  note: "Local and international partners",
-                  icon: <ClipboardDocumentCheckIcon className="h-5 w-5" />,
-                },
-              ].map((item, idx) => (
-                <div
-                  key={item.label}
-                  className={cn(
-                    "px-5 py-6 sm:px-6 sm:py-7",
-                    idx > 0 && "border-t border-border/70",
-                    (idx === 1 || idx === 3) && "sm:border-l sm:border-border/70",
-                    idx === 1 && "sm:border-t-0",
-                    idx > 0 && "lg:border-l lg:border-t-0 lg:border-border/70",
-                  )}
-                >
-                  <dt className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="text-[#00044a]/55" aria-hidden>
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </dt>
-                  <dd className="mt-3 text-lg font-semibold tracking-tight text-[#00044a]">
-                    {item.value}
-                  </dd>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.note}</p>
+            {/* Founding principle — same index/rail language as Mission */}
+            <div className="grid grid-cols-1 border-t border-border md:grid-cols-12">
+              <div className="flex items-start gap-3 border-b border-border p-8 md:col-span-3 md:flex-col md:border-b-0 md:border-r md:p-10 lg:p-12">
+                <span className="text-5xl font-light leading-none tracking-tight text-foreground/15 tabular-nums md:text-6xl">
+                  01
+                </span>
+                <div className="flex items-center gap-2 text-xs font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  <span className="text-primary" aria-hidden>
+                    <FiShield className="h-4 w-4" />
+                  </span>
+                  Principle
                 </div>
-              ))}
+              </div>
+              <div className="p-8 md:col-span-9 md:p-10 lg:p-14">
+                <p className="text-[clamp(1.45rem,2.6vw,2.15rem)] font-semibold leading-snug tracking-tight text-[#00044a]">
+                  Every worker returns home safely, while operating at peak efficiency.
+                </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Founding principle · still the measure for every program we run.
+                </p>
+              </div>
             </div>
-          </dl>
+
+            {/* Story + credentials */}
+            <div className="grid grid-cols-1 divide-y divide-border border-t border-border lg:grid-cols-12 lg:divide-x lg:divide-y-0">
+              <div className="space-y-5 p-8 text-base leading-[1.75] text-muted-foreground md:p-10 lg:col-span-7 lg:p-12 sm:text-[1.05rem]">
+                <p className="text-xs font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                  Our story
+                </p>
+                <p>
+                  The company was registered with the Securities and Exchange Commission on July 1,
+                  2013. We began with oil and gas training, then became an accredited Safety Training
+                  Organization in 2017 under the Occupational Safety and Health Center (OSHC), a
+                  Department of Labor and Employment (DOLE) agency.
+                </p>
+                <p>
+                  Petrosphere is also accredited by the Professional Regulation Commission (PRC) as a
+                  Continuing Professional Development Provider, TESDA, the International Association of
+                  Drilling Contractors (IADC) in the United States, and the Professional Evaluation
+                  and Certification Board (PECB) in Canada. Approvals with IOSH UK are still in
+                  progress.
+                </p>
+              </div>
+
+              <dl className="divide-y divide-border bg-background/40 lg:col-span-5">
+                {[
+                  {
+                    label: "Incorporated",
+                    value: "July 1, 2013",
+                    note: "SEC registered corporation",
+                    icon: <BuildingLibraryIcon className="h-4 w-4" />,
+                  },
+                  {
+                    label: "Headquarters",
+                    value: "Puerto Princesa",
+                    note: "Palawan, Philippines",
+                    icon: <BuildingOffice2Icon className="h-4 w-4" />,
+                  },
+                  {
+                    label: "DOLE–OSHC STO",
+                    value: "Since 2017",
+                    note: "Safety Training Organization",
+                    icon: <CheckBadgeIcon className="h-4 w-4" />,
+                  },
+                  {
+                    label: "Also accredited by",
+                    value: "PRC, TESDA, IADC, PECB",
+                    note: "Local and international partners",
+                    icon: <ClipboardDocumentCheckIcon className="h-4 w-4" />,
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-start gap-4 p-6 lg:p-8">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
+                      {item.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[11px] font-medium tracking-[0.18em] uppercase text-muted-foreground">
+                        {item.label}
+                      </dt>
+                      <dd className="mt-1 text-sm font-semibold tracking-tight text-[#00044a]">
+                        {item.value}
+                      </dd>
+                      <p className="mt-0.5 text-sm text-muted-foreground">{item.note}</p>
+                    </div>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </motion.div>
         </section>
 
         {/* Mission & Vision */}

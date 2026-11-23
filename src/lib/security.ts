@@ -7,9 +7,12 @@ const EXTERNAL_HTTP = /^https?:\/\//i;
 /** Blocks javascript:, data:, vbscript:, and protocol-relative URLs. */
 const DANGEROUS_SCHEME = /^(?:javascript|data|vbscript|file):/i;
 
-/** Internal paths: /foo, /foo/bar, /foo#hash, /foo?query=1 */
+/**
+ * Internal paths: /foo, /foo/bar.jpg, /foo#hash, /foo?query=1
+ * Allows a single-dot file extension; path traversal (`..`) is rejected separately.
+ */
 const SAFE_INTERNAL_PATH =
-  /^\/[a-z0-9/_-]*(?:\?[a-z0-9_%.=&-]*)?(?:#[a-z0-9_-]*)?$/i;
+  /^\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]+(?:\.[a-z0-9]+)?(?:\?[a-z0-9_%.=&-]*)?(?:#[a-z0-9_-]*)?$/i;
 
 const SAFE_CONTENT_ID = /^[a-z0-9][a-z0-9_-]{0,199}$/i;
 
@@ -69,14 +72,23 @@ export function isSafeInternalPath(href: string): boolean {
   if (!trimmed || !trimmed.startsWith("/")) return false;
   if (DANGEROUS_SCHEME.test(trimmed)) return false;
   if (trimmed.startsWith("//")) return false;
+  if (trimmed.includes("..") || /%2e%2e/i.test(trimmed)) return false;
   return SAFE_INTERNAL_PATH.test(trimmed);
 }
 
-/** http(s) URL or site-relative asset path (/uploads/...). */
+/** http(s) URL or site-relative asset path (/news, /videos, /uploads, /images, …). */
 export function isSafeAssetHref(href: string): boolean {
   const trimmed = href.trim();
   if (!trimmed) return false;
-  return isSafeExternalUrl(trimmed) || isSafeInternalPath(trimmed);
+  if (isSafeExternalUrl(trimmed)) return true;
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return false;
+  if (DANGEROUS_SCHEME.test(trimmed)) return false;
+  if (trimmed.includes("..") || /%2e%2e/i.test(trimmed)) return false;
+  // Assets often use multi-dot names (e.g. foo.thumb.jpg) — allow those on media folders.
+  if (/^\/(?:uploads|media|news|videos|images|logos|petrologo)(?:\/|$)/i.test(trimmed)) {
+    return /^\/[\w\-./]+(?:\?[\w\-./%=&]*)?(?:#[\w\-]*)?$/i.test(trimmed);
+  }
+  return isSafeInternalPath(trimmed);
 }
 
 export function isSafeNavHref(href: string): boolean {

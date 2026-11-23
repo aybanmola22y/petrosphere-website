@@ -189,7 +189,7 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     summary: r.summary,
     youtubeVideoId: r.youtube_video_id ?? "",
     videoSrc: r.video_src?.trim() || undefined,
-    posterSrc: r.poster_src,
+    posterSrc: r.poster_src?.trim() || "",
   }));
 
   const stats: SiteStat[] = (statsRes.data ?? []).map((r) => ({

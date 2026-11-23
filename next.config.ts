@@ -29,6 +29,14 @@ try {
   mediaHostname = undefined;
 }
 
+const cmsSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL_WEBSITE?.trim();
+let cmsSupabaseHostname: string | undefined;
+try {
+  if (cmsSupabaseUrl) cmsSupabaseHostname = new URL(cmsSupabaseUrl).hostname;
+} catch {
+  cmsSupabaseHostname = undefined;
+}
+
 const nextConfig: NextConfig = {
   // D:\pnpm-lock.yaml exists outside this app; pin tracing to this package root.
   outputFileTracingRoot: rootDir,
@@ -37,6 +45,8 @@ const nextConfig: NextConfig = {
   // Avoid dev-only RSC manifest errors from the segment explorer (Next.js 15.5+).
   experimental: {
     devtoolSegmentExplorer: false,
+    // Allow testimonial videos up to ~50MB through middleware body cloning.
+    middlewareClientMaxBodySize: "50mb",
   },
   async headers() {
     return [
@@ -120,6 +130,9 @@ const nextConfig: NextConfig = {
       },
       ...(mediaHostname && mediaHostname !== "petrosphere.com.ph"
         ? [{ protocol: "https" as const, hostname: mediaHostname, pathname: "/**" }]
+        : []),
+      ...(cmsSupabaseHostname
+        ? [{ protocol: "https" as const, hostname: cmsSupabaseHostname, pathname: "/storage/v1/object/public/**" }]
         : []),
     ],
   },

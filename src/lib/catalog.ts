@@ -267,8 +267,18 @@ function remoteHasSeedEquivalent(remote: Course[], seedSlug: string): boolean {
 }
 
 /** Belt-and-suspenders: drop QA-only titles if they slip through (e.g. stale cache). */
+function isTemporarilyHiddenCatalogCourse(course: Course): boolean {
+  const title = course.title.trim().toLowerCase();
+  const slug = course.slug.trim().toLowerCase();
+  if (title === "sample course") return true;
+  // Temporarily hidden from public catalog — restore when ready to promote again.
+  if (title.includes("nebosh") || title.includes("national examination board")) return true;
+  if (slug === "nebosh" || slug.includes("nebosh")) return true;
+  return false;
+}
+
 function filterExcludedCatalogCourses(courses: Course[]): Course[] {
-  return courses.filter((c) => c.title.trim().toLowerCase() !== "sample course");
+  return courses.filter((c) => !isTemporarilyHiddenCatalogCourse(c));
 }
 
 /** Prefer Supabase list when non-empty; append seed-only rows TMS omits; else full mock catalog. */

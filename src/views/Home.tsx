@@ -45,31 +45,33 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
 
   return (
     <div className="bg-background selection:bg-primary/20 selection:text-primary">
-      {/* First viewport: hero + trusted only */}
+      {/* First viewport: hero + accreditations logos */}
       <div className="flex min-h-svh flex-col">
         <HomeHeroSection />
 
-        <section className="overflow-hidden border-t border-border/40 bg-secondary/40 py-8 md:py-10">
+        <section className="shrink-0 overflow-hidden border-t border-border/40 bg-secondary/40 py-4 md:py-5">
           <div className="container mx-auto px-6">
-            <div className="mb-2 flex items-center justify-center gap-3">
+            <div className="mb-1 flex items-center justify-center gap-3">
               <span className="h-px w-10 bg-accent/60" aria-hidden />
               <p className="text-center text-[11px] font-medium tracking-[0.22em] uppercase text-muted-foreground">
-                Trusted accreditations &amp; approvals
+                Accreditations, approvals &amp; memberships
               </p>
               <span className="h-px w-10 bg-accent/60" aria-hidden />
             </div>
 
-            <LogoMarquee logos={accreditationLogos} speed={40} />
-          </div>
-        </section>
-
-        {/* Platform capabilities (4 services) */}
-        <section className="bg-background py-20 md:py-28">
-          <div className="container mx-auto px-6">
-            <PlatformCapabilitiesSection />
+            <LogoMarquee logos={accreditationLogos} speed={40} compact />
           </div>
         </section>
       </div>
+
+      {/* Platform capabilities (4 services) */}
+      <section className="bg-background py-20 md:py-28">
+        <div className="container mx-auto px-6">
+          <PlatformCapabilitiesSection />
+        </div>
+      </section>
+
+      <HomeStatsSection stats={stats} />
 
       {/* Featured Courses */}
       <section className="border-y border-border bg-secondary/30 py-24 md:py-32">
@@ -97,8 +99,6 @@ export default function Home({ companyNews, videoTestimonials, stats }: HomeProp
           </div>
         </div>
       </section>
-
-      <HomeStatsSection stats={stats} />
 
       {/* Student video testimonials */}
       <StudentVideoTestimonialsSection

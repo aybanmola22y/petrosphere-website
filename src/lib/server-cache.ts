@@ -51,7 +51,7 @@ export function getCachedPublicCatalog(): Promise<Course[]> {
   return unstable_cache(
     async () => resolveCatalogList(await fetchCatalogCourses()),
     // Bump key when catalog enrichment rules change so stale DOLE dumps are not served.
-    ["public-catalog", "enrich-v6"],
+    ["public-catalog", "enrich-v7-hide-nebosh"],
     { revalidate: CACHE_REVALIDATE_SECONDS.tms, tags: [CACHE_TAGS.tmsCourses] },
   )();
 }

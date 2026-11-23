@@ -7,7 +7,7 @@ export type StudentVideoTestimonial = {
   summary: string;
   /** YouTube embed ID (Share → Embed). Leave empty when using `videoSrc`. */
   youtubeVideoId: string;
-  /** Optional MP4/WebM/MOV served from `/uploads/videos/`. */
+  /** Optional MP4/WebM/MOV served from `/videos/`. */
   videoSrc?: string;
   posterSrc: string;
 };
