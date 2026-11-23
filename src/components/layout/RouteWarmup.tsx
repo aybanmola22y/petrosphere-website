@@ -33,12 +33,8 @@ export function RouteWarmup() {
 
   useEffect(() => {
     let cancelled = false;
-    const idle =
-      typeof window !== "undefined" && "requestIdleCallback" in window
-        ? window.requestIdleCallback
-        : (cb: () => void) => window.setTimeout(cb, 400);
 
-    const id = idle(() => {
+    const run = () => {
       if (cancelled) return;
 
       for (const href of PRIMARY_ROUTES) {
@@ -61,14 +57,27 @@ export function RouteWarmup() {
         queryFn: () => fetchPublicSchedules(),
         staleTime: CACHE_REVALIDATE_SECONDS.tms * 1000,
       });
-    });
+    };
+
+    const supportsIdle =
+      typeof window !== "undefined" && typeof window.requestIdleCallback === "function";
+
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    if (supportsIdle) {
+      idleId = window.requestIdleCallback(run, { timeout: 1500 });
+    } else {
+      timeoutId = setTimeout(run, 400);
+    }
 
     return () => {
       cancelled = true;
-      if (typeof window !== "undefined" && "cancelIdleCallback" in window) {
-        window.cancelIdleCallback(id as number);
-      } else {
-        window.clearTimeout(id as number);
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
       }
     };
   }, [queryClient, router]);
