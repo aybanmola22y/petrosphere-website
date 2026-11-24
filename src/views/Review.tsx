@@ -43,9 +43,6 @@ type ReviewProgram = {
   title: string;
   description: string;
   icon: React.ReactNode;
-  engagement: string;
-  duration: string;
-  team: string;
   previewImage: { src: string; alt: string };
 };
 
@@ -57,9 +54,6 @@ const programs: ReviewProgram[] = [
     description:
       "Nursing Licensure Examination review grounded in local blueprint coverage — high-yield concepts, computation clinics where applicable, and sit-style practice that mirrors testing psychology.",
     icon: <FiActivity className="w-5 h-5" />,
-    engagement: "Intensive cycle or extended program",
-    duration: "8 – 20 weeks",
-    team: "Clinical reviewers + test strategist",
     previewImage: {
       src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=880&q=80",
       alt: "Student studying with notes and books",
@@ -72,9 +66,6 @@ const programs: ReviewProgram[] = [
     description:
       "Civil Service Commission examination readiness — verbal, analytical, and clerical domains handled through repeatable workflows, speed drills, and mistake-proofing habits under time pressure.",
     icon: <FiBriefcase className="w-5 h-5" />,
-    engagement: "Sprint or full preparatory season",
-    duration: "6 – 14 weeks",
-    team: "Exam strategist + item specialists",
     previewImage: {
       src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=880&q=80",
       alt: "Paperwork and documents for exam preparation",
@@ -87,9 +78,6 @@ const programs: ReviewProgram[] = [
     description:
       "Licensure Examination for Teachers preparation spanning general education and professional education pillars — concept mastery, item-type tactics, and lesson-demonstration confidence where applicable.",
     icon: <FiEdit3 className="w-5 h-5" />,
-    engagement: "Seasonal cohort or customised pacing",
-    duration: "10 – 24 weeks",
-    team: "LET faculty leads + subject coaches",
     previewImage: {
       src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=880&q=80",
       alt: "Teacher or student working at a desk with books",
@@ -102,9 +90,6 @@ const programs: ReviewProgram[] = [
     description:
       "NCLEX-RN / PN readiness focused on Next Generation-style prioritisation, safety, and management-of-care judgement — not memorisation alone, but repeatable clinical reasoning frameworks.",
     icon: <FiGlobe className="w-5 h-5" />,
-    engagement: "Adaptive program",
-    duration: "12 – 28 weeks",
-    team: "International nurse educators + NCLEX coach",
     previewImage: {
       src: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=880&q=80",
       alt: "Healthcare study environment with books and notes",
@@ -117,9 +102,6 @@ const programs: ReviewProgram[] = [
     description:
       "Commission on Graduates of Foreign Nursing Schools pathway guidance — credential evaluation orientation, qualifying exam preparation, and documentation hygiene for downstream regulators.",
     icon: <FiAward className="w-5 h-5" />,
-    engagement: "Stage-based advisory",
-    duration: "8 – 20 weeks",
-    team: "Credential advisor + clinical reviewer",
     previewImage: {
       src: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=880&q=80",
       alt: "Professional reviewing documents in an office setting",
@@ -132,9 +114,6 @@ const programs: ReviewProgram[] = [
     description:
       "Health Authority – Abu Dhabi (HAAD) assessment orientation — exam mechanics, clinical scenario pacing, and professional communication expectations for Gulf deployment readiness.",
     icon: <FiMapPin className="w-5 h-5" />,
-    engagement: "Targeted prep window",
-    duration: "6 – 12 weeks",
-    team: "Gulf-licensure SME + clinical coach",
     previewImage: {
       src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=880&q=80",
       alt: "Study group collaborating around a laptop",
@@ -147,9 +126,6 @@ const programs: ReviewProgram[] = [
     description:
       "Prometric-delivered healthcare and professional examinations — environment familiarity, computer-based testing ergonomics, and adaptive pacing strategies across credentialing partners.",
     icon: <FiGrid className="w-5 h-5" />,
-    engagement: "Exam-window aligned sprint",
-    duration: "4 – 10 weeks",
-    team: "CBT strategist + domain SMEs",
     previewImage: {
       src: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=880&q=80",
       alt: "People working with laptops in a modern workspace",
@@ -233,31 +209,6 @@ export default function Review() {
                   <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
                     {cap.description}
                   </p>
-
-                  <dl className="mt-8 grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border bg-secondary/25 sm:grid-cols-3">
-                    {(
-                      [
-                        ["Engagement", cap.engagement],
-                        ["Duration", cap.duration],
-                        ["Team", cap.team],
-                      ] as const
-                    ).map(([label, value], metaIdx) => (
-                      <div
-                        key={label}
-                        className={[
-                          "min-w-0 px-5 py-4",
-                          metaIdx > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : "",
-                        ].join(" ")}
-                      >
-                        <dt className="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">
-                          {label}
-                        </dt>
-                        <dd className="mt-2 text-sm font-medium leading-snug text-foreground break-words">
-                          {value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
 
                   <div className="mt-6">
                     <Link

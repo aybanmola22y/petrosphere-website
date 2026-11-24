@@ -1,6 +1,11 @@
 import type { Course } from "@/data/mockData";
 
-export type CourseVisual = { src: string; alt: string };
+export type CourseVisual = {
+  src: string;
+  alt: string;
+  /** Tailwind object-position class for the card/detail crop. */
+  objectClass?: string;
+};
 
 type Topic =
   | "classroom"
@@ -64,10 +69,16 @@ const IV_TRAINING_IMAGE = "/images/courses/iv-training.png";
 const NEBOSH_TRAINING_IMAGE = "/images/courses/nebosh-training.png";
 const SAFETY_PROGRAM_AUDIT_TRAINING_IMAGE = "/images/courses/safety-program-audit-training.jpg";
 const HIRAC_TRAINING_IMAGE = "/images/courses/hirac-training.jpg";
+const HIRAC_ELEARNING_TRAINING_IMAGE = "/images/courses/hirac-elearning-training.jpg";
 const LOSS_CONTROL_MANAGEMENT_TRAINING_IMAGE =
   "/images/courses/loss-control-management-training.jpg";
 const WORKING_AT_HEIGHTS_TRAINING_IMAGE = "/images/courses/working-at-heights-training-v2.jpg";
 const SCAFFOLDING_TRAINING_IMAGE = "/images/courses/scaffolding-training-v2.jpg";
+const CONFINED_SPACE_TRAINING_IMAGE = "/images/courses/confined-space-training.jpg";
+const ELECTRICAL_SAFETY_TRAINING_IMAGE = "/images/courses/electrical-safety-training.jpg";
+const INDUSTRIAL_HYGIENE_TRAINING_IMAGE = "/images/courses/industrial-hygiene-training.jpg";
+const RIG_MEDIC_TRAINING_IMAGE = "/images/courses/rig-medic-training.jpg";
+const IOSH_BBS_TRAINING_IMAGE = "/images/courses/iosh-bbs-training.jpg";
 
 function resolveImageSrc(id: string): string {
   if (id.startsWith("/") || /^https?:\/\//i.test(id)) return id;
@@ -163,16 +174,27 @@ const RULES: ImageRule[] = [
     ids: [IV_TRAINING_IMAGE],
   },
   {
+    priority: 103,
+    topic: "medical",
+    match: (b) => b.includes("rig medic") || b.includes("rig-medic"),
+    ids: [RIG_MEDIC_TRAINING_IMAGE],
+  },
+  {
     priority: 102,
     topic: "medical",
-    match: (b) => b.includes("rig medic") || b.includes("emt"),
+    match: (b) => b.includes("emt") && !b.includes("rig medic") && !b.includes("rig-medic"),
     ids: ["photo-1584515933487-779824d29309", "photo-1530026405186-ed1f139313f8"],
   },
   {
     priority: 102,
     topic: "classroom",
-    match: (b) => (b.includes("behavior") && b.includes("safety")) || b.includes("bbs"),
-    ids: ["photo-1523580494863-6f3031224c94", "photo-1552664730-d307ca884978"],
+    match: (b) =>
+      b.includes("ioshbbs") ||
+      b.includes("iosh-bbs") ||
+      b.includes("iosh bbs") ||
+      (b.includes("behavior") && b.includes("safety")) ||
+      /\bbbs\b/.test(b),
+    ids: [IOSH_BBS_TRAINING_IMAGE],
   },
   {
     priority: 100,
@@ -254,7 +276,22 @@ const RULES: ImageRule[] = [
     priority: 94,
     topic: "industrial",
     match: (b) => b.includes("confined space") || b.includes("confined-space") || b.includes(" cosp"),
-    ids: ["photo-1504328345606-18bbc8c9d7d1"],
+    ids: [CONFINED_SPACE_TRAINING_IMAGE],
+  },
+  {
+    priority: 94,
+    topic: "industrial",
+    match: (b) =>
+      b.includes("electrical safety") ||
+      (b.includes("electrical") &&
+        (b.includes("elearning") || b.includes("e-learning") || b.includes("e learning"))),
+    ids: [ELECTRICAL_SAFETY_TRAINING_IMAGE],
+  },
+  {
+    priority: 94,
+    topic: "industrial",
+    match: (b) => b.includes("industrial hygiene") || b.includes("industrial-hygiene"),
+    ids: [INDUSTRIAL_HYGIENE_TRAINING_IMAGE],
   },
   {
     priority: 94,
@@ -322,12 +359,24 @@ const RULES: ImageRule[] = [
     ids: [LOSS_CONTROL_MANAGEMENT_TRAINING_IMAGE],
   },
   {
+    priority: 91,
+    topic: "classroom",
+    match: (b) =>
+      (b.includes("hirac") ||
+        (b.includes("hazard identification") && b.includes("risk"))) &&
+      (b.includes("elearning") || b.includes("e-learning") || b.includes("e learning")),
+    ids: [HIRAC_ELEARNING_TRAINING_IMAGE],
+  },
+  {
     priority: 89,
     topic: "industrial",
     match: (b) =>
-      b.includes("hirac") ||
-      (b.includes("hazard identification") && b.includes("risk")) ||
-      b.includes("hazard identification, risk assessment"),
+      (b.includes("hirac") ||
+        (b.includes("hazard identification") && b.includes("risk")) ||
+        b.includes("hazard identification, risk assessment")) &&
+      !b.includes("elearning") &&
+      !b.includes("e-learning") &&
+      !b.includes("e learning"),
     ids: [HIRAC_TRAINING_IMAGE],
   },
   {
@@ -696,23 +745,37 @@ export function assignCourseVisuals(courses: Course[]): Map<string, string> {
   return out;
 }
 
+/** Prefer heads by default; confined-space needs the manhole in frame. */
+function courseImageObjectClass(course: Course): string {
+  const b = blob(course);
+  if (b.includes("confined space") || b.includes("confined-space") || b.includes(" cosp")) {
+    return "object-[center_72%]";
+  }
+  return "object-top";
+}
+
 export function courseCardVisual(course: Course, assignedSrc?: string): CourseVisual {
+  const objectClass = courseImageObjectClass(course);
   if (assignedSrc?.trim()) {
-    return { src: assignedSrc.trim(), alt: course.title };
+    return { src: assignedSrc.trim(), alt: course.title, objectClass };
   }
   const local = localCourseOverride(course);
   if (local) {
-    return { src: local, alt: course.title };
+    return { src: local, alt: course.title, objectClass };
   }
   const uploaded = course.imageSrc?.trim();
   if (uploaded && isUsableSrc(uploaded)) {
-    return { src: uploaded, alt: course.title };
+    return { src: uploaded, alt: course.title, objectClass };
   }
   const fallback = pickForCourse(new Set(), course);
   if (!fallback) {
-    return { src: resolveImageSrc(TOPIC_POOL[courseTopic(course)][0]), alt: course.title };
+    return {
+      src: resolveImageSrc(TOPIC_POOL[courseTopic(course)][0]),
+      alt: course.title,
+      objectClass,
+    };
   }
-  return { src: fallback, alt: course.title };
+  return { src: fallback, alt: course.title, objectClass };
 }
 
 /**

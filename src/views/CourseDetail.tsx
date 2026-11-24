@@ -279,7 +279,7 @@ export default function CourseDetail({ slug }: { slug: string }) {
                           alt={courseVisual.alt}
                           fill
                           quality={92}
-                          className="object-cover object-top"
+                          className={cn("object-cover", courseVisual.objectClass ?? "object-top")}
                           sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 70vw, 1100px"
                           priority
                         />

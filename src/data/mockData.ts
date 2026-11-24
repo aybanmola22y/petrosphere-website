@@ -291,55 +291,6 @@ const ems: { group: string; courses: CourseSeed[] }[] = [
   },
 ];
 
-const denr: { group: string; courses: CourseSeed[] }[] = [
-  {
-    group: "Managing Heads",
-    courses: [
-      {
-        title: "Managing Heads — DENR Accreditation",
-        slug: "managing-heads",
-        summary: "Accreditation course for managing heads of pollution control.",
-        duration: "3 Days",
-        level: "Intermediate",
-        schedule: "Quarterly",
-        objectives: objectivesGeneric,
-        audience: ["Plant Managers", "Operations Heads", "Department Leads"],
-        overview:
-          "Required course for managing heads under DAO 2014-02. Covers environmental compliance responsibilities, reporting, and sanctions.",
-      },
-    ],
-  },
-  {
-    group: "PCO Program",
-    courses: [
-      {
-        title: "PCO — Category A",
-        slug: "pco-a",
-        summary: "Pollution Control Officer accreditation for Category A establishments.",
-        duration: "5 Days",
-        level: "Advanced",
-        schedule: "Quarterly",
-        objectives: objectivesGeneric,
-        audience: ["Senior Environmental Officers", "Plant PCOs"],
-        overview:
-          "Advanced PCO training for Category A establishments with significant environmental aspects. Includes environmental management systems and DENR reporting.",
-      },
-      {
-        title: "PCO — Category B",
-        slug: "pco-b",
-        summary: "Pollution Control Officer accreditation for Category B establishments.",
-        duration: "3 Days",
-        level: "Intermediate",
-        schedule: "Quarterly",
-        objectives: objectivesGeneric,
-        audience: ["Environmental Officers", "Compliance Staff"],
-        overview:
-          "PCO training for Category B establishments. Covers basic environmental laws, monitoring requirements, and compliance documentation.",
-      },
-    ],
-  },
-];
-
 const tesda: { group: string; courses: CourseSeed[] }[] = [
   {
     group: "TESDA Programs",
@@ -391,26 +342,6 @@ const tesda: { group: string; courses: CourseSeed[] }[] = [
         audience: ["Healthcare Aides", "Allied Health Workers"],
         overview:
           "Foundational healthcare support skills including infection control, patient comfort, vital signs, and basic clinical procedures.",
-      },
-    ],
-  },
-];
-
-const iadc: { group: string; courses: CourseSeed[] }[] = [
-  {
-    group: "IADC Programs",
-    courses: [
-      {
-        title: "IADC RigPass",
-        slug: "rigpass",
-        summary: "IADC-accredited orientation for new and transferring rig personnel.",
-        duration: "2 Days",
-        level: "Beginner",
-        schedule: "Monthly",
-        objectives: objectivesSafety,
-        audience: ["New Rig Hires", "Transferring Personnel", "Visiting Contractors"],
-        overview:
-          "The industry-standard IADC RigPass orientation covering rig terminology, hazards, PPE, and emergency response for the upstream drilling sector.",
       },
     ],
   },
@@ -513,26 +444,6 @@ const cpd: { group: string; courses: CourseSeed[] }[] = [
   },
 ];
 
-const maritime: { group: string; courses: CourseSeed[] }[] = [
-  {
-    group: "Maritime Programs",
-    courses: [
-      {
-        title: "Basic Maritime Safety",
-        slug: "maritime-safety",
-        summary: "STCW-aligned basic safety training for maritime personnel.",
-        duration: "5 Days",
-        level: "Beginner",
-        schedule: "Monthly",
-        objectives: objectivesSafety,
-        audience: ["Seafarers", "Port Workers", "Maritime Cadets"],
-        overview:
-          "Covers personal survival techniques, fire prevention, elementary first aid, and personal safety and social responsibilities aligned with STCW.",
-      },
-    ],
-  },
-];
-
 type Section = {
   category: string;
   categorySlug: string;
@@ -543,11 +454,8 @@ const sections: Section[] = [
   { category: "DOLE", categorySlug: "dole", groups: dole },
   { category: "CPD", categorySlug: "cpd", groups: cpd },
   { category: "EMS", categorySlug: "ems", groups: ems },
-  { category: "DENR", categorySlug: "denr", groups: denr },
   { category: "TESDA", categorySlug: "tesda", groups: tesda },
-  { category: "IADC", categorySlug: "iadc", groups: iadc },
   { category: "PECB", categorySlug: "pecb", groups: pecb },
-  { category: "Maritime", categorySlug: "maritime", groups: maritime },
   { category: "Consultancy", categorySlug: "consultancy", groups: consultancyPrograms },
 ];
 

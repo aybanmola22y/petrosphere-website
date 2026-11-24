@@ -46,9 +46,6 @@ type Capability = {
   title: string;
   description: string;
   icon: React.ReactNode;
-  engagement: string;
-  duration: string;
-  team: string;
   /** Thematic preview for the right-hand panel (Unsplash, license: Unsplash) */
   previewImage: { src: string; alt: string };
 };
@@ -60,9 +57,6 @@ const capabilities: Capability[] = [
     description:
       "Design, integrate, or mature your occupational health and safety management system so policies, roles, and field practices stay aligned — from governance charters to contractor oversight.",
     icon: <FiShield className="w-5 h-5" />,
-    engagement: "Retainer or project",
-    duration: "6 – 18 weeks",
-    team: "Lead HSE consultant + specialists",
     previewImage: {
       src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=880&q=80",
       alt: "Industrial team in safety gear reviewing operations on site",
@@ -74,9 +68,6 @@ const capabilities: Capability[] = [
     description:
       "Stand up or refine your permit-to-work lifecycle — isolation standards, risk verification, digital or paper workflows, and supervisor competency — so high-risk tasks stay controlled and traceable.",
     icon: <FiClipboard className="w-5 h-5" />,
-    engagement: "Project or program",
-    duration: "4 – 14 weeks",
-    team: "Process safety / HSE lead + PTW SME",
     previewImage: {
       src: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=880&q=80",
       alt: "Technician in a hard hat working with industrial equipment — controlled work context",
@@ -88,9 +79,6 @@ const capabilities: Capability[] = [
     description:
       "Structured investigations with root-cause discipline — evidence preservation, witness methodology, barrier analysis, and corrective actions that hold up to regulatory or insurer scrutiny.",
     icon: <FiAlertTriangle className="w-5 h-5" />,
-    engagement: "Per incident or retained capacity",
-    duration: "1 – 4 weeks per mandate",
-    team: "Lead investigator + technical specialists",
     previewImage: {
       src: "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=880&q=80",
       alt: "Team collaborating over documents during a structured review",
@@ -102,9 +90,6 @@ const capabilities: Capability[] = [
     description:
       "Hazard identification and risk assessment & control programs tailored to your sites — workshops, bowties or matrices, and operational controls that teams actually use.",
     icon: <FiTrendingUp className="w-5 h-5" />,
-    engagement: "Workshop series or site rollout",
-    duration: "3 – 10 weeks",
-    team: "Risk facilitator + subject SMEs",
     previewImage: {
       src: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=880&q=80",
       alt: "Analytics dashboard and charts supporting hazard and risk assessment",
@@ -116,9 +101,6 @@ const capabilities: Capability[] = [
     description:
       "Simultaneous operations planning — interface agreements, clash scenarios, communication protocols, and combined permits — so parallel crews and disciplines don’t create unmanaged interference risk.",
     icon: <FiGitMerge className="w-5 h-5" />,
-    engagement: "Campaign or turnaround window",
-    duration: "2 – 8 weeks",
-    team: "Operations integration lead + HSE liaison",
     previewImage: {
       src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=880&q=80",
       alt: "Cross-functional team coordinating work in an office setting",
@@ -130,9 +112,6 @@ const capabilities: Capability[] = [
     description:
       "Independent field inspections and systems audits — structured observations, compliance sampling, and pragmatic corrective actions that tighten execution without slowing production unnecessarily.",
     icon: <FiSearch className="w-5 h-5" />,
-    engagement: "Scheduled audits or spot campaigns",
-    duration: "Ongoing or per visit cycle",
-    team: "Lead auditor + discipline inspectors",
     previewImage: {
       src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=880&q=80",
       alt: "Inspector with hard hat and clipboard on a site walkthrough",
@@ -144,9 +123,6 @@ const capabilities: Capability[] = [
     description:
       "Management-system certification readiness for quality, environmental, and occupational health & safety — documentation harmonisation, internal audit programs, and certification-body preparedness.",
     icon: <FiAward className="w-5 h-5" />,
-    engagement: "Phased readiness program",
-    duration: "12 – 36 weeks",
-    team: "Lead auditor / MR support + SMEs",
     previewImage: {
       src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=880&q=80",
       alt: "Open notebook and study materials suggesting standards and certification preparation",
@@ -158,9 +134,6 @@ const capabilities: Capability[] = [
     description:
       "Measure how people really work — leadership visibility, reporting climate, stop-work confidence, and peer norms — then turn findings into a practical culture improvement roadmap.",
     icon: <FiUsers className="w-5 h-5" />,
-    engagement: "Assessment + improvement roadmap",
-    duration: "4 – 12 weeks",
-    team: "Culture lead + site facilitators",
     previewImage: {
       src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=880&q=80",
       alt: "Team collaborating in a workshop setting",
@@ -172,9 +145,6 @@ const capabilities: Capability[] = [
     description:
       "Independent review of process safety barriers — MOC, mechanical integrity, operating procedures, and critical controls — with prioritized findings for high-hazard operations.",
     icon: <FiActivity className="w-5 h-5" />,
-    engagement: "Site or unit audit campaign",
-    duration: "3 – 10 weeks",
-    team: "Process safety auditor + discipline SMEs",
     previewImage: {
       src: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=880&q=80",
       alt: "Industrial process equipment and technician in protective gear",
@@ -186,9 +156,6 @@ const capabilities: Capability[] = [
     description:
       "Workplace health and wellness programs that fit your operations — fitness-to-work, fatigue awareness, ergonomics, and wellbeing initiatives that support safer, more resilient crews.",
     icon: <FiHeart className="w-5 h-5" />,
-    engagement: "Program design or retained support",
-    duration: "6 – 20 weeks",
-    team: "Occupational health advisor + HSE liaison",
     previewImage: {
       src: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=880&q=80",
       alt: "People engaging in a workplace wellness activity",
@@ -200,9 +167,6 @@ const capabilities: Capability[] = [
     description:
       "Practical mental health awareness for supervisors and teams — stigma reduction, early recognition, peer support pathways, and referral options aligned with Philippine workplace realities.",
     icon: <FiMessageCircle className="w-5 h-5" />,
-    engagement: "Awareness sessions or full program",
-    duration: "2 – 8 weeks",
-    team: "Wellbeing facilitator + HR/HSE partners",
     previewImage: {
       src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=880&q=80",
       alt: "Supportive one-on-one conversation in a professional setting",
@@ -214,9 +178,6 @@ const capabilities: Capability[] = [
     description:
       "Audit your OSH program against DOLE and international benchmarks — policy coverage, implementation evidence, contractor control, and corrective-action closure discipline.",
     icon: <FiCheckSquare className="w-5 h-5" />,
-    engagement: "Full program audit or focused modules",
-    duration: "3 – 8 weeks",
-    team: "Lead OSH auditor + compliance specialist",
     previewImage: {
       src: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=880&q=80",
       alt: "Auditor reviewing documents and checklists at a desk",
@@ -228,9 +189,6 @@ const capabilities: Capability[] = [
     description:
       "DENR-aligned EIA support from screening through ECC pathways — scoping, baseline studies, impact analysis, mitigation planning, and stakeholder facilitation.",
     icon: <FiGlobe className="w-5 h-5" />,
-    engagement: "Project EIA or supplemental studies",
-    duration: "8 – 36 weeks",
-    team: "EIA lead + environmental specialists",
     previewImage: {
       src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=880&q=80",
       alt: "Forest canopy and natural landscape representing environmental stewardship",
@@ -317,31 +275,6 @@ export default function Services() {
                   <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
                     {cap.description}
                   </p>
-
-                  <dl className="mt-8 grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border bg-secondary/25 sm:grid-cols-3">
-                    {(
-                      [
-                        ["Engagement", cap.engagement],
-                        ["Duration", cap.duration],
-                        ["Team", cap.team],
-                      ] as const
-                    ).map(([label, value], metaIdx) => (
-                      <div
-                        key={label}
-                        className={[
-                          "min-w-0 px-5 py-4",
-                          metaIdx > 0 ? "border-t border-border sm:border-t-0 sm:border-l" : "",
-                        ].join(" ")}
-                      >
-                        <dt className="text-[10px] font-medium tracking-[0.16em] uppercase text-muted-foreground">
-                          {label}
-                        </dt>
-                        <dd className="mt-2 text-sm font-medium leading-snug text-foreground break-words">
-                          {value}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
 
                   <div className="mt-6">
                     <Link
