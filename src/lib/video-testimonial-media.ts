@@ -1,5 +1,25 @@
 import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 
+/**
+ * Bust poisoned Vercel CDN entries that cached apex→www "Redirecting..."
+ * bodies for /media/* before the Hostinger IP proxy fix.
+ */
+export const MEDIA_CACHE_BUST = "20261124b";
+
+export function withMediaCacheBust(src?: string | null): string | undefined {
+  const raw = src?.trim();
+  if (!raw) return undefined;
+  if (!raw.startsWith("/media/")) return raw;
+  try {
+    const url = new URL(raw, "https://petrosphere.com.ph");
+    url.searchParams.set("v", MEDIA_CACHE_BUST);
+    return `${url.pathname}?${url.searchParams.toString()}`;
+  } catch {
+    const join = raw.includes("?") ? "&" : "?";
+    return `${raw}${join}v=${MEDIA_CACHE_BUST}`;
+  }
+}
+
 export function testimonialHasUploadedVideo(
   item: Pick<StudentVideoTestimonial, "videoSrc">,
 ): boolean {

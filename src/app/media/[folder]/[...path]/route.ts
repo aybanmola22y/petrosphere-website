@@ -98,7 +98,12 @@ export async function GET(req: Request, ctx: Ctx) {
     const headers: Record<string, string> = {
       "Content-Type": contentType,
       "Accept-Ranges": "bytes",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      // Do not let Vercel CDN cache media — a prior bad apex redirect
+      // ("Redirecting...") poisoned /media/* entries and broke <video>.
+      "Cache-Control": "private, no-store",
+      "CDN-Cache-Control": "no-store",
+      "Vercel-CDN-Cache-Control": "no-store",
+      Vary: "Range",
     };
 
     const contentLength = upstream.headers.get("content-length");

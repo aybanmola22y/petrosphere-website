@@ -10,6 +10,7 @@ import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
 import {
   captureVideoPosterFrame,
   testimonialHasUploadedVideo,
+  withMediaCacheBust,
 } from "@/lib/video-testimonial-media";
 
 function embedSrc(videoId: string): string {
@@ -49,10 +50,17 @@ function usePosterSrc(item: StudentVideoTestimonial): string | null {
 
 function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }) {
   const [playing, setPlaying] = useState(false);
+  const [mediaFailed, setMediaFailed] = useState(false);
   const uploaded = testimonialHasUploadedVideo(item);
   const poster = usePosterSrc(item);
   /** Designed posters already include quote/name — don't crop or darken them. */
   const designedPoster = Boolean(item.posterSrc?.trim());
+  const videoSrc = withMediaCacheBust(item.videoSrc);
+
+  useEffect(() => {
+    setMediaFailed(false);
+    setPlaying(false);
+  }, [videoSrc]);
 
   return (
     <motion.article
@@ -73,15 +81,33 @@ function VideoCard({ item, idx }: { item: StudentVideoTestimonial; idx: number }
       >
         {playing ? (
           <div className={designedPoster ? "relative aspect-video w-full bg-black" : "absolute inset-0"}>
-            {uploaded ? (
+            {uploaded && videoSrc && !mediaFailed ? (
               <video
-                src={item.videoSrc}
+                key={videoSrc}
+                src={videoSrc}
                 controls
                 autoPlay
                 playsInline
+                preload="auto"
                 className="absolute inset-0 h-full w-full object-contain"
                 poster={poster || undefined}
+                onError={() => setMediaFailed(true)}
               />
+            ) : uploaded && mediaFailed ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/90 px-4 text-center">
+                <p className="text-sm text-white/80">Video couldn’t load. Retrying with a fresh link usually helps.</p>
+                <button
+                  type="button"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                  onClick={() => {
+                    setMediaFailed(false);
+                    setPlaying(false);
+                    window.setTimeout(() => setPlaying(true), 50);
+                  }}
+                >
+                  Try again
+                </button>
+              </div>
             ) : (
               <iframe
                 title={`Video testimonial — ${item.studentName}`}
