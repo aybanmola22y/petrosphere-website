@@ -11,10 +11,8 @@ import { readCmsFromSupabase } from "@/lib/site-content-supabase";
 import { fetchTmsSchedules } from "@/lib/tms";
 import type { SiteContentSnapshot } from "@/types/site-content";
 
-export type CachedCmsStored = Pick<
-  SiteContentSnapshot,
-  "videoTestimonials" | "stats"
-> & {
+export type CachedCmsStored = Pick<SiteContentSnapshot, "videoTestimonials" | "stats"> & {
+  heroMasonry?: SiteContentSnapshot["heroMasonry"];
   news?: SiteContentSnapshot["news"];
   authoredNews?: SiteContentSnapshot["news"];
   fetchedOverrides?: SiteContentSnapshot["news"];
@@ -32,6 +30,7 @@ export function getCachedCmsSnapshot(): Promise<CachedCmsStored> {
         removedNewsSlugs: cms.removedNewsSlugs,
         videoTestimonials: cms.videoTestimonials,
         stats: cms.stats,
+        heroMasonry: cms.heroMasonry,
       };
     },
     ["site-cms-snapshot"],

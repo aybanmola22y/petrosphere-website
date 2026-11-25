@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Home from "@/views/Home";
-import { getStatsForSiteAsync, getVideoTestimonialsForSiteAsync } from "@/lib/site-content";
-import { getCompanyNewsForSite } from "@/lib/site-content";
-import { getCompanyNewsForHome } from "@/lib/site-content";
+import {
+  getCompanyNewsForHome,
+  getCompanyNewsForSite,
+  getHeroMasonryForSiteAsync,
+  getStatsForSiteAsync,
+  getVideoTestimonialsForSiteAsync,
+} from "@/lib/site-content";
 import { getCachedPublicCatalog } from "@/lib/server-cache";
 import { resolveCatalogList } from "@/lib/catalog";
 
@@ -19,10 +23,11 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   // Use admin-edited content when available; otherwise fall back to fetched Petrosphere posts.
-  const [companyNews, videoTestimonials, stats, catalogCourses] = await Promise.all([
+  const [companyNews, videoTestimonials, stats, heroMasonry, catalogCourses] = await Promise.all([
     getCompanyNewsForHome(6).catch(() => getCompanyNewsForSite().slice(0, 6)),
     getVideoTestimonialsForSiteAsync(),
     getStatsForSiteAsync(),
+    getHeroMasonryForSiteAsync(),
     getCachedPublicCatalog().catch(() => resolveCatalogList([])),
   ]);
   return (
@@ -30,6 +35,7 @@ export default async function Page() {
       companyNews={companyNews}
       videoTestimonials={videoTestimonials}
       stats={stats}
+      heroMasonry={heroMasonry}
       initialCatalog={catalogCourses}
     />
   );

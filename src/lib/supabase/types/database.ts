@@ -76,6 +76,23 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["site_stats"]["Insert"]>;
         Relationships: [];
       };
+      hero_masonry_images: {
+        Row: {
+          id: string;
+          column_index: number;
+          sort_order: number;
+          src: string;
+          tall: boolean | null;
+          alt: string | null;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["hero_masonry_images"]["Row"], "id" | "updated_at"> & {
+          id?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["hero_masonry_images"]["Insert"]>;
+        Relationships: [];
+      };
       video_testimonials: {
         Row: {
           id: string;

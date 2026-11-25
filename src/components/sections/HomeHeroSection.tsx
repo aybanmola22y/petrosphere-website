@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 
+import type { HomeHeroMasonryColumns } from "@/data/siteMarketingDefaults";
 import { Button } from "@/components/ui/button";
 import { HomeHeroMasonryCarousel } from "@/components/sections/HomeHeroMasonryCarousel";
 
-export function HomeHeroSection() {
+export function HomeHeroSection({
+  heroMasonry,
+}: {
+  heroMasonry?: HomeHeroMasonryColumns;
+} = {}) {
   return (
     <section className="relative flex min-h-0 flex-1 flex-col justify-center overflow-hidden bg-background pt-20 pb-4 md:pt-24 md:pb-5">
       <div className="relative z-10 container mx-auto grid items-center gap-8 px-6 py-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10 lg:py-6 xl:gap-14">
@@ -45,7 +50,7 @@ export function HomeHeroSection() {
 
         {/* Right — multi-column vertical image carousel */}
         <div className="hero-fade-up relative min-w-0 [animation-delay:120ms]">
-          <HomeHeroMasonryCarousel />
+          <HomeHeroMasonryCarousel columns={heroMasonry} />
         </div>
       </div>
     </section>

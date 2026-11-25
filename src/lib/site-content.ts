@@ -4,10 +4,15 @@ import fs from "fs";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
 import { companyNewsItems } from "@/data/companyNews";
-import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
-import { stats as defaultStats, studentVideoTestimonials as defaultVideoTestimonials } from "@/data/siteMarketingDefaults";
+import type { HomeHeroMasonryColumns, StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import {
+  homeHeroMasonryColumns as defaultHeroMasonry,
+  stats as defaultStats,
+  studentVideoTestimonials as defaultVideoTestimonials,
+} from "@/data/siteMarketingDefaults";
 
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
+import { normalizeHeroMasonry } from "@/lib/hero-masonry";
 import { getLocalContentPath } from "./site-content-path";
 import {
   fetchPetrosphereLatestNews,
@@ -128,6 +133,7 @@ async function readStoredUncached(): Promise<StoredShape | null> {
         removedNewsSlugs: cms.removedNewsSlugs,
         videoTestimonials: cms.videoTestimonials,
         stats: cms.stats,
+        heroMasonry: cms.heroMasonry,
       };
     } catch (e) {
       console.error("CMS Supabase read failed, falling back to file:", e);
@@ -274,6 +280,7 @@ export async function getSiteContentSnapshotForAdminSync(options?: {
     news: fallbackNews,
     videoTestimonials: adminVideos,
     stats: stored?.stats && Array.isArray(stored.stats) ? stored.stats : defaultStats,
+    heroMasonry: normalizeHeroMasonry(stored?.heroMasonry),
   };
 
   const fetched = isPetrosphereWpNewsFetchEnabled()
@@ -383,11 +390,21 @@ export async function getStatsForSiteAsync(): Promise<SiteStat[]> {
   return getStatsForSite();
 }
 
+export function getHeroMasonryForSite(): HomeHeroMasonryColumns {
+  return normalizeHeroMasonry(defaultHeroMasonry);
+}
+
+export async function getHeroMasonryForSiteAsync(): Promise<HomeHeroMasonryColumns> {
+  const s = await readStoredForPublic();
+  return normalizeHeroMasonry(s?.heroMasonry);
+}
+
 export function getSiteContentSnapshot(): SiteContentSnapshot {
   return {
     news: getCompanyNewsForSite(),
     videoTestimonials: getVideoTestimonialsForSite(),
     stats: getStatsForSite(),
+    heroMasonry: getHeroMasonryForSite(),
   };
 }
 
@@ -446,6 +463,9 @@ export async function persistSiteContent(payload: { baseline: SiteContentSnapsho
   }
   if (stableStringify(baseline.stats) !== stableStringify(data.stats)) {
     stored.stats = data.stats;
+  }
+  if (stableStringify(baseline.heroMasonry) !== stableStringify(data.heroMasonry)) {
+    stored.heroMasonry = normalizeHeroMasonry(data.heroMasonry);
   }
 
   fs.writeFileSync(getLocalContentPath(), `${JSON.stringify(stored, null, 2)}\n`, "utf-8");

@@ -59,7 +59,10 @@ export function CourseCard({ course, imageSrc }: CourseCardProps) {
             alt={visual.alt}
             fill
             quality={88}
-            className={cn("h-full w-full object-cover", visual.objectClass ?? "object-top")}
+            className={cn(
+              "h-full w-full",
+              visual.objectClass ?? "object-cover object-top",
+            )}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </div>

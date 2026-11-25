@@ -85,7 +85,7 @@ export function isSafeAssetHref(href: string): boolean {
   if (DANGEROUS_SCHEME.test(trimmed)) return false;
   if (trimmed.includes("..") || /%2e%2e/i.test(trimmed)) return false;
   // Assets often use multi-dot names (e.g. foo.thumb.jpg) — allow those on media folders.
-  if (/^\/(?:uploads|media|news|videos|images|logos|petrologo)(?:\/|$)/i.test(trimmed)) {
+  if (/^\/(?:uploads|media|news|videos|hero|images|logos|petrologo)(?:\/|$)/i.test(trimmed)) {
     return /^\/[\w\-./]+(?:\?[\w\-./%=&]*)?(?:#[\w\-]*)?$/i.test(trimmed);
   }
   return isSafeInternalPath(trimmed);

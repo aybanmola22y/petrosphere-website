@@ -11,7 +11,7 @@ import {
   postHostingerUpload,
 } from "@/lib/hostinger-origin";
 
-export type HostingerMediaFolder = "news" | "videos";
+export type HostingerMediaFolder = "news" | "videos" | "hero";
 
 export type HostingerMediaMode = "local" | "http" | "ftp" | "supabase";
 
@@ -207,8 +207,8 @@ export async function uploadMediaFile(options: {
 
 export function mediaUploadSuccessMessage(mode: HostingerMediaMode): string {
   if (mode === "http" || mode === "ftp") {
-    return "File uploaded to Hostinger (public_html/news or public_html/videos).";
+    return "File uploaded to Hostinger (public_html/news, public_html/hero, or public_html/videos).";
   }
   if (mode === "supabase") return "File uploaded to Supabase Storage.";
-  return "File saved under /public/news or /public/videos (local dev).";
+  return "File saved under /public/news, /public/hero, or /public/videos (local dev).";
 }

@@ -6,7 +6,10 @@ import { FiArrowRight } from "react-icons/fi";
 
 import type { CompanyNewsItem } from "@/data/companyNews";
 import type { Course } from "@/data/mockData";
-import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import type {
+  HomeHeroMasonryColumns,
+  StudentVideoTestimonial,
+} from "@/data/siteMarketingDefaults";
 import type { SiteStat } from "@/types/site-content";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CourseCard } from "@/components/ui/CourseCard";
@@ -24,6 +27,7 @@ export type HomeProps = {
   companyNews: CompanyNewsItem[];
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
+  heroMasonry?: HomeHeroMasonryColumns;
   /** Server-fetched catalog snapshot — keeps SSR and hydration titles aligned. */
   initialCatalog?: Course[];
 };
@@ -32,6 +36,7 @@ export default function Home({
   companyNews,
   videoTestimonials,
   stats,
+  heroMasonry,
   initialCatalog,
 }: HomeProps) {
   const { catalogCourses: courses } = useCatalogCoursesList(initialCatalog);
@@ -55,7 +60,7 @@ export default function Home({
     <div className="bg-background selection:bg-primary/20 selection:text-primary">
       {/* First viewport: hero + accreditations logos */}
       <div className="flex min-h-svh flex-col">
-        <HomeHeroSection />
+        <HomeHeroSection heroMasonry={heroMasonry} />
 
         <section className="shrink-0 overflow-hidden border-t border-border/40 bg-secondary/40 py-4 md:py-5">
           <div className="container mx-auto px-6">

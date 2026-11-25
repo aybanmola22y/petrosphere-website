@@ -1,5 +1,8 @@
 import type { CompanyNewsItem } from "@/data/companyNews";
-import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import type {
+  HomeHeroMasonryColumns,
+  StudentVideoTestimonial,
+} from "@/data/siteMarketingDefaults";
 
 export type SiteStat = { value: string; label: string };
 
@@ -8,4 +11,6 @@ export type SiteContentSnapshot = {
   news: CompanyNewsItem[];
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
+  /** Homepage hero masonry ticker (4 columns). */
+  heroMasonry: HomeHeroMasonryColumns;
 };

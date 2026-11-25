@@ -6,12 +6,14 @@ import {
   getHostingerMediaMode,
   mediaUploadSuccessMessage,
   uploadMediaFile,
+  type HostingerMediaFolder,
 } from "@/lib/hostinger-media";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 6 * 1024 * 1024; // 6MB
 const ALLOWED = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml", "image/x-icon"]);
+const IMAGE_FOLDERS = new Set<HostingerMediaFolder>(["news", "hero"]);
 
 function safeExtFromMime(mime: string): string {
   switch (mime) {
@@ -57,14 +59,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "File too large (max 6MB)" }, { status: 413 });
   }
 
+  const folderRaw = String(form.get("folder") ?? "news").trim().toLowerCase();
+  const folder: HostingerMediaFolder = IMAGE_FOLDERS.has(folderRaw as HostingerMediaFolder)
+    ? (folderRaw as HostingerMediaFolder)
+    : "news";
+
   const ext = safeExtFromMime(file.type);
-  const filename = buildMediaFilename("news", ext);
+  const filename = buildMediaFilename(folder, ext);
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const { url, storage } = await uploadMediaFile({
       buffer,
-      folder: "news",
+      folder,
       filename,
       mimeType: file.type,
     });

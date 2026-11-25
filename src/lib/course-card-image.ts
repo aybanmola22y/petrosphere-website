@@ -54,6 +54,7 @@ const BOSH_SO1_TRAINING_IMAGE = "/images/courses/bosh-so1-training.png";
 const BOSH_SO2_TRAINING_IMAGE = "/images/courses/bosh-so2-training.png";
 const CHEMICAL_SAFETY_TRAINING_IMAGE = "/images/courses/chemical-safety-training.png";
 const EMS_TRAINING_IMAGE = "/images/courses/emergency-medical-services-training.png";
+const EMS_NC2_ASSESSMENT_TRAINING_IMAGE = "/images/courses/ems-nc2-assessment-training.jpg";
 const MESH_TRAINING_IMAGE = "/images/courses/mesh-training.png";
 const MESH_ELEARNING_TRAINING_IMAGE = "/images/courses/mesh-elearning-training.jpg";
 const TRAINING_OF_TRAINERS_IMAGE = "/images/courses/training-of-trainers.jpg";
@@ -79,6 +80,7 @@ const ELECTRICAL_SAFETY_TRAINING_IMAGE = "/images/courses/electrical-safety-trai
 const INDUSTRIAL_HYGIENE_TRAINING_IMAGE = "/images/courses/industrial-hygiene-training.jpg";
 const RIG_MEDIC_TRAINING_IMAGE = "/images/courses/rig-medic-training.jpg";
 const IOSH_BBS_TRAINING_IMAGE = "/images/courses/iosh-bbs-training.jpg";
+const BBS_ELEARNING_TRAINING_IMAGE = "/images/courses/bbs-elearning-training.jpg";
 
 function resolveImageSrc(id: string): string {
   if (id.startsWith("/") || /^https?:\/\//i.test(id)) return id;
@@ -155,12 +157,22 @@ const RULES: ImageRule[] = [
     ids: [BLS_TRAINING_IMAGE],
   },
   {
+    priority: 104,
+    topic: "medical",
+    match: (b) =>
+      (b.includes("ems") || b.includes("emergency medical")) &&
+      b.includes("assessment") &&
+      (b.includes("nc") || b.includes("nc2") || b.includes("nc ii") || b.includes("nc-ii")),
+    ids: [EMS_NC2_ASSESSMENT_TRAINING_IMAGE],
+  },
+  {
     priority: 101,
     topic: "medical",
     match: (b) =>
-      b.includes("emergency medical services") ||
-      b.includes("ems nc") ||
-      b.includes("ems-nc"),
+      (b.includes("emergency medical services") ||
+        b.includes("ems nc") ||
+        b.includes("ems-nc")) &&
+      !b.includes("assessment"),
     ids: [EMS_TRAINING_IMAGE],
   },
   {
@@ -186,14 +198,27 @@ const RULES: ImageRule[] = [
     ids: ["photo-1584515933487-779824d29309", "photo-1530026405186-ed1f139313f8"],
   },
   {
+    priority: 103,
+    topic: "classroom",
+    match: (b) =>
+      (b.includes("bbs") ||
+        b.includes("behavior-based") ||
+        (b.includes("behavior") && b.includes("safety"))) &&
+      (b.includes("elearning") || b.includes("e-learning") || b.includes("e learning")),
+    ids: [BBS_ELEARNING_TRAINING_IMAGE],
+  },
+  {
     priority: 102,
     topic: "classroom",
     match: (b) =>
-      b.includes("ioshbbs") ||
-      b.includes("iosh-bbs") ||
-      b.includes("iosh bbs") ||
-      (b.includes("behavior") && b.includes("safety")) ||
-      /\bbbs\b/.test(b),
+      (b.includes("ioshbbs") ||
+        b.includes("iosh-bbs") ||
+        b.includes("iosh bbs") ||
+        (b.includes("behavior") && b.includes("safety")) ||
+        /\bbbs\b/.test(b)) &&
+      !b.includes("elearning") &&
+      !b.includes("e-learning") &&
+      !b.includes("e learning"),
     ids: [IOSH_BBS_TRAINING_IMAGE],
   },
   {
@@ -745,13 +770,34 @@ export function assignCourseVisuals(courses: Course[]): Map<string, string> {
   return out;
 }
 
-/** Prefer heads by default; confined-space needs the manhole in frame. */
+/**
+ * Prefer heads by default (`object-cover object-top`).
+ * Overlay/board art on the right uses a right-biased cover crop (full-bleed, no letterbox).
+ */
 function courseImageObjectClass(course: Course): string {
   const b = blob(course);
+  // Balance heads + manhole (square source in 4:3 card)
   if (b.includes("confined space") || b.includes("confined-space") || b.includes(" cosp")) {
-    return "object-[center_72%]";
+    return "object-cover object-[center_52%]";
   }
-  return "object-top";
+  // Keep right-side title graphics in frame without navy letterboxing
+  if (
+    b.includes("ioshbbs") ||
+    b.includes("iosh-bbs") ||
+    b.includes("iosh bbs") ||
+    (/\bbbs\b/.test(b) &&
+      !b.includes("elearning") &&
+      !b.includes("e-learning") &&
+      !b.includes("e learning")) ||
+    (b.includes("behavior") && b.includes("safety") && !b.includes("elearning")) ||
+    b.includes("industrial hygiene") ||
+    b.includes("industrial-hygiene") ||
+    b.includes("rig medic") ||
+    b.includes("rig-medic")
+  ) {
+    return "object-cover object-right";
+  }
+  return "object-cover object-top";
 }
 
 export function courseCardVisual(course: Course, assignedSrc?: string): CourseVisual {

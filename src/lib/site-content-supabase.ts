@@ -2,9 +2,13 @@ import "server-only";
 
 import type { CompanyNewsItem, NewsBodyBlock } from "@/data/companyNews";
 import { normalizeNewsBody } from "@/data/companyNews";
-import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import type {
+  HomeHeroMasonryColumns,
+  StudentVideoTestimonial,
+} from "@/data/siteMarketingDefaults";
 import { createCmsAdminClient } from "@/lib/supabase/cms-admin";
 import type { Json } from "@/lib/supabase/types/database";
+import { normalizeHeroMasonry } from "@/lib/hero-masonry";
 import { canonicalNewsSlug, newsSlugsMatch, sanitizeNewsItem } from "@/lib/news-slug";
 import type { SiteContentSnapshot, SiteStat } from "@/types/site-content";
 
@@ -88,7 +92,29 @@ export type StoredCmsShape = {
   removedNewsSlugs: string[];
   videoTestimonials: StudentVideoTestimonial[];
   stats: SiteStat[];
+  heroMasonry?: HomeHeroMasonryColumns;
 };
+
+function rowsToHeroMasonry(
+  rows: {
+    column_index: number;
+    sort_order: number;
+    src: string;
+    tall: boolean | null;
+    alt: string | null;
+  }[],
+): HomeHeroMasonryColumns {
+  const cols: HomeHeroMasonryColumns = [[], [], [], []];
+  for (const r of rows) {
+    const c = Math.max(0, Math.min(3, r.column_index));
+    cols[c]!.push({
+      src: r.src,
+      tall: Boolean(r.tall),
+      alt: r.alt?.trim() || undefined,
+    });
+  }
+  return normalizeHeroMasonry(cols);
+}
 
 /** Load a single news post from CMS by slug (authored or fetched override). */
 export async function fetchNewsBySlugFromCms(slug: string): Promise<CompanyNewsItem | null> {
@@ -139,12 +165,17 @@ export async function fetchNewsBySlugFromCms(slug: string): Promise<CompanyNewsI
 export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
   const db = createCmsAdminClient();
 
-  const [authoredRes, overridesRes, hiddenRes, videosRes, statsRes] = await Promise.all([
+  const [authoredRes, overridesRes, hiddenRes, videosRes, statsRes, heroRes] = await Promise.all([
     db.from("news_authored").select("*").order("published_at", { ascending: false }),
     db.from("news_fetched_overrides").select("*"),
     db.from("news_fetched_hidden").select("slug"),
     db.from("video_testimonials").select("*").order("sort_order", { ascending: true }),
     db.from("site_stats").select("*").order("sort_order", { ascending: true }),
+    db
+      .from("hero_masonry_images")
+      .select("column_index, sort_order, src, tall, alt")
+      .order("column_index", { ascending: true })
+      .order("sort_order", { ascending: true }),
   ]);
 
   if (authoredRes.error) throw authoredRes.error;
@@ -152,6 +183,10 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
   if (hiddenRes.error) throw hiddenRes.error;
   if (videosRes.error) throw videosRes.error;
   if (statsRes.error) throw statsRes.error;
+  // Table may not exist yet — fall back to defaults via normalizeHeroMasonry(undefined)
+  if (heroRes.error && !/does not exist|schema cache|Could not find/i.test(heroRes.error.message)) {
+    throw heroRes.error;
+  }
 
   const authored = (authoredRes.data ?? []).map((r) => rowToNewsItem({ ...r, id: r.id }));
   const overridesByCanonical = new Map<string, CompanyNewsItem>();
@@ -201,6 +236,10 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     console.error("Failed to prune duplicate news overrides:", e);
   });
 
+  const heroMasonry = heroRes.error
+    ? undefined
+    : rowsToHeroMasonry(heroRes.data ?? []);
+
   return {
     news: [...authored, ...overrides],
     authoredNews: authored,
@@ -208,6 +247,7 @@ export async function readCmsFromSupabase(): Promise<StoredCmsShape> {
     removedNewsSlugs,
     videoTestimonials,
     stats,
+    heroMasonry,
   };
 }
 
@@ -359,6 +399,44 @@ export async function persistCmsToSupabase(payload: {
     if (rows.length) {
       const { error } = await db.from("site_stats").insert(rows);
       if (error) throw error;
+    }
+  }
+
+  if (stableStringify(baseline.heroMasonry) !== stableStringify(data.heroMasonry)) {
+    const masonry = normalizeHeroMasonry(data.heroMasonry);
+    const { data: existingHero } = await db.from("hero_masonry_images").select("id");
+    const heroIds = (existingHero ?? []).map((r) => r.id);
+    if (heroIds.length) {
+      const { error: delErr } = await db.from("hero_masonry_images").delete().in("id", heroIds);
+      if (delErr) {
+        if (/does not exist|schema cache|Could not find/i.test(delErr.message)) {
+          throw new Error(
+            "Hero masonry table is missing. Run docs/sql/hero-masonry-images.sql in Supabase, then save again.",
+          );
+        }
+        throw delErr;
+      }
+    }
+    const rows = masonry.flatMap((col, columnIndex) =>
+      col.map((img, sortOrder) => ({
+        id: crypto.randomUUID(),
+        column_index: columnIndex,
+        sort_order: sortOrder,
+        src: img.src,
+        tall: Boolean(img.tall),
+        alt: img.alt?.trim() || null,
+      })),
+    );
+    if (rows.length) {
+      const { error } = await db.from("hero_masonry_images").insert(rows);
+      if (error) {
+        if (/does not exist|schema cache|Could not find/i.test(error.message)) {
+          throw new Error(
+            "Hero masonry table is missing. Run docs/sql/hero-masonry-images.sql in Supabase, then save again.",
+          );
+        }
+        throw error;
+      }
     }
   }
 }

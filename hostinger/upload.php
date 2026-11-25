@@ -3,8 +3,8 @@
  * Petrosphere CMS media uploader — deploy to Hostinger public_html.
  *
  * Suggested path: public_html/_cms/upload.php
- * Public URLs:    https://YOUR-DOMAIN/news/...  and  .../videos/...
- * (Uses existing public_html/news and public_html/videos folders.)
+ * Public URLs:    https://YOUR-DOMAIN/news|hero|videos/...
+ * (Uses public_html/news, public_html/hero, and public_html/videos.)
  *
  * Set $UPLOAD_SECRET below (must match HOSTINGER_UPLOAD_SECRET in Vercel).
  */
@@ -15,7 +15,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 $UPLOAD_SECRET = '@Petrospherelangsakalam2026!';
 
-$allowedFolders = ['news', 'videos'];
+$allowedFolders = ['news', 'hero', 'videos'];
+$allowedImageFolders = ['news', 'hero'];
 $allowedImageTypes = [
     'image/png' => 'png',
     'image/jpeg' => 'jpg',
@@ -60,12 +61,13 @@ if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
 }
 
 $mime = mime_content_type($file['tmp_name']) ?: ($file['type'] ?? '');
-$allowed = $folder === 'news' ? $allowedImageTypes : $allowedVideoTypes;
+$isImageFolder = in_array($folder, $allowedImageFolders, true);
+$allowed = $isImageFolder ? $allowedImageTypes : $allowedVideoTypes;
 if (!isset($allowed[$mime])) {
     respond(415, ['ok' => false, 'error' => 'Unsupported file type: ' . $mime]);
 }
 
-$maxBytes = $folder === 'news' ? 6 * 1024 * 1024 : 50 * 1024 * 1024;
+$maxBytes = $isImageFolder ? 6 * 1024 * 1024 : 50 * 1024 * 1024;
 if (($file['size'] ?? 0) > $maxBytes) {
     respond(413, ['ok' => false, 'error' => 'File too large']);
 }

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clapperboard,
   FileText,
+  Images,
   LayoutDashboard,
   ChevronDown,
   ExternalLink,
@@ -32,7 +33,9 @@ import {
 
 import type { CompanyNewsItem } from "@/data/companyNews";
 import { normalizeNewsBody } from "@/data/companyNews";
-import type { StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import type { HomeHeroMasonryImage, StudentVideoTestimonial } from "@/data/siteMarketingDefaults";
+import { homeHeroMasonryColumns } from "@/data/siteMarketingDefaults";
+import { normalizeHeroMasonry } from "@/lib/hero-masonry";
 import type { SiteContentSnapshot } from "@/types/site-content";
 import { SITE_CONTENT_LOCAL_FILENAME } from "@/constants/site-content-file";
 import {
@@ -86,19 +89,22 @@ import { AdminMfaSecurityCard } from "@/components/admin/AdminMfaSecurityCard";
 import { canonicalNewsSlug } from "@/lib/news-slug";
 import { cn } from "@/lib/utils";
 
-type AdminTab = "overview" | "news" | "videos" | "stats";
+type AdminTab = "overview" | "news" | "videos" | "stats" | "hero";
 
 const TAB_TITLE: Record<AdminTab, string> = {
   overview: "Overview",
   news: "Company posts",
   videos: "Video testimonials",
   stats: "Homepage stats",
+  hero: "Hero carousel",
 };
 
 const NEWS_CATEGORIES = ["CSR", "HSE NEWS", "NEWS", "PARTNERSHIP", "TRAINING"] as const;
 
 function cloneSnapshot(s: SiteContentSnapshot): SiteContentSnapshot {
-  return JSON.parse(JSON.stringify(s)) as SiteContentSnapshot;
+  const cloned = JSON.parse(JSON.stringify(s)) as SiteContentSnapshot;
+  cloned.heroMasonry = normalizeHeroMasonry(cloned.heroMasonry ?? homeHeroMasonryColumns);
+  return cloned;
 }
 
 function validateSnapshot(s: SiteContentSnapshot): string | null {
@@ -391,6 +397,27 @@ export function AdminApp({
     });
   }
 
+  function updateHeroImage(
+    columnIndex: number,
+    imageIndex: number,
+    patch: Partial<HomeHeroMasonryImage>,
+  ) {
+    setData((d) => {
+      const heroMasonry = normalizeHeroMasonry(d.heroMasonry).map((col) =>
+        col.map((img) => ({ ...img })),
+      );
+      const col = heroMasonry[columnIndex];
+      if (!col?.[imageIndex]) return d;
+      col[imageIndex] = { ...col[imageIndex]!, ...patch };
+      return { ...d, heroMasonry };
+    });
+  }
+
+  function resetHeroMasonryDefaults() {
+    setData((d) => ({ ...d, heroMasonry: normalizeHeroMasonry(homeHeroMasonryColumns) }));
+    toast({ title: "Reset", description: "Hero grid restored to defaults. Save to publish." });
+  }
+
   function addPost() {
     const item = blankNews();
     setData((d) => ({ ...d, news: [item, ...d.news] }));
@@ -422,11 +449,12 @@ export function AdminApp({
     setConfirmDelete(null);
   }
 
-  async function uploadNewsImage(file: File) {
+  async function uploadNewsImage(file: File, folder: "news" | "hero" = "news") {
     setUploadingNewsImage(true);
     try {
       const fd = new FormData();
       fd.set("file", file);
+      fd.set("folder", folder);
       const res = await fetch("/api/admin/upload-image", { method: "POST", body: fd });
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
@@ -520,6 +548,7 @@ export function AdminApp({
                 { id: "news", label: "Posts", icon: Newspaper },
                 { id: "videos", label: "Testimonials", icon: Clapperboard },
                 { id: "stats", label: "Metrics", icon: BarChart3 },
+                { id: "hero", label: "Hero grid", icon: Images },
               ] as const).map((item) => {
                 const Icon = item.icon;
                 const active = tab === item.id;
@@ -1229,6 +1258,103 @@ export function AdminApp({
                               <Input value={s.label} onChange={(e) => updateStat(i, { label: e.target.value })} />
                             </Field>
                           </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </ScrollArea>
+            ) : null}
+
+            {tab === "hero" ? (
+              <ScrollArea className="h-full">
+                <div className="space-y-4 pr-4">
+                  <Card className="overflow-hidden rounded-3xl bg-white shadow-sm">
+                    <CardHeader className="border-b bg-white">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <CardTitle className="text-base">Homepage hero image grid</CardTitle>
+                          <CardDescription>
+                            Four scrolling columns on the homepage hero. Upload saves to Hostinger
+                            <code className="mx-1 rounded bg-muted px-1">public_html/hero/</code>
+                            (or paste any image URL), then save.
+                          </CardDescription>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={resetHeroMasonryDefaults}>
+                          Reset to defaults
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 p-6 lg:grid-cols-2 xl:grid-cols-4">
+                      {normalizeHeroMasonry(data.heroMasonry).map((column, columnIndex) => (
+                        <div key={`hero-col-${columnIndex}`} className="space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              Column {columnIndex + 1}
+                            </p>
+                            <Badge variant="outline" className="text-[10px]">
+                              {column.length} images
+                            </Badge>
+                          </div>
+                          {column.map((image, imageIndex) => (
+                            <div
+                              key={`hero-${columnIndex}-${imageIndex}`}
+                              className="rounded-2xl border bg-white p-3 shadow-xs ring-1 ring-black/5"
+                            >
+                              <div className="relative mb-3 aspect-[4/5] overflow-hidden rounded-xl bg-muted">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={image.src}
+                                  alt={image.alt || `Column ${columnIndex + 1} image ${imageIndex + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <Field label={`Image ${imageIndex + 1} URL`}>
+                                <Input
+                                  value={image.src}
+                                  onChange={(e) =>
+                                    updateHeroImage(columnIndex, imageIndex, { src: e.target.value })
+                                  }
+                                />
+                              </Field>
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                                  <input
+                                    type="checkbox"
+                                    className="size-3.5 rounded border-input"
+                                    checked={Boolean(image.tall)}
+                                    onChange={(e) =>
+                                      updateHeroImage(columnIndex, imageIndex, { tall: e.target.checked })
+                                    }
+                                  />
+                                  Tall tile
+                                </label>
+                                <label className="inline-flex">
+                                  <input
+                                    type="file"
+                                    accept="image/*,.ico"
+                                    className="hidden"
+                                    disabled={uploadingNewsImage}
+                                    onChange={async (e) => {
+                                      const f = e.target.files?.[0];
+                                      e.currentTarget.value = "";
+                                      if (!f) return;
+                                      const url = await uploadNewsImage(f, "hero");
+                                      if (url) updateHeroImage(columnIndex, imageIndex, { src: url });
+                                    }}
+                                  />
+                                  <span
+                                    className={cn(
+                                      "inline-flex cursor-pointer items-center justify-center rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-foreground shadow-sm hover:bg-black/5",
+                                      uploadingNewsImage && "cursor-not-allowed opacity-60",
+                                    )}
+                                  >
+                                    {uploadingNewsImage ? "Uploading…" : "Upload to Hostinger"}
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ))}
                     </CardContent>

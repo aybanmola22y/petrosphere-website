@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 /** Allow large video proxy responses (Hostinger files can be tens of MB). */
 export const maxDuration = 60;
 
-const ALLOWED = new Set(["news", "videos"]);
+const ALLOWED = new Set(["news", "videos", "hero"]);
 
 type Ctx = { params: Promise<{ folder: string; path: string[] }> };
 

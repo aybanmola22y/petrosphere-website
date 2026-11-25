@@ -100,10 +100,22 @@ const statSchema = z.object({
   label: z.string().min(1),
 });
 
+const heroMasonryImageSchema = z.object({
+  src: safeAssetHref,
+  tall: z.boolean().optional(),
+  alt: z.string().optional(),
+});
+
+const heroMasonrySchema = z
+  .array(z.array(heroMasonryImageSchema).min(1).max(12))
+  .min(1)
+  .max(6);
+
 export const siteContentSnapshotSchema = z.object({
   news: z.array(newsItemSchema),
   videoTestimonials: z.array(videoSchema),
   stats: z.array(statSchema),
+  heroMasonry: heroMasonrySchema,
 });
 
 // For Option B behavior: persist only local edits (overrides) computed as a diff
