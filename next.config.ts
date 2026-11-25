@@ -42,6 +42,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: rootDir,
   // Use the default Next.js dist directory (`.next`) for reliable caching on Windows.
   reactStrictMode: true,
+  // Keep HEIC decode/convert native + wasm out of the Next bundler.
+  serverExternalPackages: ["heic-convert", "heic-decode", "libheif-js"],
   // Avoid dev-only RSC manifest errors from the segment explorer (Next.js 15.5+).
   experimental: {
     devtoolSegmentExplorer: false,

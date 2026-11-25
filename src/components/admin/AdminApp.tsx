@@ -939,7 +939,7 @@ export function AdminApp({
                                 <label className="inline-flex">
                                   <input
                                     type="file"
-                                    accept="image/*,.ico"
+                                    accept="image/*,.ico,.heic,.heif,image/heic,image/heif"
                                     className="hidden"
                                     disabled={uploadingNewsImage}
                                     onChange={async (e) => {
@@ -1332,7 +1332,7 @@ export function AdminApp({
                                 <label className="inline-flex">
                                   <input
                                     type="file"
-                                    accept="image/*,.ico"
+                                    accept="image/*,.ico,.heic,.heif,image/heic,image/heif"
                                     className="hidden"
                                     disabled={uploadingNewsImage}
                                     onChange={async (e) => {

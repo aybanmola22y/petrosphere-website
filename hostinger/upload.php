@@ -63,6 +63,32 @@ if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
 $mime = mime_content_type($file['tmp_name']) ?: ($file['type'] ?? '');
 $isImageFolder = in_array($folder, $allowedImageFolders, true);
 $allowed = $isImageFolder ? $allowedImageTypes : $allowedVideoTypes;
+
+// Some browsers/OS send application/octet-stream — fall back to extension / magic.
+if (!isset($allowed[$mime])) {
+    $originalName = (string)($file['name'] ?? '');
+    $nameExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $extToMime = $isImageFolder
+        ? ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp', 'gif' => 'image/gif', 'svg' => 'image/svg+xml']
+        : ['mp4' => 'video/mp4', 'webm' => 'video/webm', 'mov' => 'video/quicktime'];
+    if (isset($extToMime[$nameExt]) && isset($allowed[$extToMime[$nameExt]])) {
+        $mime = $extToMime[$nameExt];
+    } else {
+        $head = @file_get_contents($file['tmp_name'], false, null, 0, 16);
+        if (is_string($head)) {
+            if (str_starts_with($head, "\xFF\xD8\xFF") && isset($allowed['image/jpeg'])) {
+                $mime = 'image/jpeg';
+            } elseif (str_starts_with($head, "\x89PNG") && isset($allowed['image/png'])) {
+                $mime = 'image/png';
+            } elseif (str_starts_with($head, 'GIF8') && isset($allowed['image/gif'])) {
+                $mime = 'image/gif';
+            } elseif (strlen($head) >= 12 && str_starts_with($head, 'RIFF') && substr($head, 8, 4) === 'WEBP' && isset($allowed['image/webp'])) {
+                $mime = 'image/webp';
+            }
+        }
+    }
+}
+
 if (!isset($allowed[$mime])) {
     respond(415, ['ok' => false, 'error' => 'Unsupported file type: ' . $mime]);
 }
