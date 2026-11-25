@@ -41,7 +41,7 @@ export function getHostingerFetchHostname(): string {
   return DEFAULT_HOSTINGER_IP;
 }
 
-export function mediaPublicPath(folder: "news" | "videos", filename: string): string {
+export function mediaPublicPath(folder: "news" | "videos" | "hero", filename: string): string {
   return `/media/${folder}/${filename}`;
 }
 
